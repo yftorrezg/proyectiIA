@@ -20,7 +20,7 @@
             border: 1px solid rgba(226, 232, 240, 0.8);
         }
 
-        /* Animación de Alerta de Atención */
+        /* Animación de Alerta de Atención (Para cuando el Radar 3D detecta distracción) */
         .alert-distracted { 
             animation: pulseDistracted 1.2s infinite; 
             border-color: #ef4444;
@@ -34,7 +34,7 @@
 </head>
 <body class="min-h-screen bg-slate-50 font-sans text-slate-800 selection:bg-indigo-200">
 
-    <!-- TOP NAVIGATION -->
+    <!-- BARRA DE NAVEGACIÓN SUPERIOR -->
     <nav class="bg-slate-900 text-white p-4 shadow-lg sticky top-0 z-50">
         <div class="max-w-7xl mx-auto flex justify-between items-center">
             <div class="flex items-center gap-4">
@@ -46,10 +46,12 @@
                     <p class="text-slate-400 text-[10px] font-bold tracking-[0.2em] uppercase mt-0.5">Telemetría Multimodal en Tiempo Real</p>
                 </div>
             </div>
+            
+            <!-- Indicadores de Estado del Sistema -->
             <div class="flex items-center gap-3 text-xs font-semibold tracking-wide">
                 <div class="flex items-center gap-2 bg-slate-800/50 px-3 py-1.5 rounded-full border border-slate-700">
                     <div id="ws-indicator" class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></div>
-                    <span id="ws-status" class="text-slate-300">Conectando...</span>
+                    <span id="ws-status" class="text-slate-300">Conectando WebSockets...</span>
                 </div>
                 <div class="flex items-center gap-2 bg-emerald-900/30 text-emerald-400 px-3 py-1.5 rounded-full border border-emerald-800/50">
                     <i data-lucide="cpu" class="w-3.5 h-3.5"></i>
@@ -66,11 +68,11 @@
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
             
             <!-- ==========================================
-                 PANEL IZQUIERDO (VIDEO Y AUDIO)
+                 PANEL IZQUIERDO (VIDEO MJPEG Y AUDIO WHISPER)
                  ========================================== -->
             <div class="lg:col-span-7 flex flex-col gap-6">
                 
-                <!-- Monitor de Video (OpenCV + 3D Axes) -->
+                <!-- Monitor de Video (OpenCV + 3D Axes de MediaPipe) -->
                 <div class="glass-panel rounded-2xl shadow-sm overflow-hidden flex flex-col">
                     <div class="bg-white/50 border-b border-slate-100 p-3.5 flex justify-between items-center">
                         <h2 class="font-bold flex items-center gap-2 text-slate-700 text-sm uppercase tracking-wider">
@@ -79,19 +81,21 @@
                         </h2>
                     </div>
                     <div class="bg-slate-900 relative aspect-video flex items-center justify-center border-b-4 border-indigo-500">
+                        <!-- Streaming MJPEG directo desde FastAPI -->
                         <img id="video-stream" src="http://localhost:8000/api/video_feed" alt="Transmisión IA" class="w-full h-full object-cover" />
                         
-                        <!-- Fallback si el servidor está apagado -->
+                        <!-- Fallback visual si el servidor de Python está apagado -->
                         <div id="video-fallback" class="absolute inset-0 hidden flex-col items-center justify-center text-slate-400 bg-slate-900">
                             <i data-lucide="server-crash" class="w-16 h-16 mb-4 opacity-50 text-red-400"></i>
                             <p class="font-semibold text-lg">Servidor Python Desconectado</p>
-                            <p class="text-sm mt-2 font-mono bg-slate-800 px-3 py-1 rounded-md text-slate-300">python pruebas.py</p>
+                            <p class="text-sm mt-2 font-mono bg-slate-800 px-3 py-1 rounded-md text-slate-300">Ejecuta: python pruebas.py</p>
                         </div>
                     </div>
                 </div>
 
-                <!-- Consola de Transcripción (Whisper) -->
+                <!-- Consola de Transcripción (Modelo Faster-Whisper) -->
                 <div class="bg-slate-900 rounded-2xl shadow-xl border border-slate-800 p-6 relative overflow-hidden group">
+                    <!-- Brillo de fondo estético -->
                     <div class="absolute top-0 right-0 w-64 h-64 bg-indigo-500 rounded-full mix-blend-screen filter blur-[80px] opacity-20 group-hover:opacity-30 transition-smooth"></div>
                     
                     <div class="flex justify-between items-start mb-4 relative z-10">
@@ -110,11 +114,11 @@
             </div>
 
             <!-- ==========================================
-                 PANEL DERECHO (MÉTRICAS Y GRÁFICAS)
+                 PANEL DERECHO (MÉTRICAS Y GRÁFICAS DE IA)
                  ========================================== -->
             <div class="lg:col-span-5 flex flex-col gap-6">
                 
-                <!-- 1. Radar de Atención (Geometría Epipolar) -->
+                <!-- 1. Radar de Atención (Geometría Epipolar de MediaPipe) -->
                 <div id="panel-atencion" class="glass-panel rounded-2xl p-5 transition-smooth border-l-4 border-l-emerald-500">
                     <div class="flex justify-between items-center">
                         <div>
@@ -127,7 +131,7 @@
                     </div>
                 </div>
 
-                <!-- 2. Clasificación de Microexpresiones (DeepFace) -->
+                <!-- 2. Clasificación de Microexpresiones (DeepFace CNN) -->
                 <div class="glass-panel rounded-2xl p-5 relative overflow-hidden">
                     <div id="emocion-glow" class="absolute -right-6 -top-6 w-24 h-24 rounded-full blur-2xl opacity-20 transition-smooth bg-slate-400"></div>
                     
@@ -143,7 +147,7 @@
                     </div>
                 </div>
 
-                <!-- 3. Gráfica de Seguimiento y Comprensión -->
+                <!-- 3. Gráfica de Seguimiento (Fusión Multimodal) -->
                 <div class="glass-panel rounded-2xl p-6 flex-1 flex flex-col shadow-sm">
                     <div class="flex justify-between items-start mb-6">
                         <div>
@@ -158,7 +162,7 @@
                         </div>
                     </div>
 
-                    <!-- Motor SVG Avanzado -->
+                    <!-- Motor SVG Avanzado (Calculado por JavaScript sin librerías externas) -->
                     <div class="flex-1 w-full min-h-[140px] relative mt-2">
                         <svg viewBox="0 0 400 120" class="w-full h-full overflow-visible" preserveAspectRatio="none">
                             <!-- Cuadrícula de fondo -->
@@ -166,12 +170,12 @@
                             <line x1="0" y1="60" x2="400" y2="60" stroke="#f1f5f9" stroke-width="1" stroke-dasharray="4" />
                             <line x1="0" y1="120" x2="400" y2="120" stroke="#f1f5f9" stroke-width="1" />
                             
-                            <!-- Ejes -->
+                            <!-- Ejes Numéricos -->
                             <text x="-25" y="5" font-size="10" fill="#94a3b8" font-weight="600">100</text>
                             <text x="-20" y="64" font-size="10" fill="#94a3b8" font-weight="600">50</text>
                             <text x="-15" y="124" font-size="10" fill="#94a3b8" font-weight="600">0</text>
 
-                            <!-- Degradado para el área bajo la curva -->
+                            <!-- Degradado estético para el área bajo la curva -->
                             <defs>
                                 <linearGradient id="gradient-area" x1="0%" y1="0%" x2="0%" y2="100%">
                                     <stop offset="0%" stop-color="#6366f1" stop-opacity="0.3" />
@@ -179,24 +183,24 @@
                                 </linearGradient>
                             </defs>
 
-                            <!-- Área y Línea dinámica -->
+                            <!-- Área y Línea dinámica manipuladas por JavaScript -->
                             <path id="chart-area" fill="url(#gradient-area)" d="" />
                             <path id="chart-line" fill="none" stroke="#6366f1" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" d="" class="transition-smooth" />
                             
-                            <!-- Punto indicador actual -->
+                            <!-- Punto indicador de valor actual -->
                             <circle id="chart-dot" cx="0" cy="0" r="5" fill="#ffffff" stroke="#6366f1" stroke-width="2" class="hidden transition-smooth shadow-lg" />
                         </svg>
                     </div>
                 </div>
 
-                <!-- 4. Análisis Semántico (RoBERTa) -->
+                <!-- 4. Análisis Semántico (RoBERTa NLP) -->
                 <div class="glass-panel rounded-2xl p-4 flex items-center justify-between">
                     <div class="flex items-center gap-3">
                         <div class="p-2 bg-slate-100 rounded-lg text-slate-500">
                             <i data-lucide="message-square-quote" class="w-5 h-5"></i>
                         </div>
                         <div>
-                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Semántica (NLP)</p>
+                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Semántica (RoBERTa NLP)</p>
                             <p id="nlp-val" class="font-semibold text-slate-700">Esperando texto...</p>
                         </div>
                     </div>
@@ -207,11 +211,12 @@
         </div>
     </main>
 
+    <!-- LOGICA FRONTEND Y WEBSOCKETS -->
     <script>
-        // Inicializar Iconos Vectoriales
+        // Inicializar Iconos Vectoriales de Lucide
         lucide.createIcons();
 
-        // Fallback de Video
+        // Control de Fallback de Video (si FastAPI no envía imágenes)
         const imgStream = document.getElementById('video-stream');
         imgStream.onerror = function() {
             this.style.display = 'none';
@@ -220,6 +225,7 @@
 
         // ==============================================================================
         // DICCIONARIO VISUAL DE EMOCIONES (Semiótica UI)
+        // Asigna colores e iconos a cada emoción detectada por DeepFace
         // ==============================================================================
         const emotionMap = {
             "Felicidad": { icon: "smile", colorText: "text-amber-600", colorBg: "bg-amber-100", colorBorder: "border-amber-200", colorHex: "#d97706" },
@@ -232,17 +238,17 @@
         };
 
         // ==============================================================================
-        // MOTOR SVG: GRÁFICA DE SEGUIMIENTO TEMPORAL
+        // MOTOR SVG: GRÁFICA DE SEGUIMIENTO TEMPORAL DE COMPRENSIÓN
         // ==============================================================================
-        const MAX_PUNTOS = 30; // 30 segundos de historial visual
-        let historialComprehension = Array(MAX_PUNTOS).fill(50); // Inicia plano al 50%
+        const MAX_PUNTOS = 30; // Define cuántos segundos de historial visual guardaremos
+        let historialComprehension = Array(MAX_PUNTOS).fill(50); // Inicia en un 50% plano
         
         const chartLine = document.getElementById('chart-line');
         const chartArea = document.getElementById('chart-area');
         const chartDot = document.getElementById('chart-dot');
 
         function actualizarGraficaSVG(nuevoValor) {
-            // Rotar array
+            // Lógica de "ventana deslizante": agregamos el nuevo valor al final y borramos el primero
             historialComprehension.push(nuevoValor);
             historialComprehension.shift();
 
@@ -254,10 +260,10 @@
             let ultimoX = 0;
             let ultimoY = 0;
 
-            // Generar ruta de la línea
+            // Mapeo matemático: Convertir los valores de 0-100 a coordenadas (X, Y) del SVG
             historialComprehension.forEach((val, index) => {
                 const x = index * stepX;
-                // Invertir Y porque SVG Y=0 está arriba (0 a 120)
+                // Se invierte Y porque en la web el punto Y=0 está en la parte superior de la pantalla
                 const y = height - ((val / 100) * height);
                 
                 if (index === 0) dLine += `M ${x},${y} `;
@@ -267,50 +273,51 @@
                 ultimoY = y;
             });
 
-            // Aplicar rutas
+            // Aplicar rutas (paths) calculadas a los elementos del DOM
             chartLine.setAttribute('d', dLine);
             
-            // Ruta del área (cierra el polígono hacia abajo)
+            // Ruta del área (cierra el polígono hacia abajo para crear el sombreado)
             const dArea = dLine + ` L ${ultimoX},${height} L 0,${height} Z`;
             chartArea.setAttribute('d', dArea);
 
-            // Mover el punto final
+            // Posicionar el círculo indicador final
             chartDot.classList.remove('hidden');
             chartDot.setAttribute('cx', ultimoX);
             chartDot.setAttribute('cy', ultimoY);
             
-            // Colorear línea según el nivel actual
-            let colorLinea = '#6366f1'; // Indigo por defecto
-            if(nuevoValor >= 70) colorLinea = '#10b981'; // Emerald
-            else if(nuevoValor <= 30) colorLinea = '#ef4444'; // Rojo
+            // Semiótica de colores de la línea según el nivel cognitivo actual
+            let colorLinea = '#6366f1'; // Indigo (Normal)
+            if(nuevoValor >= 70) colorLinea = '#10b981'; // Verde (Óptimo)
+            else if(nuevoValor <= 30) colorLinea = '#ef4444'; // Rojo (Frustración)
             
             chartLine.setAttribute('stroke', colorLinea);
             chartDot.setAttribute('stroke', colorLinea);
         }
 
-
         // ==============================================================================
-        // INGENIERÍA DE RED: CONEXIÓN WEBSOCKET 
+        // INGENIERÍA DE RED: CONEXIÓN WEBSOCKET FULL-DUPLEX
         // ==============================================================================
         function conectarWebSocket() {
+            // Abrimos el túnel de comunicación con FastAPI
             const ws = new WebSocket('ws://localhost:8000/ws');
             const wsStatus = document.getElementById('ws-status');
             const wsIndicator = document.getElementById('ws-indicator');
 
             ws.onopen = () => {
-                wsStatus.innerText = 'En Línea (Latencia 0ms)';
+                wsStatus.innerText = 'Túnel Activo (Latencia < 0.1s)';
                 wsStatus.className = 'text-emerald-400';
                 wsIndicator.className = 'w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_#10b981]';
             };
 
+            // Evento que se dispara instantáneamente cuando Python envía un nuevo JSON
             ws.onmessage = (event) => {
                 const data = JSON.parse(event.data);
                 
-                // 1. Textos Generales y FPS
+                // 1. Textos Generales y Fotogramas Por Segundo
                 document.getElementById('fps-val').innerText = data.fps;
                 document.getElementById('texto-val').innerText = `"${data.texto}"`;
                 
-                // 2. SEMIÓTICA DE EMOCIONES (DeepFace)
+                // 2. ACTUALIZACIÓN DE EMOCIONES (Vía DeepFace)
                 const emocion = data.emocion;
                 const emoConfig = emotionMap[emocion] || emotionMap["Neutral"];
                 
@@ -324,16 +331,17 @@
                 emoWrapper.className = `p-3.5 rounded-2xl border transition-smooth shadow-sm ${emoConfig.colorBg} ${emoConfig.colorText} ${emoConfig.colorBorder}`;
                 emoGlow.style.backgroundColor = emoConfig.colorHex;
                 
-                // Re-renderizar el icono de Lucide con el nuevo nombre
+                // Actualizar el icono inyectando el nuevo data-atributo y pidiendo a Lucide que re-dibuje
                 emoIconEl.setAttribute('data-lucide', emoConfig.icon);
                 lucide.createIcons({ nameAttr: 'data-lucide', attrs: { class: 'w-6 h-6' } });
 
-                // 3. RADAR DE ATENCIÓN ESPACIAL 3D (MediaPipe)
+                // 3. ACTUALIZACIÓN DEL RADAR DE ATENCIÓN 3D (Vía MediaPipe Epipolar)
                 const panelAtencion = document.getElementById('panel-atencion');
                 const textAtencion = document.getElementById('texto-atencion');
                 const iconAtencionBg = document.getElementById('icon-atencion-bg');
                 const iconAtencion = document.getElementById('icon-atencion');
                 
+                // Dispara alertas rojas visuales si hay desviación mayor a 15 grados Yaw o -10 grados Pitch
                 if(data.atencion === 'Distraído') {
                     panelAtencion.className = 'glass-panel rounded-2xl p-5 transition-smooth border-l-4 alert-distracted';
                     textAtencion.innerText = '⚠️ PÉRDIDA DE CONTACTO VISUAL';
@@ -348,19 +356,20 @@
                     iconAtencion.setAttribute('data-lucide', 'focus');
                 }
 
-                // 4. ÍNDICE DE COMPRENSIÓN (La Fusión Multimodal)
+                // 4. ACTUALIZACIÓN DEL ÍNDICE DE COMPRENSIÓN (La Fusión Multimodal Final)
                 const indice = data.indice_comprension;
                 const indiceEl = document.getElementById('indice-val');
                 indiceEl.innerText = indice;
                 
+                // Cambiar color numérico según umbrales de aprendizaje
                 if(indice >= 70) indiceEl.className = 'text-5xl font-black tracking-tighter transition-smooth text-emerald-500';
                 else if(indice >= 40) indiceEl.className = 'text-5xl font-black tracking-tighter transition-smooth text-amber-500';
                 else indiceEl.className = 'text-5xl font-black tracking-tighter transition-smooth text-red-500';
 
-                // Renderizar la gráfica vectorizada
+                // Llamar al motor de renderizado SVG para redibujar la gráfica con el nuevo punto
                 actualizarGraficaSVG(indice);
 
-                // 5. SEMÁNTICA NLP (RoBERTa)
+                // 5. ACTUALIZACIÓN DE SEMÁNTICA NLP (Vía RoBERTa HuggingFace)
                 const nlpVal = document.getElementById('nlp-val');
                 const nlpBadge = document.getElementById('nlp-badge');
                 
@@ -378,29 +387,29 @@
                     nlpBadge.className = 'w-3 h-3 rounded-full bg-slate-400';
                 }
                 
-                // Actualizar iconos creados dinámicamente
+                // Obligar a re-dibujar cualquier icono de Lucide que haya cambiado dinámicamente
                 lucide.createIcons();
             };
 
+            // Sistema de Auto-reconexión robusto
             ws.onclose = () => {
-                wsStatus.innerText = 'Reconectando...';
+                wsStatus.innerText = 'Reconectando al Backend...';
                 wsStatus.className = 'text-amber-400';
                 wsIndicator.className = 'w-2 h-2 rounded-full bg-amber-500 animate-pulse';
-                setTimeout(conectarWebSocket, 2000);
+                setTimeout(conectarWebSocket, 2000); // Intenta reconectar cada 2 segundos
             };
             
             ws.onerror = () => {
-                wsStatus.innerText = 'Error de Red';
+                wsStatus.innerText = 'Error de Red local';
                 wsStatus.className = 'text-red-400';
                 wsIndicator.className = 'w-2 h-2 rounded-full bg-red-500';
             };
         }
 
-        // Iniciar inicialización tras cargar el DOM
+        // Encender la maquinaria cuando el DOM esté listo
         window.addEventListener('DOMContentLoaded', () => {
             conectarWebSocket();
-            // Dibujar gráfica inicial vacía
-            actualizarGraficaSVG(50);
+            actualizarGraficaSVG(50); // Dibujar gráfica plana inicial como base
         });
     </script>
 </body>
