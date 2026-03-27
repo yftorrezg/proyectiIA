@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edu-Insight | Telemetría Avanzada</title>
+    
+    <!-- Tailwind CSS para diseño UI/UX -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <style>
+        .transition-smooth { transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+        
+        /* Efecto Glassmorphism sutil */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+        }
+
+        /* Animación de Alerta de Atención */
+        .alert-distracted { 
+            animation: pulseDistracted 1.2s infinite; 
+            border-color: #ef4444;
+        }
+        @keyframes pulseDistracted {
+            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+            70% { box-shadow: 0 0 0 15px rgba(239, 68, 68, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-slate-50 font-sans text-slate-800 selection:bg-indigo-200">
+
+    <!-- TOP NAVIGATION -->
+    <nav class="bg-slate-900 text-white p-4 shadow-lg sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <div class="flex items-center gap-4">
+                <div class="bg-indigo-500/20 text-indigo-400 p-2.5 rounded-xl border border-indigo-500/30">
+                    <i data-lucide="scan-face" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-extrabold tracking-tight">EDU-INSIGHT <span class="text-indigo-400">PRO</span></h1>
+                    <p class="text-slate-400 text-[10px] font-bold tracking-[0.2em] uppercase mt-0.5">Telemetría Multimodal en Tiempo Real</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-3 text-xs font-semibold tracking-wide">
+                <div class="flex items-center gap-2 bg-slate-800/50 px-3 py-1.5 rounded-full border border-slate-700">
+                    <div id="ws-indicator" class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></div>
+                    <span id="ws-status" class="text-slate-300">Conectando...</span>
+                </div>
+                <div class="flex items-center gap-2 bg-emerald-900/30 text-emerald-400 px-3 py-1.5 rounded-full border border-emerald-800/50">
+                    <i data-lucide="cpu" class="w-3.5 h-3.5"></i>
+                    <span>RTX 3060 CUDA</span>
+                </div>
+                <div class="bg-slate-800/50 text-slate-300 px-3 py-1.5 rounded-full border border-slate-700">
+                    FPS: <span id="fps-val" class="text-white font-mono">0</span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto p-4 md:p-6 mt-4">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            
+            <!-- ==========================================
+                 PANEL IZQUIERDO (VIDEO Y AUDIO)
+                 ========================================== -->
+            <div class="lg:col-span-7 flex flex-col gap-6">
+                
+                <!-- Monitor de Video (OpenCV + 3D Axes) -->
+                <div class="glass-panel rounded-2xl shadow-sm overflow-hidden flex flex-col">
+                    <div class="bg-white/50 border-b border-slate-100 p-3.5 flex justify-between items-center">
+                        <h2 class="font-bold flex items-center gap-2 text-slate-700 text-sm uppercase tracking-wider">
+                            <i data-lucide="video" class="w-4 h-4 text-indigo-500"></i>
+                            Auditoría Visual (Cámara + Radar 3D)
+                        </h2>
+                    </div>
+                    <div class="bg-slate-900 relative aspect-video flex items-center justify-center border-b-4 border-indigo-500">
+                        <img id="video-stream" src="http://localhost:8000/api/video_feed" alt="Transmisión IA" class="w-full h-full object-cover" />
+                        
+                        <!-- Fallback si el servidor está apagado -->
+                        <div id="video-fallback" class="absolute inset-0 hidden flex-col items-center justify-center text-slate-400 bg-slate-900">
+                            <i data-lucide="server-crash" class="w-16 h-16 mb-4 opacity-50 text-red-400"></i>
+                            <p class="font-semibold text-lg">Servidor Python Desconectado</p>
+                            <p class="text-sm mt-2 font-mono bg-slate-800 px-3 py-1 rounded-md text-slate-300">python pruebas.py</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Consola de Transcripción (Whisper) -->
+                <div class="bg-slate-900 rounded-2xl shadow-xl border border-slate-800 p-6 relative overflow-hidden group">
+                    <div class="absolute top-0 right-0 w-64 h-64 bg-indigo-500 rounded-full mix-blend-screen filter blur-[80px] opacity-20 group-hover:opacity-30 transition-smooth"></div>
+                    
+                    <div class="flex justify-between items-start mb-4 relative z-10">
+                        <h3 class="text-indigo-400 text-xs font-bold tracking-widest uppercase flex items-center gap-2">
+                            <i data-lucide="mic" class="w-4 h-4"></i> Transcripción Cognitiva
+                        </h3>
+                        <span class="flex items-center gap-1.5 text-[10px] uppercase tracking-wider font-bold bg-indigo-500/20 text-indigo-300 px-2 py-1 rounded">
+                            <div class="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse"></div> Faster-Whisper
+                        </span>
+                    </div>
+                    
+                    <div id="texto-val" class="text-white text-2xl font-light leading-relaxed relative z-10 min-h-[80px] flex items-center">
+                        "Esperando datos del modelo acústico..."
+                    </div>
+                </div>
+            </div>
+
+            <!-- ==========================================
+                 PANEL DERECHO (MÉTRICAS Y GRÁFICAS)
+                 ========================================== -->
+            <div class="lg:col-span-5 flex flex-col gap-6">
+                
+                <!-- 1. Radar de Atención (Geometría Epipolar) -->
+                <div id="panel-atencion" class="glass-panel rounded-2xl p-5 transition-smooth border-l-4 border-l-emerald-500">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <p class="text-slate-400 text-[10px] font-bold tracking-widest uppercase mb-1">Geometría Espacial 3D</p>
+                            <h3 id="texto-atencion" class="text-emerald-600 font-extrabold text-xl tracking-tight">ALUMNO ENFOCADO</h3>
+                        </div>
+                        <div id="icon-atencion-bg" class="p-3 rounded-xl bg-emerald-50 text-emerald-600 transition-smooth">
+                            <i id="icon-atencion" data-lucide="focus" class="w-7 h-7"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. Clasificación de Microexpresiones (DeepFace) -->
+                <div class="glass-panel rounded-2xl p-5 relative overflow-hidden">
+                    <div id="emocion-glow" class="absolute -right-6 -top-6 w-24 h-24 rounded-full blur-2xl opacity-20 transition-smooth bg-slate-400"></div>
+                    
+                    <p class="text-slate-400 text-[10px] font-bold tracking-widest uppercase mb-3">Red Neuronal Convolucional (CNN)</p>
+                    <div class="flex items-center gap-4">
+                        <div id="emocion-icon-wrapper" class="p-3.5 rounded-2xl bg-slate-100 text-slate-500 border border-slate-200 transition-smooth shadow-sm">
+                            <i id="emocion-icon" data-lucide="meh" class="w-6 h-6"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm font-semibold text-slate-500">Emoción Dominante</p>
+                            <p id="emocion-val" class="text-2xl font-bold text-slate-800 tracking-tight transition-smooth">Analizando...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. Gráfica de Seguimiento y Comprensión -->
+                <div class="glass-panel rounded-2xl p-6 flex-1 flex flex-col shadow-sm">
+                    <div class="flex justify-between items-start mb-6">
+                        <div>
+                            <h3 class="text-slate-800 font-bold text-lg flex items-center gap-2">
+                                <i data-lucide="activity" class="w-5 h-5 text-indigo-500"></i> Índice de Comprensión
+                            </h3>
+                            <p class="text-slate-400 text-xs mt-1">Fusión Multimodal (Visión + NLP)</p>
+                        </div>
+                        <div class="text-right">
+                            <span id="indice-val" class="text-5xl font-black tracking-tighter text-indigo-600 transition-smooth">0</span>
+                            <span class="text-xl font-bold text-slate-400">%</span>
+                        </div>
+                    </div>
+
+                    <!-- Motor SVG Avanzado -->
+                    <div class="flex-1 w-full min-h-[140px] relative mt-2">
+                        <svg viewBox="0 0 400 120" class="w-full h-full overflow-visible" preserveAspectRatio="none">
+                            <!-- Cuadrícula de fondo -->
+                            <line x1="0" y1="0" x2="400" y2="0" stroke="#f1f5f9" stroke-width="1" />
+                            <line x1="0" y1="60" x2="400" y2="60" stroke="#f1f5f9" stroke-width="1" stroke-dasharray="4" />
+                            <line x1="0" y1="120" x2="400" y2="120" stroke="#f1f5f9" stroke-width="1" />
+                            
+                            <!-- Ejes -->
+                            <text x="-25" y="5" font-size="10" fill="#94a3b8" font-weight="600">100</text>
+                            <text x="-20" y="64" font-size="10" fill="#94a3b8" font-weight="600">50</text>
+                            <text x="-15" y="124" font-size="10" fill="#94a3b8" font-weight="600">0</text>
+
+                            <!-- Degradado para el área bajo la curva -->
+                            <defs>
+                                <linearGradient id="gradient-area" x1="0%" y1="0%" x2="0%" y2="100%">
+                                    <stop offset="0%" stop-color="#6366f1" stop-opacity="0.3" />
+                                    <stop offset="100%" stop-color="#6366f1" stop-opacity="0.0" />
+                                </linearGradient>
+                            </defs>
+
+                            <!-- Área y Línea dinámica -->
+                            <path id="chart-area" fill="url(#gradient-area)" d="" />
+                            <path id="chart-line" fill="none" stroke="#6366f1" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" d="" class="transition-smooth" />
+                            
+                            <!-- Punto indicador actual -->
+                            <circle id="chart-dot" cx="0" cy="0" r="5" fill="#ffffff" stroke="#6366f1" stroke-width="2" class="hidden transition-smooth shadow-lg" />
+                        </svg>
+                    </div>
+                </div>
+
+                <!-- 4. Análisis Semántico (RoBERTa) -->
+                <div class="glass-panel rounded-2xl p-4 flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="p-2 bg-slate-100 rounded-lg text-slate-500">
+                            <i data-lucide="message-square-quote" class="w-5 h-5"></i>
+                        </div>
+                        <div>
+                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Semántica (NLP)</p>
+                            <p id="nlp-val" class="font-semibold text-slate-700">Esperando texto...</p>
+                        </div>
+                    </div>
+                    <div id="nlp-badge" class="w-3 h-3 rounded-full bg-slate-300"></div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Inicializar Iconos Vectoriales
+        lucide.createIcons();
+
+        // Fallback de Video
+        const imgStream = document.getElementById('video-stream');
+        imgStream.onerror = function() {
+            this.style.display = 'none';
+            document.getElementById('video-fallback').style.display = 'flex';
+        };
+
+        // ==============================================================================
+        // DICCIONARIO VISUAL DE EMOCIONES (Semiótica UI)
+        // ==============================================================================
+        const emotionMap = {
+            "Felicidad": { icon: "smile", colorText: "text-amber-600", colorBg: "bg-amber-100", colorBorder: "border-amber-200", colorHex: "#d97706" },
+            "Tristeza":  { icon: "frown", colorText: "text-blue-600",  colorBg: "bg-blue-100",  colorBorder: "border-blue-200",  colorHex: "#2563eb" },
+            "Enojo":     { icon: "angry", colorText: "text-red-600",   colorBg: "bg-red-100",   colorBorder: "border-red-200",   colorHex: "#dc2626" },
+            "Miedo":     { icon: "flame", colorText: "text-purple-600",colorBg: "bg-purple-100",colorBorder: "border-purple-200",colorHex: "#9333ea" },
+            "Sorpresa":  { icon: "zap",   colorText: "text-cyan-600",  colorBg: "bg-cyan-100",  colorBorder: "border-cyan-200",  colorHex: "#0891b2" },
+            "Disgusto":  { icon: "ghost", colorText: "text-lime-600",  colorBg: "bg-lime-100",  colorBorder: "border-lime-200",  colorHex: "#65a30d" },
+            "Neutral":   { icon: "meh",   colorText: "text-slate-600", colorBg: "bg-slate-100", colorBorder: "border-slate-200", colorHex: "#475569" }
+        };
+
+        // ==============================================================================
+        // MOTOR SVG: GRÁFICA DE SEGUIMIENTO TEMPORAL
+        // ==============================================================================
+        const MAX_PUNTOS = 30; // 30 segundos de historial visual
+        let historialComprehension = Array(MAX_PUNTOS).fill(50); // Inicia plano al 50%
+        
+        const chartLine = document.getElementById('chart-line');
+        const chartArea = document.getElementById('chart-area');
+        const chartDot = document.getElementById('chart-dot');
+
+        function actualizarGraficaSVG(nuevoValor) {
+            // Rotar array
+            historialComprehension.push(nuevoValor);
+            historialComprehension.shift();
+
+            const width = 400;
+            const height = 120;
+            const stepX = width / (MAX_PUNTOS - 1);
+            
+            let dLine = "";
+            let ultimoX = 0;
+            let ultimoY = 0;
+
+            // Generar ruta de la línea
+            historialComprehension.forEach((val, index) => {
+                const x = index * stepX;
+                // Invertir Y porque SVG Y=0 está arriba (0 a 120)
+                const y = height - ((val / 100) * height);
+                
+                if (index === 0) dLine += `M ${x},${y} `;
+                else dLine += `L ${x},${y} `;
+                
+                ultimoX = x;
+                ultimoY = y;
+            });
+
+            // Aplicar rutas
+            chartLine.setAttribute('d', dLine);
+            
+            // Ruta del área (cierra el polígono hacia abajo)
+            const dArea = dLine + ` L ${ultimoX},${height} L 0,${height} Z`;
+            chartArea.setAttribute('d', dArea);
+
+            // Mover el punto final
+            chartDot.classList.remove('hidden');
+            chartDot.setAttribute('cx', ultimoX);
+            chartDot.setAttribute('cy', ultimoY);
+            
+            // Colorear línea según el nivel actual
+            let colorLinea = '#6366f1'; // Indigo por defecto
+            if(nuevoValor >= 70) colorLinea = '#10b981'; // Emerald
+            else if(nuevoValor <= 30) colorLinea = '#ef4444'; // Rojo
+            
+            chartLine.setAttribute('stroke', colorLinea);
+            chartDot.setAttribute('stroke', colorLinea);
+        }
+
+
+        // ==============================================================================
+        // INGENIERÍA DE RED: CONEXIÓN WEBSOCKET 
+        // ==============================================================================
+        function conectarWebSocket() {
+            const ws = new WebSocket('ws://localhost:8000/ws');
+            const wsStatus = document.getElementById('ws-status');
+            const wsIndicator = document.getElementById('ws-indicator');
+
+            ws.onopen = () => {
+                wsStatus.innerText = 'En Línea (Latencia 0ms)';
+                wsStatus.className = 'text-emerald-400';
+                wsIndicator.className = 'w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_#10b981]';
+            };
+
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                
+                // 1. Textos Generales y FPS
+                document.getElementById('fps-val').innerText = data.fps;
+                document.getElementById('texto-val').innerText = `"${data.texto}"`;
+                
+                // 2. SEMIÓTICA DE EMOCIONES (DeepFace)
+                const emocion = data.emocion;
+                const emoConfig = emotionMap[emocion] || emotionMap["Neutral"];
+                
+                const emoWrapper = document.getElementById('emocion-icon-wrapper');
+                const emoVal = document.getElementById('emocion-val');
+                const emoGlow = document.getElementById('emocion-glow');
+                const emoIconEl = document.getElementById('emocion-icon');
+                
+                emoVal.innerText = emocion;
+                emoVal.className = `text-2xl font-bold tracking-tight transition-smooth ${emoConfig.colorText}`;
+                emoWrapper.className = `p-3.5 rounded-2xl border transition-smooth shadow-sm ${emoConfig.colorBg} ${emoConfig.colorText} ${emoConfig.colorBorder}`;
+                emoGlow.style.backgroundColor = emoConfig.colorHex;
+                
+                // Re-renderizar el icono de Lucide con el nuevo nombre
+                emoIconEl.setAttribute('data-lucide', emoConfig.icon);
+                lucide.createIcons({ nameAttr: 'data-lucide', attrs: { class: 'w-6 h-6' } });
+
+                // 3. RADAR DE ATENCIÓN ESPACIAL 3D (MediaPipe)
+                const panelAtencion = document.getElementById('panel-atencion');
+                const textAtencion = document.getElementById('texto-atencion');
+                const iconAtencionBg = document.getElementById('icon-atencion-bg');
+                const iconAtencion = document.getElementById('icon-atencion');
+                
+                if(data.atencion === 'Distraído') {
+                    panelAtencion.className = 'glass-panel rounded-2xl p-5 transition-smooth border-l-4 alert-distracted';
+                    textAtencion.innerText = '⚠️ PÉRDIDA DE CONTACTO VISUAL';
+                    textAtencion.className = 'text-red-600 font-extrabold text-xl tracking-tight';
+                    iconAtencionBg.className = 'p-3 rounded-xl bg-red-100 text-red-600 transition-smooth';
+                    iconAtencion.setAttribute('data-lucide', 'eye-off');
+                } else {
+                    panelAtencion.className = 'glass-panel rounded-2xl p-5 transition-smooth border-l-4 border-l-emerald-500';
+                    textAtencion.innerText = 'ALUMNO ENFOCADO';
+                    textAtencion.className = 'text-emerald-600 font-extrabold text-xl tracking-tight';
+                    iconAtencionBg.className = 'p-3 rounded-xl bg-emerald-50 text-emerald-600 transition-smooth';
+                    iconAtencion.setAttribute('data-lucide', 'focus');
+                }
+
+                // 4. ÍNDICE DE COMPRENSIÓN (La Fusión Multimodal)
+                const indice = data.indice_comprension;
+                const indiceEl = document.getElementById('indice-val');
+                indiceEl.innerText = indice;
+                
+                if(indice >= 70) indiceEl.className = 'text-5xl font-black tracking-tighter transition-smooth text-emerald-500';
+                else if(indice >= 40) indiceEl.className = 'text-5xl font-black tracking-tighter transition-smooth text-amber-500';
+                else indiceEl.className = 'text-5xl font-black tracking-tighter transition-smooth text-red-500';
+
+                // Renderizar la gráfica vectorizada
+                actualizarGraficaSVG(indice);
+
+                // 5. SEMÁNTICA NLP (RoBERTa)
+                const nlpVal = document.getElementById('nlp-val');
+                const nlpBadge = document.getElementById('nlp-badge');
+                
+                if(data.sentimiento === 'POS') { 
+                    nlpVal.innerText = 'Polaridad Positiva'; 
+                    nlpVal.className = 'font-semibold text-emerald-600';
+                    nlpBadge.className = 'w-3 h-3 rounded-full bg-emerald-500 shadow-[0_0_5px_#10b981]';
+                } else if(data.sentimiento === 'NEG') { 
+                    nlpVal.innerText = 'Frustración / Negativa'; 
+                    nlpVal.className = 'font-semibold text-red-600'; 
+                    nlpBadge.className = 'w-3 h-3 rounded-full bg-red-500 shadow-[0_0_5px_#ef4444]';
+                } else { 
+                    nlpVal.innerText = 'Discurso Neutral'; 
+                    nlpVal.className = 'font-semibold text-slate-600'; 
+                    nlpBadge.className = 'w-3 h-3 rounded-full bg-slate-400';
+                }
+                
+                // Actualizar iconos creados dinámicamente
+                lucide.createIcons();
+            };
+
+            ws.onclose = () => {
+                wsStatus.innerText = 'Reconectando...';
+                wsStatus.className = 'text-amber-400';
+                wsIndicator.className = 'w-2 h-2 rounded-full bg-amber-500 animate-pulse';
+                setTimeout(conectarWebSocket, 2000);
+            };
+            
+            ws.onerror = () => {
+                wsStatus.innerText = 'Error de Red';
+                wsStatus.className = 'text-red-400';
+                wsIndicator.className = 'w-2 h-2 rounded-full bg-red-500';
+            };
+        }
+
+        // Iniciar inicialización tras cargar el DOM
+        window.addEventListener('DOMContentLoaded', () => {
+            conectarWebSocket();
+            // Dibujar gráfica inicial vacía
+            actualizarGraficaSVG(50);
+        });
+    </script>
+</body>
+</html>
