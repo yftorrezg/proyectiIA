@@ -85,6 +85,9 @@ murmurhash==1.0.15
 namex==0.1.0
 networkx==3.4.2
 numpy==1.26.4
+nvidia-cublas-cu12==12.9.2.10
+nvidia-cuda-nvrtc-cu12==12.9.86
+nvidia-cudnn-cu12==9.20.0.48
 oauthlib==3.3.1
 onnxruntime==1.23.2
 opencv-contrib-python==4.9.0.80
@@ -139,6 +142,7 @@ sympy==1.14.0
 tensorboard==2.15.2
 tensorboard-data-server==0.7.2
 tensorflow==2.15.0
+tensorflow-cpu==2.13.0
 tensorflow-estimator==2.15.0
 tensorflow-intel==2.15.0
 tensorflow-io-gcs-filesystem==0.31.0
