@@ -82,7 +82,7 @@
                     </div>
                     <div class="bg-slate-900 relative aspect-video flex items-center justify-center border-b-4 border-indigo-500">
                         <!-- Streaming MJPEG directo desde FastAPI -->
-                        <img id="video-stream" src="http://localhost:8000/api/video_feed" alt="Transmisión IA" class="w-full h-full object-cover" />
+                        <img id="video-stream" src="http://localhost:8080/api/video_feed" alt="Transmisión IA" class="w-full h-full object-cover" />
                         
                         <!-- Fallback visual si el servidor de Python está apagado -->
                         <div id="video-fallback" class="absolute inset-0 hidden flex-col items-center justify-center text-slate-400 bg-slate-900">
@@ -299,7 +299,7 @@
         // ==============================================================================
         function conectarWebSocket() {
             // Abrimos el túnel de comunicación con FastAPI
-            const ws = new WebSocket('ws://localhost:8000/ws');
+            const ws = new WebSocket('ws://localhost:8080/ws');
             const wsStatus = document.getElementById('ws-status');
             const wsIndicator = document.getElementById('ws-indicator');
 
@@ -341,13 +341,19 @@
                 const iconAtencionBg = document.getElementById('icon-atencion-bg');
                 const iconAtencion = document.getElementById('icon-atencion');
                 
-                // Dispara alertas rojas visuales si hay desviación mayor a 15 grados Yaw o -10 grados Pitch
+                // Dispara alertas visuales según el estado de atención
                 if(data.atencion === 'Distraído') {
                     panelAtencion.className = 'glass-panel rounded-2xl p-5 transition-smooth border-l-4 alert-distracted';
                     textAtencion.innerText = '⚠️ PÉRDIDA DE CONTACTO VISUAL';
                     textAtencion.className = 'text-red-600 font-extrabold text-xl tracking-tight';
                     iconAtencionBg.className = 'p-3 rounded-xl bg-red-100 text-red-600 transition-smooth';
                     iconAtencion.setAttribute('data-lucide', 'eye-off');
+                } else if(data.atencion === 'Somnoliento') {
+                    panelAtencion.className = 'glass-panel rounded-2xl p-5 transition-smooth border-l-4 border-l-orange-500';
+                    textAtencion.innerText = '😴 OJOS CERRADOS / SOMNOLIENTO';
+                    textAtencion.className = 'text-orange-600 font-extrabold text-xl tracking-tight';
+                    iconAtencionBg.className = 'p-3 rounded-xl bg-orange-100 text-orange-600 transition-smooth';
+                    iconAtencion.setAttribute('data-lucide', 'moon');
                 } else {
                     panelAtencion.className = 'glass-panel rounded-2xl p-5 transition-smooth border-l-4 border-l-emerald-500';
                     textAtencion.innerText = 'ALUMNO ENFOCADO';

@@ -125,7 +125,7 @@ import queue
 import torch
 import asyncio
 from fastapi import FastAPI, WebSocket
-from fastapi.responses import StreamingResponse
+from fastapi.responses import StreamingResponse, HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 
@@ -536,6 +536,11 @@ threading.Thread(target=motor_ia.capturar_camara, daemon=True).start()
 # ==============================================================================
 # RUTAS FASTAPI (WEBSOCKETS)
 # ==============================================================================
+@app.get("/", response_class=HTMLResponse)
+def root():
+    with open(os.path.join(os.path.dirname(__file__), "dashboard.html"), encoding="utf-8") as f:
+        return f.read()
+
 def generador_video():
     while True:
         if frame_global_bytes is not None:
@@ -574,10 +579,9 @@ if __name__ == "__main__":
                     pid = parts[-1]
                     subprocess.call(f"taskkill /F /PID {pid}", shell=True)
                     print(f"⚠️  Puerto {puerto} ocupado por PID {pid} — proceso liberado.")
-                    break
         except Exception:
             pass
 
-    liberar_puerto(8000)
-    print("🚀 Servidor Web Activo. Levantando en http://localhost:8000")
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    liberar_puerto(8080)
+    print("🚀 Servidor Web Activo. Levantando en http://localhost:8080")
+    uvicorn.run(app, host="0.0.0.0", port=8080)

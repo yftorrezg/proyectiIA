@@ -1,4 +1,4 @@
-El sistema corre en hardware de alto rendimiento:
+  El sistema corre en hardware de alto rendimiento:
 
 - CPU multinúcleo (20 threads)
 - GPU NVIDIA RTX con CUDA
