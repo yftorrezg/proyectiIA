@@ -147,6 +147,26 @@ except:
     print("\n❌ LIBRERÍA FALTANTE: No se detectó 'SpeechRecognition' o 'pyaudio'.")
 
 from transformers import pipeline
+import json as _json
+import joblib as _joblib
+
+# ==============================================================================
+# CARGA OPCIONAL DEL MODELO ML DE ATENCIÓN
+# ==============================================================================
+_RUTA_MODELO_ML = os.path.join(os.path.dirname(__file__), "models", "attention_model.joblib")
+_RUTA_METRICAS  = os.path.join(os.path.dirname(__file__), "reports", "metricas.json")
+
+try:
+    _paquete_ml = _joblib.load(_RUTA_MODELO_ML)
+    MODELO_ML_DISPONIBLE = True
+    print("✅ Modelo XGBoost de atención cargado correctamente.")
+except Exception as _e:
+    _paquete_ml = None
+    MODELO_ML_DISPONIBLE = False
+    print(f"ℹ️  Modelo ML no disponible (modo heurístico activo): {_e}")
+
+# Mapa de etiquetas ML → etiquetas del sistema (con tilde)
+_MAPA_ML = {"Enfocado": "Enfocado", "Distraido": "Distraído", "Somnoliento": "Somnoliento"}
 
 # ==============================================================================
 # INICIALIZACIÓN DE FASTAPI
@@ -159,11 +179,15 @@ estado_api_global = {
     "emocion": "Neutral",
     "texto": "Esperando voz...",
     "sentimiento": "Neutral",
-    "atencion": "Enfocado",    # "Enfocado" | "Distraído" | "Somnoliento"
-    "mirada": "Centro",        # "Centro" | "Izquierda" | "Derecha" | "Arriba" | "Abajo" | combinados
-    "ear": 0.0,                # Eye Aspect Ratio en tiempo real (útil para debug)
+    "atencion": "Enfocado",       # "Enfocado" | "Distraído" | "Somnoliento"
+    "mirada": "Centro",
+    "ear": 0.0,
     "indice_comprension": 50,
-    "fps": 0
+    "fps": 0,
+    # ── Nuevos campos ML ──────────────────────────────────────────────────────
+    "modo_atencion":  "heuristico",    # "heuristico" | "ml"
+    "ml_confidence":  0.0,             # confianza de la última predicción ML (0-1)
+    "ml_disponible":  MODELO_ML_DISPONIBLE,
 }
 
 # ==============================================================================
@@ -465,19 +489,34 @@ class EduInsightWebWorker:
                             pitch, yaw = angles[0], angles[1]
 
                             # ── E. Estado de atención final ─────────────────
-                            # Somnoliento tiene prioridad sobre Distraído
-                            if es_somnoliento:
-                                estado_api_global["atencion"] = "Somnoliento"
-                                color_ejes   = (0, 165, 255)  # Naranja
-                                texto_atencion = "SOMNOLIENTO"
-                            elif pitch < -30 or pitch > 35 or yaw < -35 or yaw > 35:
-                                estado_api_global["atencion"] = "Distraído"
-                                color_ejes   = (0, 0, 255)    # Rojo
-                                texto_atencion = "DISTRAIDO"
+                            if (estado_api_global["modo_atencion"] == "ml"
+                                    and MODELO_ML_DISPONIBLE and _paquete_ml):
+                                # ── MODO ML (XGBoost) ────────────────────────
+                                _feats = np.array([[ear_promedio, pitch, yaw, ratio_h]])
+                                _pred_enc  = _paquete_ml["model"].predict(_feats)[0]
+                                _pred_prob = _paquete_ml["model"].predict_proba(_feats)[0]
+                                _pred_lbl  = _paquete_ml["label_encoder"].inverse_transform([_pred_enc])[0]
+                                _conf      = float(np.max(_pred_prob))
+                                estado_api_global["atencion"]     = _MAPA_ML.get(_pred_lbl, _pred_lbl)
+                                estado_api_global["ml_confidence"] = round(_conf, 3)
+                                _color_map = {"Enfocado": (0,255,0), "Distraído": (0,0,255), "Somnoliento": (0,165,255)}
+                                color_ejes = _color_map.get(estado_api_global["atencion"], (0,255,0))
+                                texto_atencion = f"ML:{_pred_lbl.upper()} {_conf*100:.0f}%"
                             else:
-                                estado_api_global["atencion"] = "Enfocado"
-                                color_ejes   = (0, 255, 0)    # Verde
-                                texto_atencion = "ATENTO"
+                                # ── MODO HEURÍSTICO (lógica original intacta) ─
+                                estado_api_global["ml_confidence"] = 0.0
+                                if es_somnoliento:
+                                    estado_api_global["atencion"] = "Somnoliento"
+                                    color_ejes   = (0, 165, 255)  # Naranja
+                                    texto_atencion = "SOMNOLIENTO"
+                                elif pitch < -30 or pitch > 35 or yaw < -35 or yaw > 35:
+                                    estado_api_global["atencion"] = "Distraído"
+                                    color_ejes   = (0, 0, 255)    # Rojo
+                                    texto_atencion = "DISTRAIDO"
+                                else:
+                                    estado_api_global["atencion"] = "Enfocado"
+                                    color_ejes   = (0, 255, 0)    # Verde
+                                    texto_atencion = "ATENTO"
 
                             self.calcular_indice()
 
@@ -560,6 +599,33 @@ async def websocket_endpoint(websocket: WebSocket):
             await asyncio.sleep(0.1)
     except Exception:
         pass
+
+# ──────────────────────────────────────────────────────────────────────────────
+# ENDPOINTS ML — Configuración y Métricas
+# ──────────────────────────────────────────────────────────────────────────────
+from fastapi import Request as _Request
+from fastapi.responses import JSONResponse as _JSONResponse
+
+@app.post("/api/modo")
+async def cambiar_modo(request: _Request):
+    """Cambia entre modo heurístico y modo ML desde el dashboard."""
+    try:
+        body = await request.json()
+        modo = body.get("modo", "heuristico")
+        if modo in ("heuristico", "ml"):
+            estado_api_global["modo_atencion"] = modo
+        return _JSONResponse({"ok": True, "modo": estado_api_global["modo_atencion"]})
+    except Exception as e:
+        return _JSONResponse({"ok": False, "error": str(e)}, status_code=400)
+
+@app.get("/api/ml_metricas")
+def ml_metricas():
+    """Sirve el JSON de métricas generado por train_model.py."""
+    try:
+        with open(_RUTA_METRICAS, encoding="utf-8") as f:
+            return _JSONResponse(_json.load(f))
+    except Exception as e:
+        return _JSONResponse({"error": str(e)}, status_code=404)
 
 if __name__ == "__main__":
     import socket, subprocess

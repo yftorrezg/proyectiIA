@@ -1,0 +1,71 @@
+{
+  "accuracy": 0.9804,
+  "macro_f1": 0.9807,
+  "cv_macro_f1": 0.9638,
+  "n_train": 2499,
+  "n_test": 1072,
+  "n_total": 3571,
+  "modelo": "XGBoostClassifier",
+  "fecha": "2026-04-15T12:09:18",
+  "features": [
+    "ear",
+    "pitch",
+    "yaw",
+    "ratio_h"
+  ],
+  "clases": [
+    "Enfocado",
+    "Distraido",
+    "Somnoliento"
+  ],
+  "best_params": {
+    "colsample_bytree": "1.0",
+    "learning_rate": "0.1",
+    "max_depth": "5",
+    "n_estimators": "100",
+    "subsample": "0.8"
+  },
+  "confusion_matrix": [
+    [
+      336,
+      1,
+      1
+    ],
+    [
+      6,
+      375,
+      6
+    ],
+    [
+      0,
+      7,
+      340
+    ]
+  ],
+  "feature_importance": {
+    "ear": 0.6409,
+    "pitch": 0.0985,
+    "yaw": 0.0832,
+    "ratio_h": 0.1773
+  },
+  "por_clase": {
+    "Enfocado": {
+      "precision": 0.9825,
+      "recall": 0.9941,
+      "f1": 0.9882,
+      "support": 338
+    },
+    "Distraido": {
+      "precision": 0.9791,
+      "recall": 0.969,
+      "f1": 0.974,
+      "support": 387
+    },
+    "Somnoliento": {
+      "precision": 0.9798,
+      "recall": 0.9798,
+      "f1": 0.9798,
+      "support": 347
+    }
+  }
+}

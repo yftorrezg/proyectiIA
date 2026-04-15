@@ -1,0 +1,14 @@
+EDU-INSIGHT — Reporte de Clasificación
+Fecha: 2026-04-15T12:09:18
+Accuracy : 0.9804
+Macro F1 : 0.9807
+
+              precision    recall  f1-score   support
+
+    Enfocado       0.98      0.99      0.99       338
+   Distraido       0.98      0.97      0.97       387
+ Somnoliento       0.98      0.98      0.98       347
+
+    accuracy                           0.98      1072
+   macro avg       0.98      0.98      0.98      1072
+weighted avg       0.98      0.98      0.98      1072

@@ -21,14 +21,97 @@
         }
 
         /* Animación de Alerta de Atención (Para cuando el Radar 3D detecta distracción) */
-        .alert-distracted { 
-            animation: pulseDistracted 1.2s infinite; 
+        .alert-distracted {
+            animation: pulseDistracted 1.2s infinite;
             border-color: #ef4444;
         }
         @keyframes pulseDistracted {
             0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
             70% { box-shadow: 0 0 0 15px rgba(239, 68, 68, 0); }
             100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+
+        /* ── Modal de Configuración ────────────────────────────────── */
+        #modal-config {
+            display: none;
+            position: fixed; inset: 0; z-index: 100;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(4px);
+            align-items: center; justify-content: center;
+        }
+        #modal-config.open { display: flex; }
+        .modal-box {
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 1.25rem;
+            width: 100%; max-width: 520px;
+            box-shadow: 0 25px 60px rgba(0,0,0,0.5);
+            animation: slideUp .25s cubic-bezier(.4,0,.2,1);
+        }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ── Toggle switch ─────────────────────────────────────────── */
+        .toggle-pill {
+            display: flex; gap: 4px;
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 9999px; padding: 4px;
+        }
+        .toggle-pill button {
+            flex: 1; padding: 6px 16px;
+            border-radius: 9999px;
+            font-size: .75rem; font-weight: 700;
+            letter-spacing: .05em; text-transform: uppercase;
+            border: none; cursor: pointer;
+            transition: all .25s;
+            color: #94a3b8; background: transparent;
+        }
+        .toggle-pill button.active {
+            background: #6366f1; color: #fff;
+            box-shadow: 0 0 12px rgba(99,102,241,.5);
+        }
+
+        /* ── Tarjeta de futura integración (disabled) ──────────────── */
+        .future-card {
+            background: #1e293b; border: 1px dashed #334155;
+            border-radius: .75rem; padding: 12px 16px;
+            opacity: .55;
+        }
+
+        /* ── Celda de matriz de confusión ──────────────────────────── */
+        .cm-cell {
+            padding: 10px 6px; text-align: center;
+            font-weight: 700; font-size: .85rem;
+            border-radius: 6px; transition: all .3s;
+        }
+        .cm-label {
+            padding: 8px 6px; text-align: center;
+            font-size: .68rem; font-weight: 700;
+            color: #64748b; text-transform: uppercase; letter-spacing: .06em;
+        }
+
+        /* ── Barra de importancia de features ──────────────────────── */
+        .fi-bar-bg {
+            background: #1e293b; border-radius: 9999px;
+            height: 8px; overflow: hidden;
+        }
+        .fi-bar-fill {
+            height: 100%; border-radius: 9999px;
+            background: linear-gradient(90deg, #6366f1, #818cf8);
+            transition: width .8s cubic-bezier(.4,0,.2,1);
+        }
+
+        /* ── Gauge de confianza ML ─────────────────────────────────── */
+        .conf-ring {
+            width: 60px; height: 60px;
+            border-radius: 50%;
+            border: 4px solid #1e293b;
+            display: flex; align-items: center; justify-content: center;
+            font-size: .75rem; font-weight: 800;
+            transition: all .4s;
         }
     </style>
 </head>
@@ -60,9 +143,128 @@
                 <div class="bg-slate-800/50 text-slate-300 px-3 py-1.5 rounded-full border border-slate-700">
                     FPS: <span id="fps-val" class="text-white font-mono">0</span>
                 </div>
+                <!-- Botón de Configuración -->
+                <button onclick="abrirConfig()" id="btn-config"
+                    class="flex items-center gap-2 bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-400 px-3 py-1.5 rounded-full border border-indigo-600/40 transition-smooth text-xs font-semibold tracking-wide">
+                    <i data-lucide="settings-2" class="w-3.5 h-3.5"></i>
+                    <span>Configuración</span>
+                </button>
             </div>
         </div>
     </nav>
+
+    <!-- ══════════════════════════════════════════════════════════════════════
+         MODAL DE CONFIGURACIÓN
+         ══════════════════════════════════════════════════════════════════════ -->
+    <div id="modal-config" onclick="cerrarConfigClick(event)">
+        <div class="modal-box">
+            <!-- Header del modal -->
+            <div class="flex justify-between items-center p-6 border-b border-slate-700/60">
+                <div class="flex items-center gap-3">
+                    <div class="bg-indigo-500/20 text-indigo-400 p-2 rounded-lg border border-indigo-500/30">
+                        <i data-lucide="settings-2" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-white font-extrabold text-base tracking-tight">Configuración del Sistema</h2>
+                        <p class="text-slate-400 text-[10px] font-semibold tracking-widest uppercase mt-0.5">Edu-Insight Pro</p>
+                    </div>
+                </div>
+                <button onclick="cerrarConfig()" class="text-slate-500 hover:text-white transition-smooth p-1 rounded-lg hover:bg-slate-700">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <div class="p-6 flex flex-col gap-6">
+
+                <!-- ── Sección 1: Módulo de Atención ──────────────────────── -->
+                <div>
+                    <div class="flex items-center gap-2 mb-3">
+                        <i data-lucide="brain-circuit" class="w-4 h-4 text-indigo-400"></i>
+                        <p class="text-slate-200 text-sm font-bold uppercase tracking-wider">Módulo de Atención</p>
+                    </div>
+
+                    <div class="toggle-pill mb-4" id="toggle-modo">
+                        <button id="btn-heuristico" class="active" onclick="setModo('heuristico')">
+                            Heurístico
+                        </button>
+                        <button id="btn-ml" onclick="setModo('ml')">
+                            XGBoost ML
+                        </button>
+                    </div>
+
+                    <!-- Descripción del modo activo -->
+                    <div id="desc-heuristico" class="bg-slate-800/60 rounded-xl p-4 border border-slate-700/50">
+                        <div class="flex items-start gap-3">
+                            <div class="bg-slate-700 p-1.5 rounded-lg mt-0.5">
+                                <i data-lucide="sliders-horizontal" class="w-4 h-4 text-slate-300"></i>
+                            </div>
+                            <div>
+                                <p class="text-slate-200 font-semibold text-sm">Modo Heurístico</p>
+                                <p class="text-slate-400 text-xs mt-1 leading-relaxed">Reglas fijas basadas en umbrales geométricos: <span class="font-mono text-slate-300">pitch</span>, <span class="font-mono text-slate-300">yaw</span> y <span class="font-mono text-slate-300">EAR</span>. Rápido y predecible.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="desc-ml" class="bg-indigo-950/60 rounded-xl p-4 border border-indigo-700/40 hidden">
+                        <div class="flex items-start gap-3">
+                            <div class="bg-indigo-600/30 p-1.5 rounded-lg mt-0.5">
+                                <i data-lucide="sparkles" class="w-4 h-4 text-indigo-400"></i>
+                            </div>
+                            <div>
+                                <p class="text-indigo-200 font-semibold text-sm">Modo XGBoost ML</p>
+                                <p class="text-indigo-300/70 text-xs mt-1 leading-relaxed">Modelo entrenado con <span id="conf-n-muestras" class="font-semibold text-indigo-300">—</span> muestras reales. Accuracy: <span id="conf-accuracy" class="font-bold text-indigo-200">—</span>. Incluye nivel de confianza por predicción.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Badge de estado del modelo -->
+                    <div class="flex items-center gap-2 mt-3">
+                        <div id="modelo-status-dot" class="w-2 h-2 rounded-full bg-emerald-500"></div>
+                        <span id="modelo-status-txt" class="text-slate-400 text-xs">Modelo cargado y listo</span>
+                    </div>
+                </div>
+
+                <!-- ── Sección 2: Futuras Integraciones ───────────────────── -->
+                <div>
+                    <div class="flex items-center gap-2 mb-3">
+                        <i data-lucide="layers" class="w-4 h-4 text-slate-500"></i>
+                        <p class="text-slate-500 text-sm font-bold uppercase tracking-wider">Futuras Integraciones</p>
+                        <span class="bg-slate-700/60 text-slate-400 text-[9px] font-bold tracking-widest uppercase px-2 py-0.5 rounded-full">Próximamente</span>
+                    </div>
+                    <div class="flex flex-col gap-2">
+                        <div class="future-card flex items-center gap-3">
+                            <i data-lucide="mic" class="w-4 h-4 text-slate-500 shrink-0"></i>
+                            <div>
+                                <p class="text-slate-400 text-xs font-semibold">Dataset Transcripciones — Whisper / RoBERTa</p>
+                                <p class="text-slate-600 text-[10px] mt-0.5">Clasificador NLP entrenado con frases reales del alumno</p>
+                            </div>
+                        </div>
+                        <div class="future-card flex items-center gap-3">
+                            <i data-lucide="smile" class="w-4 h-4 text-slate-500 shrink-0"></i>
+                            <div>
+                                <p class="text-slate-400 text-xs font-semibold">Dataset Emocional — DeepFace CNN</p>
+                                <p class="text-slate-600 text-[10px] mt-0.5">Modelo ajustado con expresiones faciales anotadas</p>
+                            </div>
+                        </div>
+                        <div class="future-card flex items-center gap-3">
+                            <i data-lucide="bar-chart-3" class="w-4 h-4 text-slate-500 shrink-0"></i>
+                            <div>
+                                <p class="text-slate-400 text-xs font-semibold">Dataset Comprensión — Fusión Multimodal</p>
+                                <p class="text-slate-600 text-[10px] mt-0.5">Índice de comprensión calibrado con datos históricos</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer del modal -->
+            <div class="px-6 pb-6">
+                <button onclick="cerrarConfig()"
+                    class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 rounded-xl transition-smooth text-sm">
+                    Aplicar y Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
 
     <main class="max-w-7xl mx-auto p-4 md:p-6 mt-4">
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -121,9 +323,22 @@
                 <!-- 1. Radar de Atención (Geometría Epipolar de MediaPipe) -->
                 <div id="panel-atencion" class="glass-panel rounded-2xl p-5 transition-smooth border-l-4 border-l-emerald-500">
                     <div class="flex justify-between items-center">
-                        <div>
-                            <p class="text-slate-400 text-[10px] font-bold tracking-widest uppercase mb-1">Geometría Espacial 3D</p>
+                        <div class="flex-1">
+                            <p id="label-modo-atencion" class="text-slate-400 text-[10px] font-bold tracking-widest uppercase mb-1">Geometría Espacial 3D</p>
                             <h3 id="texto-atencion" class="text-emerald-600 font-extrabold text-xl tracking-tight">ALUMNO ENFOCADO</h3>
+                            <!-- Badge de confianza ML (solo visible en modo ML) -->
+                            <div id="conf-badge" class="hidden mt-2 flex items-center gap-2">
+                                <div class="bg-indigo-500/10 border border-indigo-500/30 rounded-full px-2 py-0.5 flex items-center gap-1.5">
+                                    <i data-lucide="sparkles" class="w-3 h-3 text-indigo-400"></i>
+                                    <span class="text-indigo-300 text-[10px] font-bold tracking-wider">XGBoost ML</span>
+                                </div>
+                                <div class="flex items-center gap-1.5">
+                                    <div class="h-1.5 w-20 bg-slate-200 rounded-full overflow-hidden">
+                                        <div id="conf-bar" class="h-full bg-indigo-500 rounded-full transition-all duration-500" style="width:0%"></div>
+                                    </div>
+                                    <span id="conf-pct" class="text-indigo-400 text-[10px] font-mono font-bold">0%</span>
+                                </div>
+                            </div>
                         </div>
                         <div id="icon-atencion-bg" class="p-3 rounded-xl bg-emerald-50 text-emerald-600 transition-smooth">
                             <i id="icon-atencion" data-lucide="focus" class="w-7 h-7"></i>
@@ -209,6 +424,123 @@
 
             </div>
         </div>
+
+        <!-- ══════════════════════════════════════════════════════════════════
+             SECCIÓN ML — MÉTRICAS DEL MODELO (carga al abrir el dashboard)
+             ══════════════════════════════════════════════════════════════════ -->
+        <div class="mt-6" id="seccion-ml">
+            <!-- Header de sección -->
+            <div class="flex items-center gap-3 mb-4">
+                <div class="bg-indigo-500/10 border border-indigo-500/20 p-2 rounded-lg">
+                    <i data-lucide="sparkles" class="w-4 h-4 text-indigo-400"></i>
+                </div>
+                <div>
+                    <h2 class="text-slate-700 font-extrabold text-sm uppercase tracking-widest">Métricas del Modelo ML</h2>
+                    <p class="text-slate-400 text-[10px] font-semibold tracking-wider">XGBoost · Clasificador de Atención Personalizado</p>
+                </div>
+                <div id="ml-fecha-badge" class="ml-auto bg-slate-100 text-slate-500 text-[10px] font-semibold px-3 py-1 rounded-full border border-slate-200">
+                    Cargando...
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+
+                <!-- ── 1. Tarjetas de Métricas Globales (3 cols) ────────── -->
+                <div class="lg:col-span-3 flex flex-col gap-3">
+
+                    <!-- Accuracy -->
+                    <div class="glass-panel rounded-2xl p-4 text-center">
+                        <p class="text-slate-400 text-[10px] font-bold tracking-widest uppercase mb-1">Accuracy</p>
+                        <p id="ml-accuracy" class="text-4xl font-black text-emerald-600 tracking-tighter">—</p>
+                        <p class="text-slate-400 text-[10px] mt-1">en test set independiente</p>
+                    </div>
+
+                    <!-- Macro F1 -->
+                    <div class="glass-panel rounded-2xl p-4 text-center">
+                        <p class="text-slate-400 text-[10px] font-bold tracking-widest uppercase mb-1">Macro F1-Score</p>
+                        <p id="ml-f1" class="text-4xl font-black text-indigo-600 tracking-tighter">—</p>
+                        <p class="text-slate-400 text-[10px] mt-1">promedio entre clases</p>
+                    </div>
+
+                    <!-- Muestras -->
+                    <div class="glass-panel rounded-2xl p-4">
+                        <p class="text-slate-400 text-[10px] font-bold tracking-widest uppercase mb-2">Dataset</p>
+                        <div class="flex justify-between text-xs">
+                            <span class="text-slate-500">Entrenamiento</span>
+                            <span id="ml-n-train" class="text-slate-700 font-bold">—</span>
+                        </div>
+                        <div class="flex justify-between text-xs mt-1">
+                            <span class="text-slate-500">Test (hold-out)</span>
+                            <span id="ml-n-test" class="text-slate-700 font-bold">—</span>
+                        </div>
+                        <div class="flex justify-between text-xs mt-1">
+                            <span class="text-slate-500">Modelo</span>
+                            <span class="text-indigo-600 font-bold text-[10px]">XGBoost</span>
+                        </div>
+                        <div class="flex justify-between text-xs mt-1">
+                            <span class="text-slate-500">CV Macro F1</span>
+                            <span id="ml-cv-f1" class="text-slate-700 font-bold">—</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ── 2. Matriz de Confusión (5 cols) ───────────────────── -->
+                <div class="lg:col-span-5 glass-panel rounded-2xl p-5">
+                    <h3 class="text-slate-700 font-bold text-sm flex items-center gap-2 mb-4">
+                        <i data-lucide="grid-3x3" class="w-4 h-4 text-indigo-500"></i>
+                        Matriz de Confusión
+                        <span class="text-slate-400 font-normal text-xs">(test set)</span>
+                    </h3>
+
+                    <div id="cm-tabla" class="overflow-x-auto">
+                        <!-- Se rellena dinámicamente por JS -->
+                        <div class="text-slate-400 text-xs text-center py-6">Cargando datos del modelo...</div>
+                    </div>
+
+                    <div class="flex items-center gap-3 mt-4 justify-center">
+                        <div class="flex items-center gap-1.5">
+                            <div class="w-3 h-3 rounded bg-indigo-600/80"></div>
+                            <span class="text-slate-500 text-[10px]">Alta cantidad</span>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <div class="w-3 h-3 rounded bg-indigo-200"></div>
+                            <span class="text-slate-500 text-[10px]">Baja cantidad</span>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <div class="w-3 h-3 rounded bg-emerald-200"></div>
+                            <span class="text-slate-500 text-[10px]">Diagonal (correctas)</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ── 3. Métricas por clase + Feature Importance (4 cols) ─ -->
+                <div class="lg:col-span-4 flex flex-col gap-4">
+
+                    <!-- Métricas por clase -->
+                    <div class="glass-panel rounded-2xl p-5">
+                        <h3 class="text-slate-700 font-bold text-sm flex items-center gap-2 mb-3">
+                            <i data-lucide="list-checks" class="w-4 h-4 text-indigo-500"></i>
+                            Métricas por Clase
+                        </h3>
+                        <div id="ml-por-clase" class="flex flex-col gap-2">
+                            <!-- Rellena JS -->
+                        </div>
+                    </div>
+
+                    <!-- Importancia de Features -->
+                    <div class="glass-panel rounded-2xl p-5 flex-1">
+                        <h3 class="text-slate-700 font-bold text-sm flex items-center gap-2 mb-3">
+                            <i data-lucide="bar-chart-horizontal" class="w-4 h-4 text-indigo-500"></i>
+                            Importancia de Features
+                        </h3>
+                        <div id="ml-features" class="flex flex-col gap-3">
+                            <!-- Rellena JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </main>
 
     <!-- LOGICA FRONTEND Y WEBSOCKETS -->
@@ -393,6 +725,9 @@
                     nlpBadge.className = 'w-3 h-3 rounded-full bg-slate-400';
                 }
                 
+                // 6. CONFIANZA ML (solo activo en modo ML)
+                actualizarConfianzaML(data);
+
                 // Obligar a re-dibujar cualquier icono de Lucide que haya cambiado dinámicamente
                 lucide.createIcons();
             };
@@ -415,8 +750,195 @@
         // Encender la maquinaria cuando el DOM esté listo
         window.addEventListener('DOMContentLoaded', () => {
             conectarWebSocket();
-            actualizarGraficaSVG(50); // Dibujar gráfica plana inicial como base
+            actualizarGraficaSVG(50);
+            cargarMetricasML();
         });
+
+        // ==============================================================================
+        // ACTUALIZACIÓN DE CONFIANZA ML EN EL PANEL DE ATENCIÓN
+        // Se llama desde ws.onmessage con data.ml_confidence y data.modo_atencion
+        // ==============================================================================
+        function actualizarConfianzaML(data) {
+            const badge     = document.getElementById('conf-badge');
+            const bar       = document.getElementById('conf-bar');
+            const pct       = document.getElementById('conf-pct');
+            const lblModo   = document.getElementById('label-modo-atencion');
+
+            if (data.modo_atencion === 'ml' && data.ml_disponible) {
+                badge.classList.remove('hidden');
+                lblModo.innerText = 'XGBoost ML · Clasificador Personalizado';
+                const conf = Math.round((data.ml_confidence || 0) * 100);
+                bar.style.width = conf + '%';
+                pct.innerText   = conf + '%';
+                // color de la barra según confianza
+                if (conf >= 80) {
+                    bar.className = 'h-full bg-emerald-500 rounded-full transition-all duration-500';
+                } else if (conf >= 60) {
+                    bar.className = 'h-full bg-amber-400 rounded-full transition-all duration-500';
+                } else {
+                    bar.className = 'h-full bg-red-400 rounded-full transition-all duration-500';
+                }
+            } else {
+                badge.classList.add('hidden');
+                lblModo.innerText = 'Geometría Espacial 3D';
+            }
+        }
+
+        // ==============================================================================
+        // MODAL DE CONFIGURACIÓN
+        // ==============================================================================
+        let modoActual = 'heuristico';
+
+        function abrirConfig() {
+            document.getElementById('modal-config').classList.add('open');
+            lucide.createIcons();
+        }
+        function cerrarConfig() {
+            document.getElementById('modal-config').classList.remove('open');
+        }
+        function cerrarConfigClick(e) {
+            if (e.target === document.getElementById('modal-config')) cerrarConfig();
+        }
+
+        function setModo(modo) {
+            modoActual = modo;
+            // Actualizar pills
+            document.getElementById('btn-heuristico').classList.toggle('active', modo === 'heuristico');
+            document.getElementById('btn-ml').classList.toggle('active', modo === 'ml');
+            // Mostrar descripción correcta
+            document.getElementById('desc-heuristico').classList.toggle('hidden', modo !== 'heuristico');
+            document.getElementById('desc-ml').classList.toggle('hidden', modo !== 'ml');
+            // Llamar al backend
+            fetch('http://localhost:8080/api/modo', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ modo })
+            }).then(r => r.json()).catch(() => {});
+        }
+
+        // ==============================================================================
+        // CARGA Y RENDERIZADO DE MÉTRICAS ML
+        // ==============================================================================
+        const CLASE_COLORES = {
+            "Enfocado":    { text: '#10b981', bg: 'rgba(16,185,129,0.12)', border: 'rgba(16,185,129,0.35)' },
+            "Distraido":   { text: '#ef4444', bg: 'rgba(239,68,68,0.12)',  border: 'rgba(239,68,68,0.35)' },
+            "Somnoliento": { text: '#f59e0b', bg: 'rgba(245,158,11,0.12)', border: 'rgba(245,158,11,0.35)' },
+        };
+
+        async function cargarMetricasML() {
+            try {
+                const resp = await fetch('http://localhost:8080/api/ml_metricas');
+                if (!resp.ok) return;
+                const m = await resp.json();
+                renderizarMetricas(m);
+            } catch(e) {
+                document.getElementById('ml-fecha-badge').innerText = 'Modelo no cargado';
+            }
+        }
+
+        function renderizarMetricas(m) {
+            // Tarjetas globales
+            document.getElementById('ml-accuracy').innerText = (m.accuracy * 100).toFixed(2) + '%';
+            document.getElementById('ml-f1').innerText       = m.macro_f1.toFixed(4);
+            document.getElementById('ml-n-train').innerText  = m.n_train.toLocaleString();
+            document.getElementById('ml-n-test').innerText   = m.n_test.toLocaleString();
+            document.getElementById('ml-cv-f1').innerText    = m.cv_macro_f1.toFixed(4);
+            document.getElementById('ml-fecha-badge').innerText = 'Entrenado: ' + (m.fecha || '—').slice(0, 10);
+
+            // Rellenar datos del modal
+            document.getElementById('conf-accuracy').innerText   = (m.accuracy * 100).toFixed(1) + '%';
+            document.getElementById('conf-n-muestras').innerText = m.n_total ? m.n_total.toLocaleString() : '—';
+
+            // ── Matriz de Confusión ────────────────────────────────────────────
+            const clases = m.clases || [];
+            const cm     = m.confusion_matrix || [];
+            const maxVal = Math.max(...cm.flat());
+
+            let html = '<table class="w-full border-collapse text-xs">';
+            // Fila de cabecera (predichos)
+            html += '<tr><td class="cm-label"></td>';
+            clases.forEach(c => {
+                html += `<td class="cm-label font-bold" style="color:${CLASE_COLORES[c]?.text || '#64748b'}">${c}</td>`;
+            });
+            html += '<td class="cm-label text-right pr-1">Recall</td></tr>';
+
+            // Filas de datos
+            cm.forEach((fila, i) => {
+                const claseReal = clases[i];
+                const colorCls  = CLASE_COLORES[claseReal] || {};
+                const total = fila.reduce((a, b) => a + b, 0);
+                const recall = total > 0 ? fila[i] / total : 0;
+
+                html += `<tr>`;
+                html += `<td class="cm-label font-bold text-right pr-2" style="color:${colorCls.text || '#64748b'}">${claseReal}</td>`;
+                fila.forEach((val, j) => {
+                    const esDiag  = i === j;
+                    const intens  = maxVal > 0 ? val / maxVal : 0;
+                    let bg, textColor;
+                    if (esDiag) {
+                        bg        = `rgba(16,185,129,${0.15 + intens * 0.65})`;
+                        textColor = intens > 0.4 ? '#065f46' : '#047857';
+                    } else {
+                        bg        = val === 0 ? 'transparent' : `rgba(99,102,241,${intens * 0.55})`;
+                        textColor = intens > 0.5 ? '#312e81' : '#64748b';
+                    }
+                    html += `<td class="cm-cell" style="background:${bg};color:${textColor}">${val}</td>`;
+                });
+                html += `<td class="cm-label text-right pr-1 font-bold text-emerald-600">${(recall*100).toFixed(1)}%</td>`;
+                html += '</tr>';
+            });
+            html += '</table>';
+            document.getElementById('cm-tabla').innerHTML = html;
+
+            // ── Métricas por clase ─────────────────────────────────────────────
+            const porClase = m.por_clase || {};
+            let htmlClase = '';
+            clases.forEach(c => {
+                const pc  = porClase[c] || {};
+                const clr = CLASE_COLORES[c] || {};
+                htmlClase += `
+                <div class="rounded-xl p-3 border" style="background:${clr.bg};border-color:${clr.border}">
+                    <div class="flex justify-between items-center mb-1.5">
+                        <span class="font-bold text-xs" style="color:${clr.text}">${c}</span>
+                        <span class="text-[10px] font-bold px-1.5 py-0.5 rounded" style="background:${clr.border};color:${clr.text}">
+                            F1 ${((pc.f1||0)*100).toFixed(1)}%
+                        </span>
+                    </div>
+                    <div class="grid grid-cols-3 gap-1 text-[10px] text-slate-500">
+                        <div>P <span class="font-bold text-slate-700">${((pc.precision||0)*100).toFixed(1)}%</span></div>
+                        <div>R <span class="font-bold text-slate-700">${((pc.recall||0)*100).toFixed(1)}%</span></div>
+                        <div>n <span class="font-bold text-slate-700">${pc.support||0}</span></div>
+                    </div>
+                </div>`;
+            });
+            document.getElementById('ml-por-clase').innerHTML = htmlClase;
+
+            // ── Importancia de Features ────────────────────────────────────────
+            const fi = m.feature_importance || {};
+            const fiSorted = Object.entries(fi).sort((a, b) => b[1] - a[1]);
+            const maxFi = fiSorted.length > 0 ? fiSorted[0][1] : 1;
+            const fiIconos = { ear: 'eye', pitch: 'arrow-up-down', yaw: 'arrow-left-right', ratio_h: 'scan-eye' };
+            let htmlFi = '';
+            fiSorted.forEach(([feat, val]) => {
+                const pct  = ((val / maxFi) * 100).toFixed(0);
+                const icon = fiIconos[feat] || 'activity';
+                htmlFi += `
+                <div>
+                    <div class="flex justify-between items-center mb-1">
+                        <div class="flex items-center gap-1.5">
+                            <i data-lucide="${icon}" class="w-3 h-3 text-indigo-400"></i>
+                            <span class="text-slate-600 text-xs font-semibold">${feat}</span>
+                        </div>
+                        <span class="text-indigo-600 text-xs font-bold">${(val*100).toFixed(1)}%</span>
+                    </div>
+                    <div class="fi-bar-bg">
+                        <div class="fi-bar-fill" style="width:${pct}%"></div>
+                    </div>
+                </div>`;
+            });
+            document.getElementById('ml-features').innerHTML = htmlFi;
+            lucide.createIcons();
+        }
     </script>
 </body>
 </html>
