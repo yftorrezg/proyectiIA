@@ -65,3 +65,28 @@ Thumbs.db
 .claude/
 1parcial/
 dataset/
+datasets/emotion/
+
+# ── Modelos entrenados (artefactos pesados, se regeneran con el Training Lab) ──
+# PyTorch CNNs de emoción (.pt pueden ser hasta 91MB — GitHub límite 100MB/archivo)
+app/storage/trained_models/*.pt
+app/storage/trained_models/*.pth
+# Modelos sklearn entrenados (.joblib generados por el trainer)
+app/storage/trained_models/*.joblib
+# EXCEPCIÓN: el modelo base de atención original SÍ se sube
+!models/attention_model.joblib
+
+# ── Archivos temporales de runtime ──
+temp_audio.wav
+temp_rostro.jpg
+*.wav
+*.tmp
+
+# ── Datasets grandes (solo se ignora emotion, el de atención es pequeño) ──
+datasets/emotion/
+datasets/audio/
+
+# ── Caché de Torch / HuggingFace (pueden ser GB) ──
+.torch_cache/
+~/.cache/huggingface/
+*.cache

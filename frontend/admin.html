@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Edu-Insight — Training Lab</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  <style>
+    :root{--bg:#0f172a;--surface:#1e293b;--surface2:#263348;--border:#334155;--accent:#6366f1;--accent2:#818cf8;--green:#22c55e;--yellow:#eab308;--red:#ef4444;--text:#e2e8f0;--muted:#94a3b8;}
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{background:var(--bg);color:var(--text);font-family:system-ui,sans-serif;height:100vh;overflow:hidden;display:flex;flex-direction:column;}
+    ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:var(--surface)}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+    .card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;}
+    .card-sm{border-radius:8px;padding:12px;}
+    .progress-track{background:var(--surface2);border-radius:99px;height:10px;overflow:hidden;}
+    .progress-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .4s ease;}
+    .metric-pill{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px 20px;text-align:center;}
+    .metric-pill .value{font-size:1.8rem;font-weight:700;color:var(--accent2);}
+    .metric-pill .label{font-size:.72rem;color:var(--muted);margin-top:2px;text-transform:uppercase;letter-spacing:.05em;}
+    .cm-cell{width:52px;height:52px;display:flex;align-items:center;justify-content:center;font-size:.78rem;font-weight:600;border-radius:6px;transition:transform .15s;cursor:default;}
+    .cm-cell:hover{transform:scale(1.1);}
+    .model-card{background:var(--surface2);border:2px solid var(--border);border-radius:10px;padding:12px;cursor:pointer;transition:border-color .2s,background .2s;}
+    .model-card:hover{border-color:var(--accent);}
+    .model-card.selected{border-color:var(--accent);background:#1e1f3d;}
+    input[type=range]{-webkit-appearance:none;width:100%;height:6px;background:var(--surface2);border-radius:99px;outline:none;}
+    input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--accent);cursor:pointer;}
+    select,input[type=number]{background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);padding:6px 10px;width:100%;outline:none;}
+    select:focus,input[type=number]:focus{border-color:var(--accent);}
+    .tag{display:inline-block;font-size:.65rem;padding:2px 8px;border-radius:99px;background:var(--surface);border:1px solid var(--border);color:var(--muted);}
+    .tag-green{background:#14532d44;border-color:#22c55e55;color:var(--green);}
+    .tag-purple{background:#312e8144;border-color:#6366f155;color:var(--accent2);}
+    .tag-yellow{background:#42300044;border-color:#eab30855;color:var(--yellow);}
+    .tag-red{background:#450a0a44;border-color:#ef444455;color:var(--red);}
+    .btn{display:inline-flex;align-items:center;gap:8px;padding:10px 20px;border-radius:8px;font-weight:600;font-size:.9rem;cursor:pointer;border:none;transition:opacity .2s,transform .1s;}
+    .btn:hover:not(:disabled){opacity:.88;transform:translateY(-1px);}
+    .btn:disabled{opacity:.4;cursor:not-allowed;}
+    .btn-primary{background:var(--accent);color:#fff;}
+    .btn-green{background:#16a34a;color:#fff;}
+    .btn-red{background:#dc2626;color:#fff;}
+    .btn-ghost{background:var(--surface2);color:var(--text);border:1px solid var(--border);}
+    .step-badge{width:24px;height:24px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;flex-shrink:0;}
+    @keyframes pulse-dot{0%,100%{opacity:1}50%{opacity:.3}}
+    .pulse-dot{animation:pulse-dot 1.2s infinite;}
+    .tab-btn{padding:8px 20px;border-radius:8px;font-weight:600;font-size:.85rem;cursor:pointer;border:none;color:var(--muted);background:transparent;transition:background .2s,color .2s;}
+    .tab-btn.active{background:var(--accent);color:#fff;}
+    .tab-btn:hover:not(.active){background:var(--surface2);color:var(--text);}
+    #train-log{background:#0a0f1a;border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-family:monospace;font-size:.78rem;max-height:120px;overflow-y:auto;color:#7dd3fc;}
+    @keyframes slideIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+    /* Status banner */
+    .status-banner{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+  </style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<header class="flex items-center justify-between px-5 py-2.5 border-b border-slate-700 flex-shrink-0" style="background:var(--surface);">
+  <div class="flex items-center gap-3">
+    <a href="/" class="btn btn-ghost py-1.5 px-3 text-sm"><i data-lucide="arrow-left" class="w-4 h-4"></i> Dashboard</a>
+    <div class="w-px h-6 bg-slate-700"></div>
+    <div class="flex items-center gap-2">
+      <i data-lucide="flask-conical" class="w-5 h-5 text-indigo-400"></i>
+      <span class="font-bold">Training Lab</span>
+      <span class="tag tag-purple">MLOps v2</span>
+    </div>
+  </div>
+  <div class="flex items-center gap-4">
+    <div class="flex items-center gap-2 text-xs">
+      <i data-lucide="cpu" class="w-4 h-4 text-indigo-400"></i>
+      <span id="gpu-name" class="text-slate-400">—</span>
+    </div>
+    <div class="flex flex-col gap-0.5" style="width:150px;">
+      <div class="flex justify-between text-xs text-slate-400"><span>VRAM</span><span id="vram-label">—</span></div>
+      <div class="progress-track" style="height:5px;">
+        <div id="vram-bar" class="progress-fill" style="width:0%;background:var(--green);transition:width .6s,background .4s;"></div>
+      </div>
+    </div>
+    <div id="ws-status" class="flex items-center gap-1.5 text-xs text-red-400">
+      <span class="w-2 h-2 rounded-full bg-red-400 pulse-dot"></span> desconectado
+    </div>
+  </div>
+</header>
+
+<!-- LAYOUT -->
+<div class="flex flex-1 overflow-hidden">
+
+  <!-- SIDEBAR -->
+  <aside class="flex flex-col gap-4 p-4 border-r border-slate-700 overflow-y-auto flex-shrink-0" style="width:270px;background:var(--surface);">
+
+    <!-- Banner: modelo activo en producción -->
+    <div class="card" style="padding:12px;">
+      <div class="text-xs font-bold uppercase tracking-widest text-slate-400 mb-2 flex items-center gap-1.5">
+        <i data-lucide="zap" class="w-3.5 h-3.5 text-yellow-400"></i> En Producción
+      </div>
+      <div id="active-banner" class="flex flex-col gap-1.5">
+        <div class="text-xs text-slate-500 text-center py-2">Cargando...</div>
+      </div>
+    </div>
+
+    <!-- Model Registry (hot-swap) -->
+    <div>
+      <h3 class="text-xs font-bold uppercase tracking-widest text-slate-400 mb-3 flex items-center gap-2">
+        <i data-lucide="layers" class="w-3.5 h-3.5"></i> Model Registry
+      </h3>
+      <div id="registry-panel" class="flex flex-col gap-3">
+        <div class="text-xs text-slate-500 text-center py-4">Cargando...</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="flex-1 overflow-y-auto p-5 flex flex-col gap-5">
+
+    <!-- TABS -->
+    <div class="flex gap-2">
+      <button class="tab-btn active" onclick="switchTab('lab')"><i data-lucide="zap" class="w-3.5 h-3.5 inline mr-1"></i>Training Lab</button>
+      <button class="tab-btn" onclick="switchTab('history')"><i data-lucide="history" class="w-3.5 h-3.5 inline mr-1"></i>Historial de Modelos</button>
+    </div>
+
+    <!-- ══ TAB: TRAINING LAB ══ -->
+    <div id="tab-lab" class="flex flex-col gap-5">
+
+      <!-- STEP 1 -->
+      <div class="card">
+        <div class="flex items-center gap-2 mb-4"><div class="step-badge">1</div><h2 class="font-bold text-base">Categoría a entrenar</h2></div>
+        <div class="flex gap-3">
+          <button onclick="selectCategory('atencion')" id="cat-atencion"
+            class="flex-1 card-sm flex flex-col items-center gap-2 cursor-pointer border-2 border-transparent hover:border-indigo-500 transition-all" style="background:var(--surface2);">
+            <i data-lucide="eye" class="w-6 h-6 text-indigo-400"></i>
+            <span class="font-semibold text-sm">Atención</span>
+            <span class="text-xs text-slate-400 text-center">XGBoost · RF · SVM · LogReg</span>
+            <span class="tag tag-green">CPU — entrenable</span>
+          </button>
+          <button onclick="selectCategory('emocion')" id="cat-emocion"
+            class="flex-1 card-sm flex flex-col items-center gap-2 cursor-pointer border-2 border-transparent hover:border-indigo-500 transition-all" style="background:var(--surface2);">
+            <i data-lucide="smile" class="w-6 h-6 text-yellow-400"></i>
+            <span class="font-semibold text-sm">Emoción</span>
+            <span class="text-xs text-slate-400 text-center">MobileNet · ResNet18 · EfficientNet</span>
+            <span class="tag tag-yellow">GPU · FER-2013 · 7 clases</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- STEP 2 -->
+      <div class="card" id="step-model" style="display:none;">
+        <div class="flex items-center gap-2 mb-4"><div class="step-badge">2</div><h2 class="font-bold text-base">Modelo base</h2></div>
+        <div id="model-cards" class="grid grid-cols-2 gap-3"></div>
+      </div>
+
+      <!-- STEP 3 -->
+      <div class="card" id="step-params" style="display:none;">
+        <div class="flex items-center gap-2 mb-4">
+          <div class="step-badge">3</div>
+          <h2 class="font-bold text-base">Hiperparámetros</h2>
+          <span id="param-model-name" class="tag tag-purple ml-1"></span>
+        </div>
+        <div class="grid grid-cols-2 gap-5" id="param-form"></div>
+        <div class="mt-5 flex items-center gap-4">
+          <button onclick="startTraining()" id="btn-train" class="btn btn-primary">
+            <i data-lucide="play" class="w-4 h-4"></i> Entrenar modelo
+          </button>
+          <span class="text-xs text-slate-400" id="train-est-time"></span>
+        </div>
+      </div>
+
+      <!-- STEP 4: Progreso -->
+      <div class="card" id="step-progress" style="display:none;">
+        <div class="flex items-center justify-between mb-3">
+          <div class="flex items-center gap-2"><div class="step-badge">4</div><h2 class="font-bold text-base">Entrenamiento</h2></div>
+          <div class="flex items-center gap-2 text-sm">
+            <span class="w-2 h-2 rounded-full bg-yellow-400 pulse-dot" id="train-dot"></span>
+            <span id="train-status-text" class="text-yellow-400">Iniciando...</span>
+          </div>
+        </div>
+        <div class="progress-track mb-2"><div id="train-progress-bar" class="progress-fill" style="width:0%;"></div></div>
+        <div class="flex justify-between text-xs text-slate-400 mb-3">
+          <span id="train-progress-pct">0%</span><span id="train-epoch-info"></span>
+        </div>
+        <div id="live-metrics" class="hidden grid grid-cols-3 gap-3 mb-3">
+          <div class="metric-pill"><div class="value text-2xl" id="live-train-loss">—</div><div class="label">Train Loss</div></div>
+          <div class="metric-pill"><div class="value text-2xl" id="live-val-loss">—</div><div class="label">Val Loss</div></div>
+          <div class="metric-pill"><div class="value text-2xl" id="live-val-acc">—</div><div class="label">Val Acc</div></div>
+        </div>
+        <div id="train-log"></div>
+      </div>
+
+      <!-- STEP 5: Métricas -->
+      <div id="step-metrics" style="display:none;" class="flex flex-col gap-4">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <div class="step-badge" style="background:var(--green);">5</div>
+            <h2 class="font-bold text-base">Resultados</h2>
+            <span id="metrics-model-badge" class="tag tag-purple"></span>
+          </div>
+          <div class="flex gap-2">
+            <button onclick="activateModel()" id="btn-activate" class="btn btn-green">
+              <i data-lucide="check-circle" class="w-4 h-4"></i> Activar en producción
+            </button>
+          </div>
+        </div>
+        <!-- Aviso de modo -->
+        <div class="status-banner text-sm">
+          <i data-lucide="info" class="w-4 h-4 text-indigo-400 flex-shrink-0"></i>
+          <span>Para usar este modelo en el dashboard, actívalo y luego cambia a <strong>modo ML</strong> desde el Dashboard.</span>
+        </div>
+        <div class="grid grid-cols-4 gap-3">
+          <div class="metric-pill"><div class="value" id="m-accuracy">—</div><div class="label">Accuracy</div></div>
+          <div class="metric-pill"><div class="value" id="m-f1">—</div><div class="label">F1 Macro</div></div>
+          <div class="metric-pill"><div class="value" id="m-recall">—</div><div class="label">Recall</div></div>
+          <div class="metric-pill"><div class="value" id="m-precision">—</div><div class="label">Precision</div></div>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div class="card">
+            <h3 class="text-sm font-bold mb-3 flex items-center gap-2"><i data-lucide="grid-3x3" class="w-4 h-4 text-indigo-400"></i>Matriz de Confusión</h3>
+            <div id="confusion-matrix" class="overflow-x-auto"></div>
+          </div>
+          <div class="card">
+            <h3 class="text-sm font-bold mb-3 flex items-center gap-2"><i data-lucide="table" class="w-4 h-4 text-indigo-400"></i>Por Clase — VP/VN/FP/FN</h3>
+            <div class="overflow-x-auto">
+              <table class="w-full text-xs">
+                <thead><tr class="text-slate-400 border-b border-slate-700">
+                  <th class="text-left py-1.5 pr-2">Clase</th>
+                  <th class="text-center px-1.5">VP</th><th class="text-center px-1.5">VN</th>
+                  <th class="text-center px-1.5">FP</th><th class="text-center px-1.5">FN</th>
+                  <th class="text-center px-1.5">Prec.</th><th class="text-center px-1.5">Recall</th><th class="text-center px-1.5">F1</th>
+                </tr></thead>
+                <tbody id="per-class-table"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        <div class="card" id="history-chart-card" style="display:none;">
+          <h3 class="text-sm font-bold mb-3 flex items-center gap-2"><i data-lucide="trending-up" class="w-4 h-4 text-indigo-400"></i>Curva de Entrenamiento</h3>
+          <div id="history-chart"></div>
+        </div>
+      </div>
+    </div><!-- /tab-lab -->
+
+    <!-- ══ TAB: HISTORIAL ══ -->
+    <div id="tab-history" style="display:none;" class="flex flex-col gap-4">
+      <div class="flex items-center justify-between">
+        <h2 class="font-bold text-base flex items-center gap-2">
+          <i data-lucide="database" class="w-5 h-5 text-indigo-400"></i> Modelos Entrenados
+        </h2>
+        <button onclick="loadMetricsHistory()" class="btn btn-ghost text-sm py-2">
+          <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Actualizar
+        </button>
+      </div>
+
+      <!-- Leyenda -->
+      <div class="flex items-center gap-4 text-xs text-slate-400">
+        <span class="flex items-center gap-1"><span class="w-3 h-3 rounded-sm bg-green-600 inline-block"></span>Activo en producción</span>
+        <span class="flex items-center gap-1"><span class="w-3 h-3 rounded-sm bg-indigo-600 inline-block"></span>Modelo base (no entrenado)</span>
+      </div>
+
+      <div id="history-list" class="flex flex-col gap-2">
+        <div class="text-center py-8 text-slate-500 text-sm">Cargando historial...</div>
+      </div>
+    </div>
+  </main>
+</div><!-- /layout -->
+
+<script>
+// ── Estado global ────────────────────────────────────────────────────────────
+const API = '';
+let ws = null;
+let wsReady = false;
+let state = {
+  category: null, modelId: null, modelName: '',
+  hyperparams: {}, currentValues: {},
+  lastMetrics: null, lastModelPath: null, lastJobId: null,
+  catalogData: null,
+  activeProductionModel: null,   // info de /api/train/active-info
+};
+
+// ── Init ─────────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  lucide.createIcons();
+  loadAll();
+  connectTrainingWS();
+  setInterval(refreshVRAM, 5000);
+  setInterval(refreshActiveBanner, 4000);
+  refreshVRAM();
+});
+
+async function loadAll() {
+  await Promise.all([loadModels(), refreshActiveBanner()]);
+}
+
+// ── Tabs ─────────────────────────────────────────────────────────────────────
+function switchTab(tab) {
+  const lab = document.getElementById('tab-lab');
+  const hist = document.getElementById('tab-history');
+  lab.style.display  = tab==='lab'     ? 'flex' : 'none';  lab.style.flexDirection='column';
+  hist.style.display = tab==='history' ? 'flex' : 'none';  hist.style.flexDirection='column';
+  document.querySelectorAll('.tab-btn').forEach((b,i)=>b.classList.toggle('active',(i===0&&tab==='lab')||(i===1&&tab==='history')));
+  if (tab==='history') loadMetricsHistory();
+}
+
+// ── VRAM ─────────────────────────────────────────────────────────────────────
+async function refreshVRAM() {
+  try {
+    const v = await fetch(`${API}/api/models/vram`).then(r=>r.json());
+    const pct = v.total_mb>0 ? (v.used_mb/v.total_mb)*100 : 0;
+    document.getElementById('vram-label').textContent = `${v.used_mb}/${v.total_mb}MB`;
+    const bar = document.getElementById('vram-bar');
+    bar.style.width = pct+'%';
+    bar.style.background = pct>80?'var(--red)':pct>60?'var(--yellow)':'var(--green)';
+  } catch{}
+}
+
+// ── Banner modelo activo en producción ───────────────────────────────────────
+async function refreshActiveBanner() {
+  try {
+    const d = await fetch(`${API}/api/train/active-info`).then(r=>r.json());
+    state.activeProductionModel = d;
+    const banner = document.getElementById('active-banner');
+    const modeColor = d.modo_atencion==='ml' ? 'text-green-400' : 'text-yellow-400';
+    const modeIcon  = d.modo_atencion==='ml' ? 'cpu' : 'brain';
+    const acc = d.metrics_summary?.accuracy;
+    const f1  = d.metrics_summary?.f1_macro;
+    banner.innerHTML = `
+      <div class="flex items-center justify-between">
+        <span class="font-bold text-sm">${d.model_name}</span>
+        ${d.is_custom ? '<span class="tag tag-green" style="font-size:.6rem;">ENTRENADO</span>' : '<span class="tag" style="font-size:.6rem;">BASE</span>'}
+      </div>
+      <div class="flex items-center gap-1.5 text-xs ${modeColor}">
+        <i data-lucide="${modeIcon}" class="w-3.5 h-3.5"></i>
+        Modo: ${d.modo_atencion==='ml'?'ML (activo)':'Heurístico'}
+      </div>
+      ${d.ml_disponible
+        ? `<div class="text-xs text-slate-400">Modelo cargado en motor <span class="text-green-400">✓</span></div>`
+        : `<div class="text-xs text-red-400">Modelo no cargado en motor</div>`}
+      ${acc!=null ? `<div class="flex gap-2 text-xs"><span class="text-slate-400">Acc:</span><span class="text-indigo-300 font-bold">${(acc*100).toFixed(1)}%</span><span class="text-slate-400 ml-2">F1:</span><span class="text-indigo-300 font-bold">${(f1*100).toFixed(1)}%</span></div>` : ''}
+    `;
+    lucide.createIcons();
+  } catch{}
+}
+
+// ── Cargar registry ───────────────────────────────────────────────────────────
+async function loadModels() {
+  try {
+    const data = await fetch(`${API}/api/models/`).then(r=>r.json());
+    state.catalogData = data;
+    const gpu = data.status?.gpu;
+    if (gpu?.available) document.getElementById('gpu-name').textContent = gpu.name;
+    renderRegistry(data.catalog, data.status.active_models);
+  } catch(e) {
+    document.getElementById('registry-panel').innerHTML=`<div class="text-xs text-red-400">Error: ${e.message}</div>`;
+  }
+}
+
+function renderRegistry(catalog, activeModels) {
+  const panel = document.getElementById('registry-panel');
+  const labels={atencion:'Atención',audio:'Audio',emocion:'Emoción',semantica:'Semántica'};
+  const icons ={atencion:'eye',audio:'mic',emocion:'smile',semantica:'brain'};
+  const colors={atencion:'text-indigo-400',audio:'text-blue-400',emocion:'text-yellow-400',semantica:'text-pink-400'};
+  panel.innerHTML='';
+  for (const [cat,models] of Object.entries(catalog)) {
+    const activeId = activeModels?.[cat]?.id;
+    const div=document.createElement('div');
+    div.innerHTML=`
+      <div class="flex items-center gap-1.5 mb-1.5 text-xs font-semibold text-slate-400">
+        <i data-lucide="${icons[cat]}" class="w-3.5 h-3.5 ${colors[cat]}"></i>${labels[cat]}
+      </div>
+      <div class="flex flex-col gap-1">
+        ${models.map(m=>`
+          <div class="flex items-center justify-between p-2 rounded-lg border text-xs
+            ${m.id===activeId?'border-green-600 bg-green-950/30':'border-slate-700 bg-slate-800/40'}">
+            <div class="flex flex-col gap-0.5 flex-1 min-w-0">
+              <span class="font-semibold truncate ${m.id===activeId?'text-green-400':''}">${m.name}</span>
+              <div class="flex gap-1 flex-wrap">
+                ${m.id===activeId?'<span class="tag tag-green" style="font-size:.58rem;">ACTIVO</span>':''}
+                ${m.trainable?'<span class="tag tag-purple" style="font-size:.58rem;">entrenable</span>':''}
+              </div>
+            </div>
+            ${m.id!==activeId?`<button onclick="hotSwapModel('${cat}','${m.id}',event)"
+              class="ml-2 flex-shrink-0 text-xs px-2 py-0.5 rounded bg-indigo-900/60 hover:bg-indigo-700 text-indigo-300 border border-indigo-700">
+              Activar</button>`:''}
+          </div>`).join('')}
+      </div>`;
+    panel.appendChild(div);
+  }
+  lucide.createIcons();
+}
+
+// ── Hot-swap desde registry ───────────────────────────────────────────────────
+async function hotSwapModel(category, modelId, evt) {
+  const btn = evt.target;
+  btn.textContent='...'; btn.disabled=true;
+  try {
+    const r = await fetch(`${API}/api/models/active`,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({category,model_id:modelId})});
+    const d = await r.json();
+    if (!r.ok){showToast('Error: '+(d.detail||'desconocido'),'red');return;}
+    showToast(`✅ "${d.active_model.name}" activado.`,'green');
+    await loadAll();
+  } catch(e){showToast('Error: '+e.message,'red');}
+  finally{btn.textContent='Activar';btn.disabled=false;}
+}
+
+// ── STEP 1: Categoría ─────────────────────────────────────────────────────────
+function selectCategory(cat) {
+  state.category=cat; state.modelId=null;
+  ['atencion','emocion'].forEach(c=>{
+    const el=document.getElementById(`cat-${c}`);
+    el.style.borderColor=c===cat?'var(--accent)':'transparent';
+    el.style.background =c===cat?'#1e1f3d':'var(--surface2)';
+  });
+  renderModelCards();
+  document.getElementById('step-model').style.display='block';
+  document.getElementById('step-params').style.display='none';
+  document.getElementById('step-metrics').style.display='none';
+}
+
+// ── STEP 2: Modelo ────────────────────────────────────────────────────────────
+function renderModelCards() {
+  if (!state.catalogData) return;
+  const models=(state.catalogData.catalog[state.category]||[]).filter(m=>m.trainable);
+  document.getElementById('model-cards').innerHTML=models.map(m=>`
+    <div class="model-card" onclick="selectModel('${m.id}','${m.name}')" id="mcard-${m.id}">
+      <div class="flex items-start justify-between mb-2">
+        <span class="font-bold text-sm">${m.name}</span>
+        ${m.is_active?'<span class="tag tag-green">activo</span>':''}
+      </div>
+      <p class="text-xs text-slate-400 mb-2 leading-relaxed">${m.description}</p>
+      <div class="flex flex-wrap gap-1">${m.tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div>
+    </div>`).join('');
+  lucide.createIcons();
+}
+
+async function selectModel(modelId, modelName) {
+  state.modelId=modelId; state.modelName=modelName;
+  document.querySelectorAll('.model-card').forEach(c=>c.classList.remove('selected'));
+  document.getElementById(`mcard-${modelId}`)?.classList.add('selected');
+  await loadHyperparams();
+  document.getElementById('step-params').style.display='block';
+  document.getElementById('step-params').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+// ── STEP 3: Hiperparámetros ───────────────────────────────────────────────────
+async function loadHyperparams() {
+  try {
+    const d=await fetch(`${API}/api/models/hyperparams?category=${state.category}&model_id=${state.modelId}`).then(r=>r.json());
+    state.hyperparams=d.hyperparams; state.currentValues={};
+    document.getElementById('param-model-name').textContent=state.modelName;
+    const est=d.estimated_time;
+    document.getElementById('train-est-time').textContent=est?`⏱ ~${est} ${d.time_unit}`:'';
+    renderParamForm(d.hyperparams);
+  } catch(e) {
+    document.getElementById('param-form').innerHTML=`<div class="text-red-400 text-sm col-span-2">Error: ${e.message}</div>`;
+  }
+}
+
+function renderParamForm(hyperparams) {
+  const form=document.getElementById('param-form');
+  form.innerHTML='';
+  const NAMES={n_estimators:'N° Estimadores',max_depth:'Profundidad Máx.',learning_rate:'Learning Rate',
+    subsample:'Subsample',min_samples_split:'Mín. Muestras Split',max_features:'Máx. Features',
+    C:'Regularización (C)',gamma:'Gamma',kernel:'Kernel',solver:'Solver',max_iter:'Máx. Iteraciones',
+    epochs:'Épocas',batch_size:'Batch Size',freeze_layers:'Congelar Capas Base'};
+  for (const [key,def] of Object.entries(hyperparams)) {
+    const div=document.createElement('div');
+    div.className='flex flex-col gap-2';
+    const id=`hp-${key}`;
+    let inp='';
+    if (def.options) {
+      const opts=def.options.map(o=>`<option value="${o}"${o===def.default?' selected':''}>${o}</option>`).join('');
+      inp=`<select id="${id}" onchange="updateHP('${key}',this.value)">${opts}</select>`;
+      state.currentValues[key]=def.default;
+    } else if (typeof def.default==='boolean') {
+      inp=`<div class="flex items-center gap-3 mt-1">
+        <label class="relative inline-flex items-center cursor-pointer">
+          <input type="checkbox" id="${id}" ${def.default?'checked':''} class="sr-only peer" onchange="updateHP('${key}',this.checked)">
+          <div class="w-10 h-5 bg-slate-600 rounded-full peer peer-checked:bg-indigo-600 after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-5"></div>
+        </label>
+        <span class="text-sm" id="${id}-label">${def.default?'Activado':'Desactivado'}</span>
+      </div>`;
+      state.currentValues[key]=def.default;
+    } else if (def.step!==undefined) {
+      const isFloat=def.step<1;
+      inp=`<div class="flex items-center gap-3">
+        <input type="range" id="${id}" min="${def.min}" max="${def.max}" step="${def.step}" value="${def.default}"
+          oninput="updateHPRange('${key}',this.value,'${id}-d',${isFloat})" class="flex-1">
+        <input type="number" id="${id}-d" min="${def.min}" max="${def.max}" step="${def.step}" value="${def.default}"
+          style="width:90px;" oninput="updateHPNumber('${key}',this.value,'${id}')">
+      </div>`;
+      state.currentValues[key]=def.default;
+    }
+    div.innerHTML=`
+      <label class="text-sm font-semibold text-slate-200">${NAMES[key]||key}</label>
+      ${inp}
+      <div class="flex items-start gap-1.5 bg-indigo-950/40 border border-indigo-900/50 rounded-lg p-2">
+        <i data-lucide="info" class="w-3.5 h-3.5 text-indigo-400 flex-shrink-0 mt-0.5"></i>
+        <p class="text-xs text-indigo-300 leading-relaxed">${def.tip}</p>
+      </div>`;
+    form.appendChild(div);
+  }
+  lucide.createIcons();
+}
+
+function updateHP(key,value){
+  state.currentValues[key]=value;
+  const l=document.getElementById(`hp-${key}-label`);
+  if(l) l.textContent=value?'Activado':'Desactivado';
+}
+function updateHPRange(key,value,displayId,isFloat){
+  const p=isFloat?parseFloat(value):parseInt(value);
+  state.currentValues[key]=p;
+  const d=document.getElementById(displayId); if(d) d.value=isFloat?p.toExponential(1):p;
+}
+function updateHPNumber(key,value,rangeId){
+  const p=parseFloat(value); if(isNaN(p)) return;
+  state.currentValues[key]=p;
+  const r=document.getElementById(rangeId); if(r) r.value=p;
+}
+
+// ── STEP 4: Entrenar ──────────────────────────────────────────────────────────
+async function startTraining() {
+  if (!state.category||!state.modelId){alert('Selecciona categoría y modelo primero.');return;}
+  document.getElementById('btn-train').disabled=true;
+  document.getElementById('step-progress').style.display='block';
+  document.getElementById('step-metrics').style.display='none';
+  document.getElementById('step-progress').scrollIntoView({behavior:'smooth',block:'nearest'});
+  document.getElementById('live-metrics').className=
+    state.category==='emocion'?'grid grid-cols-3 gap-3 mb-3':'hidden';
+  setProgress(0,''); document.getElementById('train-log').innerHTML='';
+  appendLog('Enviando solicitud de entrenamiento...');
+  try {
+    const r=await fetch(`${API}/api/train/start`,{method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({category:state.category,model_id:state.modelId,hyperparams:state.currentValues})});
+    const d=await r.json();
+    if (!r.ok){appendLog(`Error: ${d.detail}`);document.getElementById('btn-train').disabled=false;return;}
+    state.lastJobId=d.job_id;
+    appendLog(`Job iniciado: ${d.job_id}`);
+    updateStatusBadge('running');
+  } catch(e){appendLog(`Error: ${e.message}`);document.getElementById('btn-train').disabled=false;}
+}
+
+function setProgress(pct,msg){
+  document.getElementById('train-progress-bar').style.width=pct+'%';
+  document.getElementById('train-progress-pct').textContent=pct+'%';
+  if (msg) document.getElementById('train-epoch-info').textContent=msg;
+}
+function appendLog(msg){
+  const log=document.getElementById('train-log');
+  const t=new Date().toLocaleTimeString('es',{hour12:false});
+  const d=document.createElement('div');
+  d.innerHTML=`<span class="text-slate-500">[${t}]</span> ${msg}`;
+  log.appendChild(d); log.scrollTop=log.scrollHeight;
+}
+function updateStatusBadge(status){
+  const dot=document.getElementById('train-dot');
+  const txt=document.getElementById('train-status-text');
+  const map={running:['bg-yellow-400','text-yellow-400','Entrenando...','pulse-dot'],
+             completed:['bg-green-400','text-green-400','Completado',''],
+             failed:['bg-red-400','text-red-400','Error',''],
+             idle:['bg-slate-400','text-slate-400','En espera','']};
+  const [dc,tc,label,anim]=map[status]||map.idle;
+  dot.className=`w-2 h-2 rounded-full ${dc} ${anim}`;
+  txt.className=tc; txt.textContent=label;
+}
+
+// ── WebSocket training ────────────────────────────────────────────────────────
+function connectTrainingWS(){
+  const proto=location.protocol==='https:'?'wss':'ws';
+  ws=new WebSocket(`${proto}://${location.host}/ws/training`);
+  ws.onopen=()=>{
+    wsReady=true;
+    document.getElementById('ws-status').innerHTML='<span class="w-2 h-2 rounded-full bg-green-400"></span><span class="text-green-400 ml-1">conectado</span>';
+  };
+  ws.onmessage=evt=>handleEvent(JSON.parse(evt.data));
+  ws.onclose=()=>{
+    wsReady=false;
+    document.getElementById('ws-status').innerHTML='<span class="w-2 h-2 rounded-full bg-red-400 pulse-dot"></span><span class="text-red-400 ml-1">desconectado</span>';
+    setTimeout(connectTrainingWS,3000);
+  };
+  ws.onerror=()=>ws.close();
+}
+
+function handleEvent(e){
+  if (e.type==='idle') return;
+  if (e.progress!==undefined) setProgress(e.progress,e.total_epochs>0?`Epoch ${e.current_epoch}/${e.total_epochs}`:'');
+  if (e.message) appendLog(e.message);
+  if (e.train_loss!==undefined){
+    document.getElementById('live-train-loss').textContent=e.train_loss.toFixed(4);
+    document.getElementById('live-val-loss').textContent=e.val_loss?.toFixed(4)??'—';
+    document.getElementById('live-val-acc').textContent=e.val_acc!=null?(e.val_acc*100).toFixed(1)+'%':'—';
+  }
+  if (e.type==='complete'){
+    updateStatusBadge('completed');
+    document.getElementById('btn-train').disabled=false;
+    state.lastMetrics=e.metrics; state.lastModelPath=e.model_path;
+    renderFinalMetrics(e.metrics);
+    refreshVRAM(); loadAll();
+    showToast('Entrenamiento completado. Actívalo en producción desde el paso 5.','green');
+  }
+  if (e.type==='error'){updateStatusBadge('failed');document.getElementById('btn-train').disabled=false;}
+  if (e.type==='start') updateStatusBadge('running');
+}
+
+// ── STEP 5: Métricas finales ──────────────────────────────────────────────────
+function renderFinalMetrics(metrics){
+  if (!metrics) return;
+  const sec=document.getElementById('step-metrics');
+  sec.style.display='flex'; sec.style.flexDirection='column';
+  sec.scrollIntoView({behavior:'smooth',block:'nearest'});
+  document.getElementById('metrics-model-badge').textContent=state.modelName||state.modelId||'';
+  document.getElementById('m-accuracy').textContent =pct(metrics.accuracy);
+  document.getElementById('m-f1').textContent        =pct(metrics.f1_macro);
+  document.getElementById('m-recall').textContent    =pct(metrics.recall);
+  document.getElementById('m-precision').textContent =pct(metrics.precision);
+  renderCM(metrics.confusion_matrix,metrics.class_names);
+  renderPerClass(metrics.per_class,metrics.class_names);
+  if (metrics.history){
+    document.getElementById('history-chart-card').style.display='block';
+    renderHistoryChart(metrics.history);
+  }
+}
+function pct(v){return v!=null?(v*100).toFixed(1)+'%':'—';}
+
+function renderCM(cm,names){
+  if (!cm||!names){document.getElementById('confusion-matrix').innerHTML='<p class="text-xs text-slate-500">Sin datos</p>';return;}
+  const max=Math.max(...cm.flat());
+  const short=names.map(n=>n.substring(0,6));
+  let h=`<div style="display:inline-grid;gap:3px;grid-template-columns:auto ${Array(names.length).fill('52px').join(' ')};">`;
+  h+='<div></div>'+short.map(n=>`<div class="text-center text-xs text-slate-400 font-semibold pb-1">${n}</div>`).join('');
+  cm.forEach((row,i)=>{
+    h+=`<div class="text-xs text-slate-400 font-semibold flex items-center justify-end pr-2">${short[i]}</div>`;
+    row.forEach((val,j)=>{
+      const isDiag=i===j;
+      let bg,color;
+      if(isDiag){const int=max>0?val/max:0;const g=Math.round(80+int*120);bg=`rgba(34,${g},94,0.7)`;color='#86efac';}
+      else{const int=max>0?val/max:0;bg=int>0?`rgba(239,68,68,${0.15+int*0.6})`:'var(--surface2)';color=int>0.4?'#fca5a5':'var(--muted)';}
+      h+=`<div class="cm-cell" style="background:${bg};color:${color};" title="${names[i]}→${names[j]}:${val}">${val}</div>`;
+    });
+  });
+  h+='</div>';
+  document.getElementById('confusion-matrix').innerHTML=h;
+}
+
+function renderPerClass(perClass,names){
+  if (!perClass) return;
+  document.getElementById('per-class-table').innerHTML=names.map(cls=>{
+    const d=perClass[cls]; if(!d) return '';
+    const fc=d.f1>0.8?'text-green-400':d.f1>0.6?'text-yellow-400':'text-red-400';
+    return `<tr class="border-b border-slate-800 hover:bg-slate-800/40">
+      <td class="py-1.5 pr-2 font-semibold capitalize">${cls}</td>
+      <td class="text-center px-1.5 text-green-400">${d.VP}</td>
+      <td class="text-center px-1.5 text-blue-400">${d.VN}</td>
+      <td class="text-center px-1.5 text-orange-400">${d.FP}</td>
+      <td class="text-center px-1.5 text-red-400">${d.FN}</td>
+      <td class="text-center px-1.5">${(d.precision*100).toFixed(1)}%</td>
+      <td class="text-center px-1.5">${(d.recall*100).toFixed(1)}%</td>
+      <td class="text-center px-1.5 font-bold ${fc}">${(d.f1*100).toFixed(1)}%</td>
+    </tr>`;
+  }).join('');
+}
+
+function renderHistoryChart(history){
+  const W=500,H=120,P=30;
+  const ep=history.val_acc.length;
+  const maxL=Math.max(...history.train_loss,...history.val_loss)*1.1;
+  const xS=e=>P+(e/(ep-1))*(W-P*2);
+  const yA=v=>P+(1-v)*(H-P*2);
+  const yL=v=>P+(v/maxL)*(H-P*2);
+  const accPts=history.val_acc.map((v,i)=>`${xS(i)},${yA(v)}`).join(' ');
+  const lossPts=history.val_loss.map((v,i)=>`${xS(i)},${yL(v)}`).join(' ');
+  document.getElementById('history-chart').innerHTML=`
+    <div class="flex gap-4 mb-2 text-xs">
+      <span class="flex items-center gap-1"><span class="w-3 h-1 rounded bg-indigo-400 inline-block"></span>Val Acc</span>
+      <span class="flex items-center gap-1"><span class="w-3 h-1 rounded bg-red-400 inline-block"></span>Val Loss</span>
+    </div>
+    <svg width="${W}" height="${H}" style="max-width:100%;">
+      ${[0,.25,.5,.75,1].map(v=>`<line x1="${P}" x2="${W-P}" y1="${yA(v)}" y2="${yA(v)}" stroke="#334155" stroke-width=".5"/>
+        <text x="${P-5}" y="${yA(v)+4}" text-anchor="end" fill="#64748b" font-size="9">${(v*100).toFixed(0)}%</text>`).join('')}
+      <polyline points="${accPts}" fill="none" stroke="#818cf8" stroke-width="2" stroke-linejoin="round"/>
+      <polyline points="${lossPts}" fill="none" stroke="#f87171" stroke-width="1.5" stroke-dasharray="4 2" stroke-linejoin="round"/>
+      ${Array.from({length:Math.min(ep,6)},(_,i)=>{const ei=Math.round(i*(ep-1)/5);return `<text x="${xS(ei)}" y="${H-8}" text-anchor="middle" fill="#64748b" font-size="9">E${ei+1}</text>`;}).join('')}
+    </svg>`;
+}
+
+// ── Activar modelo entrenado ──────────────────────────────────────────────────
+async function activateModel(category, modelId, modelPath, modelName) {
+  // Si se llama desde botón del Step 5 (sin args), usar estado actual
+  const cat   = category  || state.category;
+  const mid   = modelId   || state.modelId;
+  const mpath = modelPath || state.lastModelPath;
+  const mname = modelName || state.modelName;
+
+  if (!cat || !mid){alert('No hay modelo para activar.');return;}
+
+  const btn=document.getElementById('btn-activate');
+  if (btn){btn.disabled=true;btn.innerHTML='<i data-lucide="loader" class="w-4 h-4 animate-spin"></i> Activando...';lucide.createIcons();}
+
+  try {
+    const r=await fetch(`${API}/api/models/active`,{method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({category:cat,model_id:mid,trained_model_path:mpath||null})});
+    const d=await r.json();
+    if (!r.ok){showToast('Error: '+(d.detail||'desconocido'),'red');return;}
+
+    let msg = `"${mname||d.active_model.name}" activado en producción.`;
+    if (d.ml_disponible) msg += ' El motor de inferencia ya lo tiene cargado.';
+    else msg += ' Reinicia si el motor no lo carga automáticamente.';
+    showToast(msg,'green');
+
+    await loadAll();
+    refreshVRAM();
+  } catch(e){showToast('Error: '+e.message,'red');}
+  finally{
+    if (btn){btn.disabled=false;btn.innerHTML='<i data-lucide="check-circle" class="w-4 h-4"></i> Activar en producción';lucide.createIcons();}
+  }
+}
+
+// ── Historial CRUD ────────────────────────────────────────────────────────────
+async function loadMetricsHistory(){
+  const list=document.getElementById('history-list');
+  list.innerHTML='<div class="text-center py-6 text-slate-500 text-sm">Cargando...</div>';
+  try {
+    const [metricsData, activeInfo] = await Promise.all([
+      fetch(`${API}/api/train/metrics`).then(r=>r.json()),
+      fetch(`${API}/api/train/active-info`).then(r=>r.json()),
+    ]);
+    if (!metricsData.metrics.length){
+      list.innerHTML='<div class="text-center py-8 text-slate-500 text-sm">No hay entrenamientos guardados aún. Entrena un modelo para verlo aquí.</div>';
+      return;
+    }
+    const activeModelPath = activeInfo.trained_path || '';
+    list.innerHTML=metricsData.metrics.map(m=>{
+      const stem=(m.model_path||'').split(/[\\/]/).pop().replace(/\.(joblib|pt)$/,'');
+      const isActive = activeModelPath && activeModelPath.includes(stem) && stem;
+      const acc=m.accuracy!=null?(m.accuracy*100).toFixed(1)+'%':'—';
+      const f1 =m.f1_macro !=null?(m.f1_macro*100) .toFixed(1)+'%':'—';
+      const rec=m.recall   !=null?(m.recall*100)   .toFixed(1)+'%':'—';
+      const accColor=m.accuracy>0.9?'text-green-400':m.accuracy>0.7?'text-yellow-400':'text-red-400';
+      const catLabel={atencion:'Atención',emocion:'Emoción'}[m.category]||m.category||'—';
+      const date=m.trained_at?m.trained_at.replace('_',' ').substring(0,15):'—';
+      return `
+        <div class="card" style="padding:12px;" id="hist-${stem}">
+          <div class="flex items-center gap-3 flex-wrap">
+            <!-- Info -->
+            <div class="flex flex-col gap-0.5 flex-1 min-w-0">
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="font-bold text-sm truncate">${m.model_id||'—'}</span>
+                ${isActive?'<span class="tag tag-green">ACTIVO EN PROD.</span>':''}
+                <span class="tag">${catLabel}</span>
+                <span class="text-xs text-slate-500">${date}</span>
+              </div>
+              <div class="flex gap-4 mt-1 text-xs">
+                <span>Acc: <strong class="${accColor}">${acc}</strong></span>
+                <span>F1: <strong class="${accColor}">${f1}</strong></span>
+                <span>Recall: <strong>${rec}</strong></span>
+              </div>
+            </div>
+            <!-- Acciones -->
+            <div class="flex gap-2 flex-shrink-0">
+              <button onclick="viewHistoryMetrics('${m.filename}')"
+                class="btn btn-ghost text-xs py-1.5 px-3">
+                <i data-lucide="bar-chart-2" class="w-3.5 h-3.5"></i> Ver métricas
+              </button>
+              ${!isActive?`
+              <button onclick="activateModel('${m.category}','${m.model_id}','${m.model_path||''}','${m.model_id}')"
+                class="btn btn-green text-xs py-1.5 px-3">
+                <i data-lucide="check-circle" class="w-3.5 h-3.5"></i> Activar
+              </button>`:
+              `<button disabled class="btn btn-ghost text-xs py-1.5 px-3 opacity-40">
+                <i data-lucide="check" class="w-3.5 h-3.5"></i> Activo
+              </button>`}
+              ${!isActive?`
+              <button onclick="deleteModel('${stem}','${stem}')"
+                class="btn btn-red text-xs py-1.5 px-3">
+                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Eliminar
+              </button>`:`
+              <button disabled title="Desactiva el modelo antes de eliminarlo"
+                class="btn btn-ghost text-xs py-1.5 px-3 opacity-30">
+                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Eliminar
+              </button>`}
+            </div>
+          </div>
+        </div>`;
+    }).join('');
+    lucide.createIcons();
+  } catch(e){
+    list.innerHTML=`<div class="text-red-400 text-sm text-center py-4">Error: ${e.message}</div>`;
+  }
+}
+
+async function deleteModel(stem, displayName) {
+  if (!confirm(`¿Eliminar el modelo "${displayName}" y sus métricas?\n\nEsta acción no se puede deshacer.`)) return;
+  try {
+    const r=await fetch(`${API}/api/train/models/${encodeURIComponent(stem)}`,{method:'DELETE'});
+    const d=await r.json();
+    if (!r.ok){showToast('Error: '+(d.detail||'desconocido'),'red');return;}
+    showToast(`Modelo "${displayName}" eliminado correctamente.`,'green');
+    document.getElementById(`hist-${stem}`)?.remove();
+    await loadMetricsHistory();
+  } catch(e){showToast('Error: '+e.message,'red');}
+}
+
+async function viewHistoryMetrics(filename) {
+  try {
+    const m=await fetch(`${API}/api/train/metrics/${filename}`).then(r=>r.json());
+    state.lastMetrics=m; state.lastModelPath=m.model_path;
+    state.category=m.category; state.modelId=m.model_id; state.modelName=m.model_id;
+    switchTab('lab');
+    renderFinalMetrics(m);
+  } catch(e){showToast('Error: '+e.message,'red');}
+}
+
+// ── Toast ────────────────────────────────────────────────────────────────────
+function showToast(msg,type='green'){
+  const t=document.createElement('div');
+  const c={green:'border-green-500 bg-green-950 text-green-300',red:'border-red-500 bg-red-950 text-red-300'};
+  t.className=`fixed bottom-6 right-6 z-50 px-4 py-3 rounded-xl border text-sm font-medium shadow-xl ${c[type]||c.green}`;
+  t.style.cssText+='animation:slideIn .3s ease;max-width:420px;';
+  t.textContent=msg; document.body.appendChild(t);
+  setTimeout(()=>t.remove(),5000);
+}
+document.head.insertAdjacentHTML('beforeend','<style>@keyframes slideIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}</style>');
+</script>
+</body>
+</html>

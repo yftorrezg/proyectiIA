@@ -1,0 +1,162 @@
+{
+  "accuracy": 0.6821,
+  "f1_macro": 0.676,
+  "recall": 0.6729,
+  "precision": 0.6836,
+  "confusion_matrix": [
+    [
+      606,
+      8,
+      78,
+      30,
+      88,
+      124,
+      24
+    ],
+    [
+      17,
+      78,
+      2,
+      5,
+      3,
+      5,
+      1
+    ],
+    [
+      138,
+      4,
+      481,
+      19,
+      112,
+      169,
+      101
+    ],
+    [
+      40,
+      0,
+      16,
+      1534,
+      91,
+      43,
+      50
+    ],
+    [
+      70,
+      2,
+      55,
+      67,
+      852,
+      168,
+      19
+    ],
+    [
+      151,
+      3,
+      125,
+      35,
+      243,
+      670,
+      20
+    ],
+    [
+      24,
+      2,
+      65,
+      28,
+      23,
+      14,
+      675
+    ]
+  ],
+  "class_names": [
+    "angry",
+    "disgust",
+    "fear",
+    "happy",
+    "neutral",
+    "sad",
+    "surprise"
+  ],
+  "per_class": {
+    "angry": {
+      "VP": 606,
+      "VN": 5780,
+      "FP": 440,
+      "FN": 352,
+      "precision": 0.5793,
+      "recall": 0.6326,
+      "f1": 0.6048
+    },
+    "disgust": {
+      "VP": 78,
+      "VN": 7048,
+      "FP": 19,
+      "FN": 33,
+      "precision": 0.8041,
+      "recall": 0.7027,
+      "f1": 0.75
+    },
+    "fear": {
+      "VP": 481,
+      "VN": 5813,
+      "FP": 341,
+      "FN": 543,
+      "precision": 0.5852,
+      "recall": 0.4697,
+      "f1": 0.5211
+    },
+    "happy": {
+      "VP": 1534,
+      "VN": 5220,
+      "FP": 184,
+      "FN": 240,
+      "precision": 0.8929,
+      "recall": 0.8647,
+      "f1": 0.8786
+    },
+    "neutral": {
+      "VP": 852,
+      "VN": 5385,
+      "FP": 560,
+      "FN": 381,
+      "precision": 0.6034,
+      "recall": 0.691,
+      "f1": 0.6442
+    },
+    "sad": {
+      "VP": 670,
+      "VN": 5408,
+      "FP": 523,
+      "FN": 577,
+      "precision": 0.5616,
+      "recall": 0.5373,
+      "f1": 0.5492
+    },
+    "surprise": {
+      "VP": 675,
+      "VN": 6132,
+      "FP": 215,
+      "FN": 156,
+      "precision": 0.7584,
+      "recall": 0.8123,
+      "f1": 0.7844
+    }
+  },
+  "n_train": 28709,
+  "n_test": 7178,
+  "model_id": "resnet50_fer",
+  "model_name": "resnet50_fer",
+  "category": "emocion",
+  "trained_at": "20260421_023537",
+  "model_path": "C:\\Users\\Yafer Torrez\\Desktop\\proyectos\\ProyectoIA\\app\\storage\\trained_models\\resnet50_fer_20260421_023537_local.pt",
+  "hyperparams": {
+    "img_size": 112,
+    "epochs": 30,
+    "batch_size": 32,
+    "learning_rate": 3e-05,
+    "freeze_layers": false,
+    "cutmix": 0.5,
+    "focal_loss": true,
+    "weight_decay": 0.0001
+  }
+}

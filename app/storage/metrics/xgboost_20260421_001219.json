@@ -1,0 +1,71 @@
+{
+  "accuracy": 0.9559,
+  "f1_macro": 0.9402,
+  "recall": 0.9346,
+  "precision": 0.9469,
+  "confusion_matrix": [
+    [
+      123,
+      10,
+      13
+    ],
+    [
+      6,
+      331,
+      1
+    ],
+    [
+      6,
+      0,
+      326
+    ]
+  ],
+  "class_names": [
+    "Distraido",
+    "Enfocado",
+    "Somnoliento"
+  ],
+  "per_class": {
+    "Distraido": {
+      "VP": 123,
+      "VN": 658,
+      "FP": 12,
+      "FN": 23,
+      "precision": 0.9111,
+      "recall": 0.8425,
+      "f1": 0.8754
+    },
+    "Enfocado": {
+      "VP": 331,
+      "VN": 468,
+      "FP": 10,
+      "FN": 7,
+      "precision": 0.9707,
+      "recall": 0.9793,
+      "f1": 0.975
+    },
+    "Somnoliento": {
+      "VP": 326,
+      "VN": 470,
+      "FP": 14,
+      "FN": 6,
+      "precision": 0.9588,
+      "recall": 0.9819,
+      "f1": 0.9702
+    }
+  },
+  "n_train": 1901,
+  "n_test": 816,
+  "job_id": "ccd9096c",
+  "model_id": "xgboost",
+  "model_name": "xgboost",
+  "category": "atencion",
+  "hyperparams": {
+    "n_estimators": 200,
+    "max_depth": 5,
+    "learning_rate": 0.05,
+    "subsample": 0.8
+  },
+  "trained_at": "20260421_001219",
+  "model_path": "app\\storage\\trained_models\\xgboost_20260421_001219.joblib"
+}

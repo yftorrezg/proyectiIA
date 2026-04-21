@@ -45,6 +45,8 @@
             border: 1px solid #334155;
             border-radius: 1.25rem;
             width: 100%; max-width: 520px;
+            max-height: 88vh;
+            overflow-y: auto;
             box-shadow: 0 25px 60px rgba(0,0,0,0.5);
             animation: slideUp .25s cubic-bezier(.4,0,.2,1);
         }
@@ -143,6 +145,18 @@
                 <div class="bg-slate-800/50 text-slate-300 px-3 py-1.5 rounded-full border border-slate-700">
                     FPS: <span id="fps-val" class="text-white font-mono">0</span>
                 </div>
+                <!-- Modelo de atención activo -->
+                <div id="active-model-badge" class="flex items-center gap-2 bg-slate-800/50 px-3 py-1.5 rounded-full border border-slate-700 cursor-default" title="Modelo de Atención activo">
+                    <div id="active-model-dot" class="w-2 h-2 rounded-full bg-slate-500 shrink-0"></div>
+                    <span id="active-model-name" class="text-slate-400 text-[10px] font-bold tracking-wider uppercase">xgboost</span>
+                    <span id="active-mode-pill" class="hidden text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-indigo-500/20 text-indigo-400 border border-indigo-500/30">ML</span>
+                </div>
+                <!-- Enlace Admin Lab -->
+                <a href="/admin" target="_blank"
+                    class="flex items-center gap-2 bg-slate-800/50 hover:bg-slate-700/60 text-slate-300 px-3 py-1.5 rounded-full border border-slate-700 transition-smooth text-xs font-semibold tracking-wide">
+                    <i data-lucide="flask-conical" class="w-3.5 h-3.5 text-indigo-400"></i>
+                    <span>Admin Lab</span>
+                </a>
                 <!-- Botón de Configuración -->
                 <button onclick="abrirConfig()" id="btn-config"
                     class="flex items-center gap-2 bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-400 px-3 py-1.5 rounded-full border border-indigo-600/40 transition-smooth text-xs font-semibold tracking-wide">
@@ -188,7 +202,7 @@
                             Heurístico
                         </button>
                         <button id="btn-ml" onclick="setModo('ml')">
-                            XGBoost ML
+                            <span id="modal-model-name">ML</span>
                         </button>
                     </div>
 
@@ -210,7 +224,7 @@
                                 <i data-lucide="sparkles" class="w-4 h-4 text-indigo-400"></i>
                             </div>
                             <div>
-                                <p class="text-indigo-200 font-semibold text-sm">Modo XGBoost ML</p>
+                                <p class="text-indigo-200 font-semibold text-sm">Modo <span id="desc-model-name">ML</span></p>
                                 <p class="text-indigo-300/70 text-xs mt-1 leading-relaxed">Modelo entrenado con <span id="conf-n-muestras" class="font-semibold text-indigo-300">—</span> muestras reales. Accuracy: <span id="conf-accuracy" class="font-bold text-indigo-200">—</span>. Incluye nivel de confianza por predicción.</p>
                             </div>
                         </div>
@@ -223,35 +237,30 @@
                     </div>
                 </div>
 
-                <!-- ── Sección 2: Futuras Integraciones ───────────────────── -->
+                <!-- ── Sección 2: Detección Multi-Rostro ──────────────────── -->
                 <div>
                     <div class="flex items-center gap-2 mb-3">
-                        <i data-lucide="layers" class="w-4 h-4 text-slate-500"></i>
-                        <p class="text-slate-500 text-sm font-bold uppercase tracking-wider">Futuras Integraciones</p>
-                        <span class="bg-slate-700/60 text-slate-400 text-[9px] font-bold tracking-widest uppercase px-2 py-0.5 rounded-full">Próximamente</span>
+                        <i data-lucide="users" class="w-4 h-4 text-violet-400"></i>
+                        <p class="text-slate-200 text-sm font-bold uppercase tracking-wider">Detección de Rostros</p>
                     </div>
-                    <div class="flex flex-col gap-2">
-                        <div class="future-card flex items-center gap-3">
-                            <i data-lucide="mic" class="w-4 h-4 text-slate-500 shrink-0"></i>
-                            <div>
-                                <p class="text-slate-400 text-xs font-semibold">Dataset Transcripciones — Whisper / RoBERTa</p>
-                                <p class="text-slate-600 text-[10px] mt-0.5">Clasificador NLP entrenado con frases reales del alumno</p>
-                            </div>
+                    <div class="bg-slate-800/60 rounded-xl p-4 border border-slate-700/50">
+                        <p class="text-slate-400 text-xs mb-3 leading-relaxed">Controla cuántas personas reciben análisis de landmarks y emoción simultáneamente.</p>
+                        <div class="flex items-center gap-3">
+                            <span class="text-slate-400 text-xs w-5">1</span>
+                            <input type="range" min="1" max="6" value="1" id="faces-slider"
+                                class="flex-1 accent-violet-500 h-1.5 rounded-full cursor-pointer"
+                                oninput="document.getElementById('faces-count').innerText = this.value">
+                            <span class="text-slate-400 text-xs w-5">6</span>
                         </div>
-                        <div class="future-card flex items-center gap-3">
-                            <i data-lucide="smile" class="w-4 h-4 text-slate-500 shrink-0"></i>
-                            <div>
-                                <p class="text-slate-400 text-xs font-semibold">Dataset Emocional — DeepFace CNN</p>
-                                <p class="text-slate-600 text-[10px] mt-0.5">Modelo ajustado con expresiones faciales anotadas</p>
-                            </div>
+                        <div class="flex items-center justify-between mt-3">
+                            <span class="text-slate-400 text-xs">Rostros activos:</span>
+                            <span class="text-violet-300 font-extrabold text-lg" id="faces-count">1</span>
                         </div>
-                        <div class="future-card flex items-center gap-3">
-                            <i data-lucide="bar-chart-3" class="w-4 h-4 text-slate-500 shrink-0"></i>
-                            <div>
-                                <p class="text-slate-400 text-xs font-semibold">Dataset Comprensión — Fusión Multimodal</p>
-                                <p class="text-slate-600 text-[10px] mt-0.5">Índice de comprensión calibrado con datos históricos</p>
-                            </div>
-                        </div>
+                        <button onclick="aplicarFaces()"
+                            class="mt-3 w-full bg-violet-600/20 hover:bg-violet-600/40 text-violet-300 border border-violet-600/40 text-xs font-bold py-2 rounded-lg transition-smooth flex items-center justify-center gap-2">
+                            <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+                            Aplicar
+                        </button>
                     </div>
                 </div>
             </div>
@@ -276,11 +285,30 @@
                 
                 <!-- Monitor de Video (OpenCV + 3D Axes de MediaPipe) -->
                 <div class="glass-panel rounded-2xl shadow-sm overflow-hidden flex flex-col">
-                    <div class="bg-white/50 border-b border-slate-100 p-3.5 flex justify-between items-center">
-                        <h2 class="font-bold flex items-center gap-2 text-slate-700 text-sm uppercase tracking-wider">
+                    <div class="bg-white/50 border-b border-slate-100 p-3.5 flex justify-between items-center gap-3">
+                        <h2 class="font-bold flex items-center gap-2 text-slate-700 text-sm uppercase tracking-wider shrink-0">
                             <i data-lucide="video" class="w-4 h-4 text-indigo-500"></i>
-                            Auditoría Visual (Cámara + Radar 3D)
+                            Auditoría Visual
                         </h2>
+                        <!-- Modelos activos en producción -->
+                        <div class="flex items-center gap-1.5 flex-wrap justify-end">
+                            <div class="flex items-center gap-1 bg-sky-50 px-2 py-0.5 rounded-full border border-sky-200 cursor-default" title="Modelo de Audio">
+                                <i data-lucide="mic" class="w-3 h-3 text-sky-500 shrink-0"></i>
+                                <span id="badge-audio" class="text-sky-600 text-[10px] font-bold uppercase tracking-wide">Base</span>
+                            </div>
+                            <div class="flex items-center gap-1 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200 cursor-default" title="Modelo de Emoción">
+                                <i data-lucide="smile" class="w-3 h-3 text-amber-500 shrink-0"></i>
+                                <span id="badge-emocion" class="text-amber-600 text-[10px] font-bold uppercase tracking-wide">DeepFace</span>
+                            </div>
+                            <div class="flex items-center gap-1 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 cursor-default" title="Modelo Semántico">
+                                <i data-lucide="message-square-text" class="w-3 h-3 text-emerald-500 shrink-0"></i>
+                                <span id="badge-semantica" class="text-emerald-600 text-[10px] font-bold uppercase tracking-wide">RoBERTuito</span>
+                            </div>
+                            <div class="flex items-center gap-1 bg-indigo-50 px-2 py-0.5 rounded-full border border-indigo-200 cursor-default" title="Modelo de Atención">
+                                <i data-lucide="brain-circuit" class="w-3 h-3 text-indigo-500 shrink-0"></i>
+                                <span id="badge-atencion" class="text-indigo-600 text-[10px] font-bold uppercase tracking-wide">XGBoost</span>
+                            </div>
+                        </div>
                     </div>
                     <div class="bg-slate-900 relative aspect-video flex items-center justify-center border-b-4 border-indigo-500">
                         <!-- Streaming MJPEG directo desde FastAPI -->
@@ -330,7 +358,7 @@
                             <div id="conf-badge" class="hidden mt-2 flex items-center gap-2">
                                 <div class="bg-indigo-500/10 border border-indigo-500/30 rounded-full px-2 py-0.5 flex items-center gap-1.5">
                                     <i data-lucide="sparkles" class="w-3 h-3 text-indigo-400"></i>
-                                    <span class="text-indigo-300 text-[10px] font-bold tracking-wider">XGBoost ML</span>
+                                    <span id="conf-badge-model-name" class="text-indigo-300 text-[10px] font-bold tracking-wider">ML</span>
                                 </div>
                                 <div class="flex items-center gap-1.5">
                                     <div class="h-1.5 w-20 bg-slate-200 rounded-full overflow-hidden">
@@ -436,7 +464,7 @@
                 </div>
                 <div>
                     <h2 class="text-slate-700 font-extrabold text-sm uppercase tracking-widest">Métricas del Modelo ML</h2>
-                    <p class="text-slate-400 text-[10px] font-semibold tracking-wider">XGBoost · Clasificador de Atención Personalizado</p>
+                    <p id="ml-header-subtitle" class="text-slate-400 text-[10px] font-semibold tracking-wider">Modelo de Atención · Clasificador Personalizado</p>
                 </div>
                 <div id="ml-fecha-badge" class="ml-auto bg-slate-100 text-slate-500 text-[10px] font-semibold px-3 py-1 rounded-full border border-slate-200">
                     Cargando...
@@ -475,7 +503,7 @@
                         </div>
                         <div class="flex justify-between text-xs mt-1">
                             <span class="text-slate-500">Modelo</span>
-                            <span class="text-indigo-600 font-bold text-[10px]">XGBoost</span>
+                            <span id="ml-model-label" class="text-indigo-600 font-bold text-[10px]">—</span>
                         </div>
                         <div class="flex justify-between text-xs mt-1">
                             <span class="text-slate-500">CV Macro F1</span>
@@ -728,6 +756,9 @@
                 // 6. CONFIANZA ML (solo activo en modo ML)
                 actualizarConfianzaML(data);
 
+                // 7. BADGES DE TODOS LOS MODELOS ACTIVOS
+                actualizarModelesBadges(data);
+
                 // Obligar a re-dibujar cualquier icono de Lucide que haya cambiado dinámicamente
                 lucide.createIcons();
             };
@@ -748,29 +779,109 @@
         }
 
         // Encender la maquinaria cuando el DOM esté listo
+        let _ultimoModeloActivo = null;
         window.addEventListener('DOMContentLoaded', () => {
             conectarWebSocket();
             actualizarGraficaSVG(50);
             cargarMetricasML();
+            // Polling cada 8s: recarga métricas si el modelo activo cambió
+            setInterval(async () => {
+                try {
+                    const r = await fetch('http://localhost:8080/api/train/active-info');
+                    if (!r.ok) return;
+                    const info = await r.json();
+                    const clave = (info.model_id || '') + ':' + (info.trained_path || '');
+                    if (_ultimoModeloActivo !== null && _ultimoModeloActivo !== clave) {
+                        cargarMetricasML(); // modelo cambió → recargar métricas
+                    }
+                    _ultimoModeloActivo = clave;
+                } catch(e) {}
+            }, 8000);
         });
 
         // ==============================================================================
         // ACTUALIZACIÓN DE CONFIANZA ML EN EL PANEL DE ATENCIÓN
         // Se llama desde ws.onmessage con data.ml_confidence y data.modo_atencion
         // ==============================================================================
+        // Helper: display name corto para modelos
+        function modelShortName(id) {
+            if (!id) return '—';
+            const map = {
+                'whisper_tiny':           'Tiny',
+                'whisper_base':           'Base',
+                'whisper_small':          'Small',
+                'whisper_medium':         'Medium',
+                'deepface_vggface':       'DeepFace',
+                'mobilenet_v2_fer':       'MobileNet',
+                'resnet18_fer':           'ResNet-18',
+                'resnet50_fer':           'ResNet-50',
+                'efficientnet_b0_fer':    'Effnet-B0',
+                'efficientnet_b3_fer':    'Effnet-B3',
+                'robertuito':             'RoBERTuito',
+                'beto':                   'BETO',
+                'multilingual_bert':      'mBERT',
+                'xlm_roberta_sentiment':  'XLM-R',
+                'xgboost':                'XGBoost',
+                'random_forest':          'Rand.Forest',
+                'svm':                    'SVM',
+                'logistic_regression':    'Logistic',
+            };
+            return map[id] || id.replace(/_/g,' ').toUpperCase();
+        }
+
+        // Inicializa el slider de faces una sola vez con el valor del servidor
+        let _facesSliderSynced = false;
+
+        function actualizarModelesBadges(data) {
+            const bAudio = document.getElementById('badge-audio');
+            const bEmoc  = document.getElementById('badge-emocion');
+            const bSem   = document.getElementById('badge-semantica');
+            const bAten  = document.getElementById('badge-atencion');
+            if (bAudio && data.audio_model)     bAudio.innerText = modelShortName(data.audio_model);
+            if (bEmoc  && data.emocion_model)   bEmoc.innerText  = modelShortName(data.emocion_model);
+            if (bSem   && data.semantica_model) bSem.innerText   = modelShortName(data.semantica_model);
+            if (bAten  && data.modelo_activo)   bAten.innerText  = modelShortName(data.modelo_activo);
+
+            // Sincronizar slider de faces solo la primera vez (no en cada frame del WS)
+            if (!_facesSliderSynced && data.max_num_faces !== undefined) {
+                const sl  = document.getElementById('faces-slider');
+                const lbl = document.getElementById('faces-count');
+                if (sl)  sl.value      = data.max_num_faces;
+                if (lbl) lbl.innerText = data.max_num_faces;
+                _facesSliderSynced = true;
+            }
+        }
+
         function actualizarConfianzaML(data) {
-            const badge     = document.getElementById('conf-badge');
-            const bar       = document.getElementById('conf-bar');
-            const pct       = document.getElementById('conf-pct');
-            const lblModo   = document.getElementById('label-modo-atencion');
+            const badge    = document.getElementById('conf-badge');
+            const bar      = document.getElementById('conf-bar');
+            const pct      = document.getElementById('conf-pct');
+            const lblModo  = document.getElementById('label-modo-atencion');
+            const badgeModelName = document.getElementById('conf-badge-model-name');
+
+            // Nombre del modelo activo (viene del WS)
+            const modeloNombre = data.modelo_activo || 'ML';
+
+            // Actualizar navbar badge y elementos dinámicos
+            const navDot      = document.getElementById('active-model-dot');
+            const navName     = document.getElementById('active-model-name');
+            const navPill     = document.getElementById('active-mode-pill');
+            const modalName   = document.getElementById('modal-model-name');
+            const descModName = document.getElementById('desc-model-name');
+
+            if (navName) navName.innerText = modelShortName(modeloNombre);
+            if (modalName) modalName.innerText = modelShortName(modeloNombre);
+            if (descModName) descModName.innerText = modelShortName(modeloNombre);
+            if (badgeModelName) badgeModelName.innerText = modelShortName(modeloNombre);
 
             if (data.modo_atencion === 'ml' && data.ml_disponible) {
                 badge.classList.remove('hidden');
-                lblModo.innerText = 'XGBoost ML · Clasificador Personalizado';
+                lblModo.innerText = modelShortName(modeloNombre) + ' · Clasificador Personalizado';
+                if (navDot)  navDot.className  = 'w-2 h-2 rounded-full bg-indigo-400 shadow-[0_0_6px_#818cf8]';
+                if (navPill) { navPill.classList.remove('hidden'); navPill.innerText = 'ML'; }
                 const conf = Math.round((data.ml_confidence || 0) * 100);
                 bar.style.width = conf + '%';
                 pct.innerText   = conf + '%';
-                // color de la barra según confianza
                 if (conf >= 80) {
                     bar.className = 'h-full bg-emerald-500 rounded-full transition-all duration-500';
                 } else if (conf >= 60) {
@@ -781,6 +892,8 @@
             } else {
                 badge.classList.add('hidden');
                 lblModo.innerText = 'Geometría Espacial 3D';
+                if (navDot)  navDot.className  = data.ml_disponible ? 'w-2 h-2 rounded-full bg-emerald-500' : 'w-2 h-2 rounded-full bg-slate-500';
+                if (navPill) navPill.classList.add('hidden');
             }
         }
 
@@ -798,6 +911,22 @@
         }
         function cerrarConfigClick(e) {
             if (e.target === document.getElementById('modal-config')) cerrarConfig();
+        }
+
+        async function aplicarFaces() {
+            const n = parseInt(document.getElementById('faces-slider').value) || 1;
+            try {
+                const r = await fetch('http://localhost:8080/api/models/faces', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ n }),
+                });
+                const j = await r.json();
+                if (j.ok) {
+                    document.getElementById('faces-count').innerText = j.max_num_faces;
+                    document.getElementById('faces-slider').value = j.max_num_faces;
+                }
+            } catch(e) { console.warn('faces error', e); }
         }
 
         function setModo(modo) {
@@ -837,20 +966,38 @@
         }
 
         function renderizarMetricas(m) {
+            // Nombre del modelo en cabecera de métricas
+            const modelName = m.model_id || m.model_name || 'Modelo';
+            const sub = document.getElementById('ml-header-subtitle');
+            if (sub) sub.innerText = modelName + ' · Clasificador de Atención';
+            const lbl = document.getElementById('ml-model-label');
+            if (lbl) lbl.innerText = modelName;
+
             // Tarjetas globales
             document.getElementById('ml-accuracy').innerText = (m.accuracy * 100).toFixed(2) + '%';
-            document.getElementById('ml-f1').innerText       = m.macro_f1.toFixed(4);
-            document.getElementById('ml-n-train').innerText  = m.n_train.toLocaleString();
-            document.getElementById('ml-n-test').innerText   = m.n_test.toLocaleString();
-            document.getElementById('ml-cv-f1').innerText    = m.cv_macro_f1.toFixed(4);
-            document.getElementById('ml-fecha-badge').innerText = 'Entrenado: ' + (m.fecha || '—').slice(0, 10);
+            document.getElementById('ml-f1').innerText       = (m.f1_macro ?? m.macro_f1 ?? 0).toFixed(4);
+            const nTrain = m.n_train ?? null;
+            const nTest  = m.n_test  ?? null;
+            document.getElementById('ml-n-train').innerText  = nTrain != null ? Number(nTrain).toLocaleString() : '—';
+            document.getElementById('ml-n-test').innerText   = nTest  != null ? Number(nTest).toLocaleString()  : '—';
+            document.getElementById('ml-cv-f1').innerText    = m.cv_macro_f1 != null ? Number(m.cv_macro_f1).toFixed(4) : '—';
+            const fechaRaw = m.trained_at || m.fecha || null;
+            let fechaDisplay = modelName + ' — activo';
+            if (fechaRaw) {
+                // Soporta "20260420_231711" y "2026-04-20T23:17:11"
+                const match = fechaRaw.match(/(\d{4})(\d{2})(\d{2})/);
+                fechaDisplay = match
+                    ? `Entrenado: ${match[1]}-${match[2]}-${match[3]}`
+                    : 'Entrenado: ' + fechaRaw.slice(0, 10);
+            }
+            document.getElementById('ml-fecha-badge').innerText = fechaDisplay;
 
             // Rellenar datos del modal
             document.getElementById('conf-accuracy').innerText   = (m.accuracy * 100).toFixed(1) + '%';
             document.getElementById('conf-n-muestras').innerText = m.n_total ? m.n_total.toLocaleString() : '—';
 
             // ── Matriz de Confusión ────────────────────────────────────────────
-            const clases = m.clases || [];
+            const clases = m.clases || m.class_names || [];
             const cm     = m.confusion_matrix || [];
             const maxVal = Math.max(...cm.flat());
 
@@ -891,11 +1038,23 @@
             document.getElementById('cm-tabla').innerHTML = html;
 
             // ── Métricas por clase ─────────────────────────────────────────────
-            const porClase = m.por_clase || {};
+            const porClase = m.por_clase || m.per_class || {};
+            // Paleta de colores genérica para clases desconocidas
+            const PALETA = [
+                { text:'#10b981',bg:'rgba(16,185,129,0.12)',border:'rgba(16,185,129,0.35)' },
+                { text:'#ef4444',bg:'rgba(239,68,68,0.12)', border:'rgba(239,68,68,0.35)'  },
+                { text:'#f59e0b',bg:'rgba(245,158,11,0.12)',border:'rgba(245,158,11,0.35)' },
+                { text:'#6366f1',bg:'rgba(99,102,241,0.12)',border:'rgba(99,102,241,0.35)' },
+                { text:'#06b6d4',bg:'rgba(6,182,212,0.12)', border:'rgba(6,182,212,0.35)'  },
+                { text:'#a855f7',bg:'rgba(168,85,247,0.12)',border:'rgba(168,85,247,0.35)' },
+                { text:'#ec4899',bg:'rgba(236,72,153,0.12)',border:'rgba(236,72,153,0.35)' },
+            ];
             let htmlClase = '';
-            clases.forEach(c => {
+            clases.forEach((c, idx) => {
                 const pc  = porClase[c] || {};
-                const clr = CLASE_COLORES[c] || {};
+                const clr = CLASE_COLORES[c] || PALETA[idx % PALETA.length];
+                // Support: puede venir como 'support' (old) o calculado de VP+FN (new)
+                const support = pc.support != null ? pc.support : ((pc.VP || 0) + (pc.FN || 0));
                 htmlClase += `
                 <div class="rounded-xl p-3 border" style="background:${clr.bg};border-color:${clr.border}">
                     <div class="flex justify-between items-center mb-1.5">
@@ -907,7 +1066,7 @@
                     <div class="grid grid-cols-3 gap-1 text-[10px] text-slate-500">
                         <div>P <span class="font-bold text-slate-700">${((pc.precision||0)*100).toFixed(1)}%</span></div>
                         <div>R <span class="font-bold text-slate-700">${((pc.recall||0)*100).toFixed(1)}%</span></div>
-                        <div>n <span class="font-bold text-slate-700">${pc.support||0}</span></div>
+                        <div>n <span class="font-bold text-slate-700">${support}</span></div>
                     </div>
                 </div>`;
             });
@@ -919,6 +1078,12 @@
             const maxFi = fiSorted.length > 0 ? fiSorted[0][1] : 1;
             const fiIconos = { ear: 'eye', pitch: 'arrow-up-down', yaw: 'arrow-left-right', ratio_h: 'scan-eye' };
             let htmlFi = '';
+            if (fiSorted.length === 0) {
+                htmlFi = '<p class="text-slate-400 text-xs text-center py-4">No disponible para este tipo de modelo</p>';
+                document.getElementById('ml-features').innerHTML = htmlFi;
+                lucide.createIcons();
+                return;
+            }
             fiSorted.forEach(([feat, val]) => {
                 const pct  = ((val / maxFi) * 100).toFixed(0);
                 const icon = fiIconos[feat] || 'activity';
