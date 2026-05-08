@@ -1,0 +1,984 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Edu-Insight — Reporte de Sesión</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    :root{
+      --bg:#080d1a;--surface:#0f172a;--surface2:#1a2235;--surface3:#1e2d42;
+      --border:#1e3a5f;--border2:#243650;
+      --accent:#6366f1;--accent2:#818cf8;
+      --green:#22c55e;--green2:#16a34a;
+      --yellow:#eab308;--red:#ef4444;--orange:#f97316;
+      --cyan:#06b6d4;--pink:#ec4899;--purple:#a855f7;
+      --text:#e2e8f0;--muted:#64748b;--muted2:#94a3b8;
+    }
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,sans-serif;min-height:100vh;}
+    ::-webkit-scrollbar{width:5px}
+    ::-webkit-scrollbar-track{background:var(--surface)}
+    ::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+
+    /* NAV */
+    .nav{
+      background:linear-gradient(135deg,#0d1526 0%,#1a1040 100%);
+      border-bottom:1px solid rgba(99,102,241,.22);
+      padding:0 28px;position:sticky;top:0;z-index:200;
+    }
+    .nav-inner{
+      max-width:1540px;margin:0 auto;height:60px;
+      display:flex;align-items:center;justify-content:space-between;gap:16px;
+    }
+    .nav-logo{display:flex;align-items:center;gap:11px;}
+    .nav-ico{
+      width:36px;height:36px;border-radius:10px;flex-shrink:0;
+      background:linear-gradient(135deg,var(--accent),var(--purple));
+      display:flex;align-items:center;justify-content:center;
+    }
+    .nav-ico svg{width:17px;height:17px;color:#fff;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+    .nav-actions{display:flex;align-items:center;gap:8px;}
+
+    /* HERO */
+    .hero{
+      background:linear-gradient(135deg,#0d1526 0%,#1a1040 55%,#1a0535 100%);
+      border-bottom:1px solid rgba(99,102,241,.18);
+      padding:28px 28px 24px;position:relative;overflow:hidden;
+    }
+    .hero::after{
+      content:'';position:absolute;right:-60px;top:-60px;
+      width:320px;height:320px;border-radius:50%;pointer-events:none;
+      background:radial-gradient(circle,rgba(99,102,241,.14),transparent 65%);
+    }
+    .hero::before{
+      content:'';position:absolute;left:-40px;bottom:-40px;
+      width:200px;height:200px;border-radius:50%;pointer-events:none;
+      background:radial-gradient(circle,rgba(168,85,247,.08),transparent 65%);
+    }
+    .hero-inner{max-width:1540px;margin:0 auto;position:relative;z-index:1;}
+    .hero-badge{
+      display:inline-flex;align-items:center;gap:6px;
+      background:rgba(99,102,241,.12);border:1px solid rgba(99,102,241,.25);
+      border-radius:99px;padding:3px 12px;
+      font-size:.68rem;font-weight:700;color:var(--accent2);
+      text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;
+    }
+    .hero-title{font-size:1.65rem;font-weight:900;color:#fff;
+                letter-spacing:-.03em;line-height:1.2;margin-bottom:12px;}
+    .hero-pills{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+    .pill{
+      display:flex;align-items:center;gap:6px;
+      background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.1);
+      border-radius:99px;padding:4px 13px;
+      font-size:.72rem;color:var(--muted2);
+    }
+    .pill strong{color:var(--text);}
+    .pill-ok{background:rgba(34,197,94,.1);border-color:rgba(34,197,94,.2);color:#4ade80;}
+    .pill-ok strong{color:#4ade80;}
+
+    /* MAIN */
+    main{max-width:1540px;margin:0 auto;padding:24px 28px 56px;
+         display:flex;flex-direction:column;gap:22px;}
+
+    /* CARD */
+    .card{
+      background:var(--surface);border:1px solid var(--border2);
+      border-radius:16px;padding:22px 24px;
+    }
+    .card-ttl{
+      font-size:.67rem;font-weight:800;color:var(--muted);
+      text-transform:uppercase;letter-spacing:.09em;
+      display:flex;align-items:center;gap:8px;margin-bottom:18px;
+    }
+    .card-ico{
+      width:22px;height:22px;border-radius:6px;flex-shrink:0;
+      display:flex;align-items:center;justify-content:center;font-size:.7rem;
+    }
+
+    /* KPI ROW */
+    .kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;}
+    @media(max-width:860px){.kpi-grid{grid-template-columns:1fr 1fr;}}
+    .kpi{
+      background:var(--surface2);border:1px solid var(--border2);
+      border-radius:14px;padding:20px 18px;
+      position:relative;overflow:hidden;
+      display:flex;flex-direction:column;gap:6px;
+    }
+    .kpi::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2.5px;}
+    .kpi.k1::after{background:linear-gradient(90deg,var(--accent),var(--accent2));}
+    .kpi.k2::after{background:var(--green);}
+    .kpi.k3::after{background:var(--yellow);}
+    .kpi.k4::after{background:var(--cyan);}
+    .kpi::before{
+      content:'';position:absolute;top:-20px;right:-20px;
+      width:80px;height:80px;border-radius:50%;opacity:.07;
+    }
+    .kpi.k1::before{background:var(--accent);}
+    .kpi.k2::before{background:var(--green);}
+    .kpi.k3::before{background:var(--yellow);}
+    .kpi.k4::before{background:var(--cyan);}
+    .kpi-emo{font-size:1.4rem;line-height:1;}
+    .kpi-val{font-size:2.4rem;font-weight:900;line-height:1;letter-spacing:-.04em;}
+    .kpi-lbl{font-size:.67rem;color:var(--muted2);text-transform:uppercase;
+             letter-spacing:.06em;font-weight:700;}
+    .kpi-sub{font-size:.68rem;color:var(--muted);margin-top:1px;}
+
+    /* STUDENT BANNERS */
+    .sb-grid{display:grid;gap:12px;}
+    .sb{
+      border-radius:13px;padding:16px 20px;border:1px solid;
+      display:flex;align-items:center;gap:18px;position:relative;overflow:hidden;
+    }
+    .sb::before{
+      content:'';position:absolute;right:-20px;top:-20px;
+      width:110px;height:110px;border-radius:50%;
+      opacity:.06;background:currentColor;
+    }
+    .sb-avatar{
+      width:48px;height:48px;border-radius:50%;flex-shrink:0;
+      display:flex;align-items:center;justify-content:center;
+      font-weight:900;font-size:1.15rem;color:#fff;
+    }
+    .sb-info{flex:1;min-width:0;}
+    .sb-name{font-size:.95rem;font-weight:800;color:#fff;margin-bottom:2px;}
+    .sb-code{font-size:.7rem;color:var(--muted2);}
+    .sb-stats{display:flex;gap:24px;flex-wrap:wrap;flex-shrink:0;}
+    .sb-stat{text-align:center;}
+    .sb-stat-v{font-size:1.6rem;font-weight:900;line-height:1;}
+    .sb-stat-l{font-size:.6rem;color:var(--muted);text-transform:uppercase;
+               letter-spacing:.05em;margin-top:2px;}
+    .sb-badge{
+      display:inline-flex;align-items:center;gap:5px;padding:4px 11px;
+      border-radius:99px;font-size:.7rem;font-weight:700;
+    }
+    .score-ring{
+      width:72px;height:72px;border-radius:50%;flex-shrink:0;
+      display:flex;align-items:center;justify-content:center;
+      font-size:1.25rem;font-weight:900;border:3px solid currentColor;
+    }
+
+    /* CHARTS */
+    .c2{display:grid;grid-template-columns:3fr 2fr;gap:16px;}
+    .c3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
+    @media(max-width:1050px){
+      .c2{grid-template-columns:1fr;}
+      .c3{grid-template-columns:1fr 1fr;}
+    }
+    .ch-wrap{position:relative;}
+
+    /* TABS */
+    .tabs{display:flex;gap:6px;margin-bottom:18px;flex-wrap:wrap;}
+    .tab{
+      display:flex;align-items:center;gap:7px;
+      padding:7px 16px;border-radius:10px;font-size:.8rem;font-weight:700;
+      cursor:pointer;border:2px solid transparent;
+      background:var(--surface2);color:var(--muted2);transition:all .2s;
+    }
+    .tab-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+    .tab.active{color:#fff;}
+    .tab:hover:not(.active){background:var(--surface3);color:var(--text);}
+
+    /* DETAIL */
+    .detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+    @media(max-width:780px){.detail-grid{grid-template-columns:1fr;}}
+    .hbar{display:flex;align-items:center;gap:10px;margin:5px 0;}
+    .hbar-lbl{min-width:96px;font-size:.74rem;color:var(--muted2);}
+    .hbar-trk{flex:1;background:rgba(255,255,255,.05);border-radius:99px;height:9px;overflow:hidden;}
+    .hbar-fill{height:100%;border-radius:99px;transition:width .7s cubic-bezier(.4,0,.2,1);}
+    .hbar-pct{min-width:40px;font-size:.74rem;font-weight:700;
+              text-align:right;color:var(--muted2);}
+    .stat-row{
+      display:flex;justify-content:space-between;align-items:center;
+      padding:9px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:.83rem;
+    }
+    .stat-row:last-child{border-bottom:none;}
+    .stat-lbl{color:var(--muted2);}
+    .stat-val{font-weight:700;}
+
+    /* BUTTONS */
+    .btn{
+      display:inline-flex;align-items:center;gap:7px;
+      padding:8px 16px;border-radius:9px;font-weight:700;font-size:.8rem;
+      cursor:pointer;border:1px solid transparent;transition:all .18s;
+      text-decoration:none;
+    }
+    .btn:hover{transform:translateY(-1px);filter:brightness(1.12);}
+    .btn-ghost{background:rgba(255,255,255,.06);color:var(--text);
+               border-color:rgba(255,255,255,.1);}
+    .btn-accent{background:var(--accent);color:#fff;}
+    .btn-green{background:var(--green2);color:#fff;}
+
+    /* EMPTY */
+    #empty-state{
+      display:none;text-align:center;padding:100px 24px;
+      flex-direction:column;align-items:center;gap:16px;color:var(--muted2);
+    }
+
+    /* ANIMATIONS */
+    @keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+    .fi{animation:fadeUp .4s ease both;}
+    .fi:nth-child(1){animation-delay:.04s;}
+    .fi:nth-child(2){animation-delay:.1s;}
+    .fi:nth-child(3){animation-delay:.16s;}
+    .fi:nth-child(4){animation-delay:.22s;}
+    .fi:nth-child(5){animation-delay:.28s;}
+    .fi:nth-child(6){animation-delay:.34s;}
+
+    /* COLOR HELPERS */
+    .c-hi{color:var(--green);}
+    .c-mi{color:var(--yellow);}
+    .c-lo{color:var(--red);}
+    .svg-ico{display:inline-block;vertical-align:middle;}
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<div class="nav">
+  <div class="nav-inner">
+    <div class="nav-logo">
+      <div class="nav-ico">
+        <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      </div>
+      <div>
+        <div style="font-weight:900;font-size:.88rem;color:#fff;letter-spacing:-.01em">
+          EDU-INSIGHT <span style="color:var(--accent2)">PRO</span>
+        </div>
+        <div style="font-size:.63rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em">
+          Reporte de Sesión
+        </div>
+      </div>
+    </div>
+    <div class="nav-actions">
+      <button onclick="exportCSV()" class="btn btn-ghost">
+        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Exportar CSV
+      </button>
+      <a href="/" class="btn btn-ghost">
+        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        Dashboard
+      </a>
+      <a href="/session-setup" class="btn btn-accent">
+        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Nueva Sesión
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- HERO -->
+<div class="hero" id="hero-section" style="display:none">
+  <div class="hero-inner">
+    <div class="hero-badge">Edu-Insight Pro &rsaquo; Reporte Analítico</div>
+    <div class="hero-title" id="hero-titulo">—</div>
+    <div class="hero-pills">
+      <div class="pill">
+        <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        <strong id="hero-fecha">—</strong>
+      </div>
+      <div class="pill">
+        <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        Duración: <strong id="hero-duracion">—</strong> min
+      </div>
+      <div class="pill">
+        <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        <strong id="hero-alumnos">—</strong> alumno(s)
+      </div>
+      <div class="pill">
+        <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+        <strong id="hero-materia">—</strong>
+      </div>
+      <div class="pill pill-ok">
+        <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        <strong>Sesión completada</strong>
+      </div>
+    </div>
+  </div>
+</div>
+
+<main>
+
+  <!-- EMPTY STATE -->
+  <div id="empty-state">
+    <svg viewBox="0 0 24 24" width="52" height="52" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--muted);margin-bottom:4px"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+    <div style="font-size:1.1rem;font-weight:800;color:var(--text)" id="empty-title">Sin datos</div>
+    <div style="font-size:.84rem;line-height:1.65;max-width:420px" id="empty-msg">Sin datos disponibles.</div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:4px">
+      <a href="/" class="btn btn-ghost">Dashboard</a>
+      <a href="/session-setup" class="btn btn-accent">Nueva Sesión</a>
+    </div>
+  </div>
+
+  <!-- REPORT CONTENT -->
+  <div id="report-content" style="display:none;flex-direction:column;gap:22px">
+
+    <!-- KPIs -->
+    <div class="kpi-grid fi">
+      <div class="kpi k1">
+        <div class="kpi-emo">🎯</div>
+        <div class="kpi-val" id="kpi-comp">—</div>
+        <div class="kpi-lbl">Comprensión promedio</div>
+        <div class="kpi-sub">Índice multimodal de la sesión</div>
+      </div>
+      <div class="kpi k2">
+        <div class="kpi-emo">👥</div>
+        <div class="kpi-val" id="kpi-alumnos">—</div>
+        <div class="kpi-lbl">Alumnos monitoreados</div>
+        <div class="kpi-sub">Con seguimiento biométrico activo</div>
+      </div>
+      <div class="kpi k3">
+        <div class="kpi-emo">⏱️</div>
+        <div class="kpi-val" id="kpi-dur">—</div>
+        <div class="kpi-lbl">Duración (minutos)</div>
+        <div class="kpi-sub">Tiempo total de la sesión</div>
+      </div>
+      <div class="kpi k4">
+        <div class="kpi-emo">📸</div>
+        <div class="kpi-val" id="kpi-snap">—</div>
+        <div class="kpi-lbl">Snapshots telemetría</div>
+        <div class="kpi-sub">Muestras registradas (c/5 seg)</div>
+      </div>
+    </div>
+
+    <!-- STUDENT BANNERS -->
+    <div class="card fi">
+      <div class="card-ttl">
+        <div class="card-ico" style="background:rgba(99,102,241,.15);font-size:.75rem">👤</div>
+        Resumen Individual por Alumno
+      </div>
+      <div id="sb-wrap" class="sb-grid"></div>
+    </div>
+
+    <!-- TIMELINE + COMPARATIVA -->
+    <div class="c2 fi">
+      <div class="card">
+        <div class="card-ttl">
+          <div class="card-ico" style="background:rgba(99,102,241,.15);font-size:.75rem">📈</div>
+          Evolución del Índice de Comprensión — Por Minuto
+        </div>
+        <div class="ch-wrap" style="height:250px">
+          <canvas id="ch-timeline"></canvas>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-ttl">
+          <div class="card-ico" style="background:rgba(34,197,94,.15);font-size:.75rem">📊</div>
+          Comparativa de Comprensión por Alumno
+        </div>
+        <div class="ch-wrap" style="height:250px">
+          <canvas id="ch-compare"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3 DONUTS -->
+    <div class="c3 fi">
+      <div class="card">
+        <div class="card-ttl">
+          <div class="card-ico" style="background:rgba(234,179,8,.15);font-size:.75rem">😊</div>
+          Distribución de Emociones
+        </div>
+        <div class="ch-wrap" style="height:210px">
+          <canvas id="ch-emo"></canvas>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-ttl">
+          <div class="card-ico" style="background:rgba(239,68,68,.15);font-size:.75rem">🧠</div>
+          Estados de Atención
+        </div>
+        <div class="ch-wrap" style="height:210px">
+          <canvas id="ch-aten"></canvas>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-ttl">
+          <div class="card-ico" style="background:rgba(6,182,212,.15);font-size:.75rem">👁️</div>
+          Zonas de Mirada
+        </div>
+        <div class="ch-wrap" style="height:210px">
+          <canvas id="ch-mir"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- DETALLE POR ALUMNO -->
+    <div class="card fi">
+      <div class="card-ttl">
+        <div class="card-ico" style="background:rgba(168,85,247,.15);font-size:.75rem">📋</div>
+        Análisis Detallado por Alumno
+      </div>
+      <div class="tabs" id="det-tabs"></div>
+      <div id="det-content"></div>
+    </div>
+
+  </div>
+</main>
+
+<script>
+// ──────────────────────────────────────────────────────────────
+// CONFIG
+// ──────────────────────────────────────────────────────────────
+const token     = sessionStorage.getItem('edu_token');
+const sessionId = sessionStorage.getItem('report_session_id')
+               || new URLSearchParams(location.search).get('id');
+
+if (!token)     { location.href = '/login';        }
+if (!sessionId) { location.href = '/session-setup';}
+
+const HEADERS = { Authorization: `Bearer ${token}` };
+
+const S_COLORS = ['#6366f1','#22c55e','#f97316','#ec4899','#06b6d4','#eab308'];
+
+const EMO_COLORS = {
+  'Neutral':'#94a3b8','Felicidad':'#22c55e','Enojo':'#ef4444',
+  'Tristeza':'#6366f1','Sorpresa':'#f97316','Miedo':'#8b5cf6','Disgusto':'#84cc16',
+};
+const EMO_EMOJI = {
+  'Neutral':'😐','Felicidad':'😊','Enojo':'😠',
+  'Tristeza':'😢','Sorpresa':'😮','Miedo':'😨','Disgusto':'🤢',
+};
+const ATEN_COLORS = {'Enfocado':'#22c55e','Distraido':'#ef4444',
+                     'Distraído':'#ef4444','Somnoliento':'#f97316'};
+const MIR_COLORS  = {'Centro':'#6366f1','Derecha':'#22c55e','Izquierda':'#f97316',
+                     'Arriba':'#06b6d4','Abajo':'#ec4899'};
+
+Chart.defaults.color       = '#64748b';
+Chart.defaults.borderColor = '#1e3a5f';
+Chart.defaults.font.family = 'system-ui,-apple-system,sans-serif';
+
+let charts = {};
+let activeTab = 0;
+let reportData = null;
+
+// ──────────────────────────────────────────────────────────────
+// CARGA
+// ──────────────────────────────────────────────────────────────
+async function loadReport() {
+  try {
+    const res = await fetch(`/api/reports/${sessionId}`, { headers: HEADERS });
+    if (!res.ok) {
+      const msg = res.status === 404
+        ? `Sesión #${sessionId} no encontrada. Es posible que el servidor se haya reiniciado y la BD se haya limpiado.`
+        : `Error del servidor (HTTP ${res.status}). Revisá la consola del backend.`;
+      showEmpty('No se pudo cargar el reporte', msg);
+      return;
+    }
+    reportData = await res.json();
+    if (!reportData.students || reportData.students.length === 0) {
+      showEmpty(
+        'Sesión sin telemetría',
+        'La sesión existe pero no registró datos biométricos.<br>' +
+        'La telemetría se graba cada <strong>5 segundos</strong>. ' +
+        'Asegurate de que el motor de inferencia esté activo y que la sesión dure al menos 10 segundos.'
+      );
+      return;
+    }
+    render();
+  } catch(e) {
+    showEmpty('Error de conexión', 'No se pudo conectar con el servidor. Asegurate de que el backend esté corriendo con <code>python -m app.main</code>.');
+  }
+}
+
+function showEmpty(title, msg) {
+  document.getElementById('empty-state').style.display   = 'flex';
+  document.getElementById('empty-state').style.flexDirection = 'column';
+  document.getElementById('empty-state').style.alignItems    = 'center';
+  document.getElementById('empty-title').textContent = title;
+  document.getElementById('empty-msg').innerHTML     = msg;
+}
+
+// ──────────────────────────────────────────────────────────────
+// RENDER PRINCIPAL
+// ──────────────────────────────────────────────────────────────
+function render() {
+  const { session, students, group } = reportData;
+
+  // Mostrar contenido
+  document.getElementById('report-content').style.display = 'flex';
+  document.getElementById('empty-state').style.display    = 'none';
+
+  // Hero
+  const hh = document.getElementById('hero-section');
+  hh.style.display = 'block';
+  document.getElementById('hero-titulo').textContent = session.titulo || 'Sesión';
+  document.title = 'Reporte — ' + (session.titulo || 'Sesión');
+  const fecha = (session.started_at || '').slice(0,16).replace('T',' ');
+  document.getElementById('hero-fecha').textContent    = fecha || '—';
+  document.getElementById('hero-duracion').textContent = group.total_tiempo_min || '—';
+  document.getElementById('hero-alumnos').textContent  = group.num_alumnos;
+  document.getElementById('hero-materia').textContent  = session.materia || 'General';
+
+  // KPIs
+  const compVal = group.avg_comprension;
+  const compEl  = document.getElementById('kpi-comp');
+  compEl.textContent = compVal + '%';
+  compEl.className   = 'kpi-val ' + compColor(compVal);
+  document.getElementById('kpi-alumnos').textContent = group.num_alumnos;
+  document.getElementById('kpi-dur').textContent     = group.total_tiempo_min || '—';
+  const totalSnaps = students.reduce((s,st) => s + (st.summary.total_snapshots||0), 0);
+  document.getElementById('kpi-snap').textContent    = totalSnaps;
+
+  // Banners
+  buildBanners(students);
+
+  // Charts
+  buildTimeline(students);
+  buildCompare(students);
+  buildDonutAgregado('ch-emo',  students, 'emocion',  EMO_COLORS,  'Emociones');
+  buildDonutAgregado('ch-aten', students, 'atencion', ATEN_COLORS, 'Atención');
+  buildDonutAgregado('ch-mir',  students, 'mirada',   MIR_COLORS,  'Mirada');
+
+  // Tabs detalle
+  buildTabs(students);
+  renderTab(0);
+}
+
+// ──────────────────────────────────────────────────────────────
+// HELPERS
+// ──────────────────────────────────────────────────────────────
+function compColor(v) {
+  return v >= 70 ? 'c-hi' : v >= 50 ? 'c-mi' : 'c-lo';
+}
+function compBgColor(v) {
+  return v >= 70 ? '#22c55e' : v >= 50 ? '#eab308' : '#ef4444';
+}
+
+// ──────────────────────────────────────────────────────────────
+// BANNERS DE ALUMNOS
+// ──────────────────────────────────────────────────────────────
+function buildBanners(students) {
+  const wrap = document.getElementById('sb-wrap');
+  // Responsive: 1 col si 1 alumno, 2 cols si >=2
+  wrap.style.gridTemplateColumns = students.length === 1 ? '1fr' : 'repeat(auto-fit,minmax(340px,1fr))';
+
+  wrap.innerHTML = students.map((s, i) => {
+    const col  = S_COLORS[i % S_COLORS.length];
+    const comp = s.summary.avg_comprension;
+    const aten = s.summary.atencion || {};
+    const emo  = s.summary.emocion  || {};
+
+    // Estado de atención dominante
+    const atenTop = Object.entries(aten).sort((a,b)=>b[1]-a[1])[0];
+    const atenLbl = atenTop ? atenTop[0] : '—';
+    const atenCol = ATEN_COLORS[atenLbl] || '#94a3b8';
+
+    // Emoción dominante
+    const emoTop  = Object.entries(emo).sort((a,b)=>b[1]-a[1])[0];
+    const emoLbl  = emoTop ? emoTop[0] : '—';
+    const emoEmj  = EMO_EMOJI[emoLbl] || '😐';
+
+    const badgeBg  = atenLbl === 'Enfocado' ? 'rgba(34,197,94,.15)'
+                   : atenLbl === 'Somnoliento' ? 'rgba(249,115,22,.15)'
+                   : 'rgba(239,68,68,.15)';
+    const badgeBrd = atenLbl === 'Enfocado' ? 'rgba(34,197,94,.3)'
+                   : atenLbl === 'Somnoliento' ? 'rgba(249,115,22,.3)'
+                   : 'rgba(239,68,68,.3)';
+
+    return `
+    <div class="sb" style="background:${col}0d;border-color:${col}33;color:${col}">
+      <div class="sb-avatar" style="background:${col}">${s.nombre.charAt(0).toUpperCase()}</div>
+      <div class="sb-info">
+        <div class="sb-name">${s.nombre}</div>
+        <div class="sb-code">${s.codigo || ''} &middot; Slot ${s.face_slot}</div>
+        <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <span class="sb-badge" style="background:${badgeBg};border:1px solid ${badgeBrd};color:${atenCol}">
+            ${atenCol==='#22c55e'?'✅':'⚠️'} ${atenLbl}
+          </span>
+          <span class="sb-badge" style="background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:#e2e8f0">
+            ${emoEmj} ${emoLbl}
+          </span>
+        </div>
+      </div>
+      <div class="sb-stats">
+        <div class="sb-stat">
+          <div class="sb-stat-v ${compColor(comp)}">${comp}%</div>
+          <div class="sb-stat-l">Comprensión</div>
+        </div>
+        <div class="sb-stat">
+          <div class="sb-stat-v" style="color:${col}">${s.summary.total_snapshots || 0}</div>
+          <div class="sb-stat-l">Snapshots</div>
+        </div>
+        <div class="score-ring" style="color:${compBgColor(comp)};border-color:${compBgColor(comp)}">${comp}%</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ──────────────────────────────────────────────────────────────
+// CHART: TIMELINE
+// ──────────────────────────────────────────────────────────────
+function buildTimeline(students) {
+  if (charts.timeline) charts.timeline.destroy();
+
+  const maxMin = Math.max(1, ...students.flatMap(s => s.timeline.map(t => t.minuto || 0)));
+  const labels = Array.from({length: maxMin + 1}, (_, i) => `${i}m`);
+
+  const datasets = students.map((s, i) => {
+    const col  = S_COLORS[i % S_COLORS.length];
+    const data = Array(maxMin + 1).fill(null);
+    s.timeline.forEach(t => { data[t.minuto] = t.comprension; });
+    return {
+      label: s.nombre,
+      data,
+      borderColor: col,
+      backgroundColor: col + '18',
+      borderWidth: 2.5,
+      pointBackgroundColor: col,
+      pointRadius: 4,
+      pointHoverRadius: 6,
+      tension: 0.4,
+      fill: students.length === 1,
+    };
+  });
+
+  const ctx = document.getElementById('ch-timeline').getContext('2d');
+  charts.timeline = new Chart(ctx, {
+    type: 'line',
+    data: { labels, datasets },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { position: 'top', labels: { usePointStyle: true, pointStyle: 'circle', padding: 14, font: { size: 11, weight: 'bold' } } },
+        tooltip: {
+          backgroundColor: '#0f172a', borderColor: '#334155', borderWidth: 1,
+          callbacks: { label: c => ` ${c.dataset.label}: ${c.raw ?? '—'}%` }
+        },
+      },
+      scales: {
+        y: { min: 0, max: 100, grid: { color: '#1e3a5f' },
+             ticks: { callback: v => v + '%', font: { size: 10 } } },
+        x: { grid: { display: false }, ticks: { font: { size: 10 } } },
+      },
+    },
+  });
+}
+
+// ──────────────────────────────────────────────────────────────
+// CHART: COMPARATIVA BAR
+// ──────────────────────────────────────────────────────────────
+function buildCompare(students) {
+  if (charts.compare) charts.compare.destroy();
+  const ctx = document.getElementById('ch-compare').getContext('2d');
+  charts.compare = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: students.map(s => s.nombre.split(' ')[0]),
+      datasets: [{
+        label: 'Comprensión Promedio (%)',
+        data: students.map(s => s.summary.avg_comprension),
+        backgroundColor: students.map((_, i) => S_COLORS[i % S_COLORS.length] + 'cc'),
+        borderColor:     students.map((_, i) => S_COLORS[i % S_COLORS.length]),
+        borderWidth: 2, borderRadius: 8, borderSkipped: false,
+      }],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#0f172a', borderColor: '#334155', borderWidth: 1,
+          callbacks: { label: c => ` ${c.raw}% comprensión` }
+        },
+      },
+      scales: {
+        y: { min: 0, max: 100, grid: { color: '#1e3a5f' },
+             ticks: { callback: v => v + '%', font: { size: 10 } } },
+        x: { grid: { display: false }, ticks: { font: { size: 11, weight: 'bold' } } },
+      },
+    },
+  });
+}
+
+// ──────────────────────────────────────────────────────────────
+// CHART: DONUT AGREGADO (suma todos los alumnos)
+// ──────────────────────────────────────────────────────────────
+function buildDonutAgregado(canvasId, students, field, colorMap, title) {
+  if (charts[canvasId]) charts[canvasId].destroy();
+
+  // Agregar counts de todos los alumnos
+  const agg = {};
+  students.forEach(s => {
+    Object.entries(s.summary[field] || {}).forEach(([k, v]) => {
+      agg[k] = (agg[k] || 0) + v;
+    });
+  });
+
+  const labels = Object.keys(agg);
+  const data   = Object.values(agg);
+  const total  = data.reduce((a, b) => a + b, 0);
+  const colors = labels.map(l => colorMap[l] || '#64748b');
+
+  if (labels.length === 0) {
+    const ctx = document.getElementById(canvasId).getContext('2d');
+    ctx.fillStyle = '#1e3a5f';
+    ctx.font = '12px system-ui';
+    ctx.textAlign = 'center';
+    ctx.fillText('Sin datos', ctx.canvas.width / 2, ctx.canvas.height / 2);
+    return;
+  }
+
+  const ctx = document.getElementById(canvasId).getContext('2d');
+  charts[canvasId] = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels,
+      datasets: [{
+        data,
+        backgroundColor: colors.map(c => c + 'cc'),
+        borderColor: colors,
+        borderWidth: 2,
+        hoverOffset: 6,
+      }],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      cutout: '62%',
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: { usePointStyle: true, pointStyle: 'circle',
+                    padding: 10, font: { size: 10, weight: 'bold' } }
+        },
+        tooltip: {
+          backgroundColor: '#0f172a', borderColor: '#334155', borderWidth: 1,
+          callbacks: {
+            label: c => {
+              const pct = total > 0 ? Math.round(c.raw / total * 100) : 0;
+              return ` ${c.label}: ${c.raw} (${pct}%)`;
+            }
+          }
+        },
+      },
+    },
+  });
+}
+
+// ──────────────────────────────────────────────────────────────
+// TABS DE DETALLE
+// ──────────────────────────────────────────────────────────────
+function buildTabs(students) {
+  const tabsEl = document.getElementById('det-tabs');
+  tabsEl.innerHTML = students.map((s, i) => {
+    const col = S_COLORS[i % S_COLORS.length];
+    return `
+    <button class="tab${i===0?' active':''}" onclick="renderTab(${i})"
+            id="tab-btn-${i}" style="${i===0?'border-color:'+col+';background:'+col+'22;color:'+col:''}">
+      <span class="tab-dot" style="background:${col}"></span>
+      ${s.nombre.split(' ')[0]}
+    </button>`;
+  }).join('');
+}
+
+function renderTab(idx) {
+  activeTab = idx;
+  const students = reportData.students;
+
+  // Actualizar botones
+  students.forEach((_, i) => {
+    const btn = document.getElementById('tab-btn-' + i);
+    const col = S_COLORS[i % S_COLORS.length];
+    if (i === idx) {
+      btn.className = 'tab active';
+      btn.style.cssText = `border-color:${col};background:${col}22;color:${col}`;
+    } else {
+      btn.className = 'tab';
+      btn.style.cssText = '';
+    }
+  });
+
+  const s   = students[idx];
+  const col = S_COLORS[idx % S_COLORS.length];
+  const sum = s.summary;
+
+  // Atención
+  const atenEntries = Object.entries(sum.atencion || {}).sort((a,b)=>b[1]-a[1]);
+  const atenTotal   = atenEntries.reduce((acc,[,v])=>acc+v, 0);
+
+  // Emoción
+  const emoEntries  = Object.entries(sum.emocion  || {}).sort((a,b)=>b[1]-a[1]);
+  const emoTotal    = emoEntries.reduce((acc,[,v])=>acc+v, 0);
+
+  // Mirada
+  const mirEntries  = Object.entries(sum.mirada   || {}).sort((a,b)=>b[1]-a[1]);
+  const mirTotal    = mirEntries.reduce((acc,[,v])=>acc+v, 0);
+
+  document.getElementById('det-content').innerHTML = `
+  <div class="detail-grid">
+
+    <!-- Columna izquierda: stats + atención -->
+    <div>
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px;
+                  padding:16px 18px;background:${col}0f;border:1px solid ${col}25;border-radius:12px">
+        <div style="width:50px;height:50px;border-radius:50%;background:${col};flex-shrink:0;
+                    display:flex;align-items:center;justify-content:center;
+                    font-weight:900;font-size:1.2rem;color:#fff">
+          ${s.nombre.charAt(0).toUpperCase()}
+        </div>
+        <div>
+          <div style="font-weight:800;font-size:1rem;color:#fff">${s.nombre}</div>
+          <div style="font-size:.72rem;color:var(--muted2)">${s.codigo || ''} &middot; Slot ${s.face_slot} &middot; ${sum.total_snapshots} snapshots</div>
+        </div>
+        <div style="margin-left:auto;text-align:center">
+          <div style="font-size:1.8rem;font-weight:900;color:${compBgColor(sum.avg_comprension)}">${sum.avg_comprension}%</div>
+          <div style="font-size:.62rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em">Comprensión</div>
+        </div>
+      </div>
+
+      <div style="font-size:.67rem;font-weight:800;color:var(--muted);
+                  text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px">
+        Distribución de Atención
+      </div>
+      ${atenEntries.length ? atenEntries.map(([lbl, cnt]) => {
+        const pct = atenTotal > 0 ? Math.round(cnt/atenTotal*100) : 0;
+        const bc  = ATEN_COLORS[lbl] || '#64748b';
+        return `<div class="hbar">
+          <span class="hbar-lbl">${lbl}</span>
+          <div class="hbar-trk"><div class="hbar-fill" style="width:${pct}%;background:${bc}"></div></div>
+          <span class="hbar-pct" style="color:${bc}">${pct}%</span>
+        </div>`;
+      }).join('') : '<div style="color:var(--muted);font-size:.8rem">Sin datos de atención</div>'}
+
+      <div style="font-size:.67rem;font-weight:800;color:var(--muted);
+                  text-transform:uppercase;letter-spacing:.08em;margin:18px 0 12px">
+        Distribución de Mirada
+      </div>
+      ${mirEntries.length ? mirEntries.map(([lbl, cnt]) => {
+        const pct = mirTotal > 0 ? Math.round(cnt/mirTotal*100) : 0;
+        const bc  = MIR_COLORS[lbl] || '#64748b';
+        return `<div class="hbar">
+          <span class="hbar-lbl">${lbl}</span>
+          <div class="hbar-trk"><div class="hbar-fill" style="width:${pct}%;background:${bc}"></div></div>
+          <span class="hbar-pct" style="color:${bc}">${pct}%</span>
+        </div>`;
+      }).join('') : '<div style="color:var(--muted);font-size:.8rem">Sin datos de mirada</div>'}
+    </div>
+
+    <!-- Columna derecha: emociones + stats numéricos -->
+    <div>
+      <div style="font-size:.67rem;font-weight:800;color:var(--muted);
+                  text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px">
+        Distribución de Emociones
+      </div>
+      ${emoEntries.length ? emoEntries.map(([lbl, cnt]) => {
+        const pct = emoTotal > 0 ? Math.round(cnt/emoTotal*100) : 0;
+        const bc  = EMO_COLORS[lbl]  || '#64748b';
+        const emj = EMO_EMOJI[lbl]   || '😐';
+        return `<div class="hbar">
+          <span class="hbar-lbl">${emj} ${lbl}</span>
+          <div class="hbar-trk"><div class="hbar-fill" style="width:${pct}%;background:${bc}"></div></div>
+          <span class="hbar-pct" style="color:${bc}">${pct}%</span>
+        </div>`;
+      }).join('') : '<div style="color:var(--muted);font-size:.8rem">Sin datos de emoción</div>'}
+
+      <div style="font-size:.67rem;font-weight:800;color:var(--muted);
+                  text-transform:uppercase;letter-spacing:.08em;margin:18px 0 4px">
+        Estadísticas Numéricas
+      </div>
+      <div>
+        <div class="stat-row">
+          <span class="stat-lbl">Comprensión promedio</span>
+          <span class="stat-val ${compColor(sum.avg_comprension)}">${sum.avg_comprension}%</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-lbl">Snapshots registrados</span>
+          <span class="stat-val" style="color:${col}">${sum.total_snapshots}</span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-lbl">Estado de atención dominante</span>
+          <span class="stat-val" style="color:${ATEN_COLORS[atenEntries[0]?.[0]]||'#94a3b8'}">
+            ${atenEntries[0]?.[0] || '—'}
+          </span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-lbl">Emoción dominante</span>
+          <span class="stat-val">
+            ${EMO_EMOJI[emoEntries[0]?.[0]]||'😐'} ${emoEntries[0]?.[0] || '—'}
+          </span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-lbl">Zona de mirada principal</span>
+          <span class="stat-val" style="color:${MIR_COLORS[mirEntries[0]?.[0]]||'#94a3b8'}">
+            ${mirEntries[0]?.[0] || '—'}
+          </span>
+        </div>
+        <div class="stat-row">
+          <span class="stat-lbl">% Tiempo enfocado</span>
+          <span class="stat-val c-hi">
+            ${atenTotal > 0 ? Math.round(((sum.atencion?.['Enfocado']||0)/atenTotal)*100) : 0}%
+          </span>
+        </div>
+      </div>
+
+      <!-- Mini timeline individual -->
+      <div style="margin-top:20px">
+        <div style="font-size:.67rem;font-weight:800;color:var(--muted);
+                    text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px">
+          Evolución personal de comprensión
+        </div>
+        <div style="height:90px">
+          <canvas id="mini-timeline-${idx}"></canvas>
+        </div>
+      </div>
+    </div>
+
+  </div>`;
+
+  // Mini timeline
+  buildMiniTimeline('mini-timeline-' + idx, s, col);
+}
+
+function buildMiniTimeline(id, s, col) {
+  const maxMin = Math.max(1, ...s.timeline.map(t => t.minuto || 0));
+  const labels = Array.from({length: maxMin + 1}, (_, i) => `${i}m`);
+  const data   = Array(maxMin + 1).fill(null);
+  s.timeline.forEach(t => { data[t.minuto] = t.comprension; });
+
+  const ctx = document.getElementById(id);
+  if (!ctx) return;
+  new Chart(ctx.getContext('2d'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        data, borderColor: col, backgroundColor: col + '22',
+        borderWidth: 2, pointRadius: 2, tension: 0.4, fill: true,
+      }],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { enabled: false } },
+      scales: {
+        y: { min: 0, max: 100, grid: { color: '#1a2a3a' },
+             ticks: { callback: v => v + '%', font: { size: 9 }, maxTicksLimit: 4 } },
+        x: { grid: { display: false }, ticks: { font: { size: 9 }, maxTicksLimit: 6 } },
+      },
+    },
+  });
+}
+
+// ──────────────────────────────────────────────────────────────
+// EXPORT CSV
+// ──────────────────────────────────────────────────────────────
+function exportCSV() {
+  const a = document.createElement('a');
+  fetch(`/api/reports/${sessionId}/csv`, { headers: HEADERS })
+    .then(r => r.blob())
+    .then(blob => {
+      a.href = URL.createObjectURL(blob);
+      a.download = `reporte_sesion_${sessionId}.csv`;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    })
+    .catch(() => alert('Error al exportar CSV.'));
+}
+
+// ──────────────────────────────────────────────────────────────
+// INIT
+// ──────────────────────────────────────────────────────────────
+loadReport();
+</script>
+</body>
+</html>

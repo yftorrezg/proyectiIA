@@ -1,0 +1,25 @@
+timestamp,alumno,student_id,atencion,indice_comprension,emocion,sentimiento,mirada,ear
+2026-05-05 19:28:12,yafer,3,Enfocado,67.0,Neutral,NEU,Centro,0.329
+2026-05-05 19:28:17,yafer,3,Somnoliento,30.0,Neutral,NEU,Arriba,0.032
+2026-05-05 19:28:22,yafer,3,Enfocado,67.0,Neutral,NEU,Centro,0.299
+2026-05-05 19:28:27,yafer,3,Enfocado,27.0,Enojo,NEU,Centro,0.269
+2026-05-05 19:28:32,yafer,3,Somnoliento,9.0,Tristeza,NEU,Arriba,0.077
+2026-05-05 19:28:37,yafer,3,Somnoliento,0.0,Enojo,NEU,Centro,0.13
+2026-05-05 19:28:42,yafer,3,Somnoliento,0.0,Tristeza,NEU,Centro,0.28
+2026-05-05 19:28:47,yafer,3,Somnoliento,27.0,Neutral,NEU,Centro,0.292
+2026-05-05 19:28:52,yafer,3,Enfocado,67.0,Neutral,NEU,Centro,0.274
+2026-05-05 19:28:57,yafer,3,Enfocado,12.0,Neutral,NEG,Centro,0.299
+2026-05-05 19:29:02,yafer,3,Enfocado,37.0,Neutral,NEG,Centro,0.324
+2026-05-05 19:29:07,yafer,3,Enfocado,37.0,Neutral,NEG,Centro,0.315
+2026-05-05 19:29:12,yafer,3,Distraído,2.0,Tristeza,NEG,Centro,0.328
+2026-05-05 19:29:17,yafer,3,Somnoliento,10.0,Felicidad,NEG,Abajo,0.068
+2026-05-05 19:29:22,yafer,3,Somnoliento,0.0,Enojo,NEU,Arriba,0.062
+2026-05-05 19:29:27,yafer,3,Distraído,12.0,Tristeza,NEU,Centro,0.294
+2026-05-05 19:29:32,yafer,3,Enfocado,67.0,Neutral,NEU,Centro,0.296
+2026-05-05 19:29:37,yafer,3,Distraído,53.0,Neutral,NEU,Centro,0.287
+2026-05-05 19:29:42,yafer,3,Distraído,21.0,Tristeza,NEU,Centro,0.31
+2026-05-05 19:29:47,yafer,3,Distraído,10.0,Tristeza,NEU,Centro,0.323
+2026-05-05 19:29:52,yafer,3,Enfocado,67.0,Neutral,NEU,Centro,0.343
+2026-05-05 19:29:57,yafer,3,Enfocado,63.0,Neutral,NEU,Centro,0.325
+2026-05-05 19:30:02,yafer,3,Enfocado,67.0,Neutral,NEU,Centro,0.304
+2026-05-05 19:30:07,yafer,3,Enfocado,67.0,Neutral,NEU,Centro,0.303

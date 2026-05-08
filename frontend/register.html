@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Edu-Insight — Registro Biometrico</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  <style>
+    :root {
+      --bg:      #0f172a;
+      --surface: #1e293b;
+      --surface2:#263348;
+      --border:  #334155;
+      --accent:  #6366f1;
+      --accent2: #818cf8;
+      --green:   #22c55e;
+      --yellow:  #eab308;
+      --red:     #ef4444;
+      --text:    #e2e8f0;
+      --muted:   #94a3b8;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg); color: var(--text);
+      font-family: system-ui, sans-serif;
+      min-height: 100vh;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+    }
+    .bg-grid {
+      position: fixed; inset: 0; z-index: 0;
+      background-image:
+        linear-gradient(rgba(99,102,241,.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(99,102,241,.04) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+    }
+    .container {
+      position: relative; z-index: 1;
+      display: grid;
+      grid-template-columns: 1fr 400px;
+      gap: 28px;
+      max-width: 1020px; width: 100%; padding: 24px;
+      align-items: start;
+    }
+    .cam-panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px; overflow: hidden;
+      position: relative; aspect-ratio: 4/3;
+    }
+    #video-feed { width: 100%; height: 100%; object-fit: cover; display: block; }
+    #face-overlay {
+      position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none;
+    }
+    #cam-status {
+      position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%);
+      background: rgba(15,23,42,.85); backdrop-filter: blur(8px);
+      border: 1px solid var(--border); border-radius: 99px;
+      padding: 8px 20px; font-size: .82rem; font-weight: 600;
+      display: flex; align-items: center; gap: 8px; white-space: nowrap;
+    }
+    #cam-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
+
+    /* Indicador de captura */
+    #capture-ring {
+      position: absolute; inset: 0;
+      border: 4px solid var(--accent); border-radius: 20px;
+      opacity: 0; pointer-events: none; transition: opacity .3s;
+    }
+
+    .form-panel {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 20px; padding: 32px; display: flex; flex-direction: column; gap: 20px;
+    }
+    .logo { display: flex; align-items: center; gap: 12px; }
+    .logo-icon {
+      width: 42px; height: 42px; border-radius: 12px;
+      background: linear-gradient(135deg, #10b981, #059669);
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    label { display: block; font-size: .78rem; font-weight: 600; color: var(--muted);
+            text-transform: uppercase; letter-spacing: .05em; margin-bottom: 6px; }
+    input[type=text] {
+      width: 100%; background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 10px; color: var(--text); padding: 12px 14px; font-size: .9rem;
+      outline: none; transition: border-color .2s;
+    }
+    input[type=text]:focus { border-color: var(--accent); }
+    input[type=text]::placeholder { color: var(--muted); }
+
+    /* Guia de posicion */
+    .guide-box {
+      background: rgba(99,102,241,.07); border: 1px solid rgba(99,102,241,.2);
+      border-radius: 12px; padding: 14px 16px;
+    }
+    .guide-row {
+      display: flex; align-items: center; gap: 10px;
+      font-size: .82rem; padding: 5px 0;
+    }
+    .guide-icon { width: 20px; height: 20px; flex-shrink: 0; }
+    .guide-ok   { color: var(--green); }
+    .guide-warn { color: var(--yellow); }
+
+    /* Pasos del registro */
+    .reg-steps { display: flex; flex-direction: column; gap: 8px; }
+    .reg-step {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 12px; border-radius: 8px;
+      border: 1px solid transparent; transition: all .3s; opacity: .4;
+    }
+    .reg-step.active { background: rgba(99,102,241,.08); border-color: var(--accent); opacity: 1; }
+    .reg-step.done   { opacity: .65; }
+    .reg-step.current-error { background: rgba(239,68,68,.08); border-color: var(--red); opacity: 1; }
+    .reg-step-dot {
+      width: 28px; height: 28px; border-radius: 50%;
+      background: var(--surface2); display: flex; align-items: center;
+      justify-content: center; font-size: .75rem; font-weight: 700;
+      flex-shrink: 0; transition: all .3s;
+    }
+    .reg-step.active .reg-step-dot { background: var(--accent); color: #fff; }
+    .reg-step.done   .reg-step-dot { background: var(--green);  color: #fff; }
+
+    .btn-main {
+      width: 100%; padding: 14px;
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: #fff; font-weight: 700; font-size: 1rem;
+      border: none; border-radius: 12px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      transition: opacity .2s, transform .15s, box-shadow .2s;
+    }
+    .btn-main:hover:not(:disabled) {
+      opacity: .9; transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(16,185,129,.3);
+    }
+    .btn-main:disabled { opacity: .4; cursor: not-allowed; transform: none; box-shadow: none; }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spinner {
+      width: 18px; height: 18px; border-radius: 50%;
+      border: 2px solid rgba(255,255,255,.3); border-top-color: #fff;
+      animation: spin .7s linear infinite; display: none;
+    }
+
+    #error-box {
+      display: none; background: rgba(239,68,68,.1);
+      border: 1px solid rgba(239,68,68,.3); border-radius: 10px;
+      padding: 12px 16px; font-size: .82rem; color: #fca5a5;
+    }
+    #success-box {
+      display: none; background: rgba(34,197,94,.1);
+      border: 1px solid rgba(34,197,94,.3); border-radius: 10px;
+      padding: 16px; text-align: center;
+    }
+
+    @keyframes successPulse {
+      0%   { box-shadow: 0 0 0   0 rgba(34,197,94,.5); }
+      100% { box-shadow: 0 0 0 32px rgba(34,197,94, 0); }
+    }
+    .pulse-anim { animation: successPulse .6s ease-out; }
+
+    @keyframes borderPulse {
+      0%,100% { stroke-opacity:1 } 50% { stroke-opacity:.3 }
+    }
+    .rect-pulse { animation: borderPulse 1.2s ease-in-out infinite; }
+
+    .link-muted { font-size:.8rem; color:var(--muted); text-align:center; text-decoration:none; }
+    .link-muted:hover { color: var(--accent2); }
+  </style>
+</head>
+<body>
+
+<div class="bg-grid"></div>
+
+<div class="container">
+
+  <!-- ══ CAMARA ══ -->
+  <div class="cam-panel">
+    <img id="video-feed" src="/api/video_feed" alt="Camara">
+
+    <svg id="face-overlay" viewBox="0 0 640 480" preserveAspectRatio="xMidYMid slice">
+      <rect id="face-rect"
+        x="200" y="80" width="240" height="300" rx="12"
+        fill="none" stroke="#475569" stroke-width="2" stroke-dasharray="12 6"/>
+      <!-- Esquinas -->
+      <path d="M200,116 L200,80 L236,80"  fill="none" id="c-tl" stroke="#10b981" stroke-width="3" stroke-linecap="round"/>
+      <path d="M404,80  L440,80 L440,116" fill="none" id="c-tr" stroke="#10b981" stroke-width="3" stroke-linecap="round"/>
+      <path d="M200,344 L200,380 L236,380" fill="none" id="c-bl" stroke="#10b981" stroke-width="3" stroke-linecap="round"/>
+      <path d="M404,380 L440,380 L440,344" fill="none" id="c-br" stroke="#10b981" stroke-width="3" stroke-linecap="round"/>
+
+      <!-- Flash de captura -->
+      <rect id="flash-rect" x="0" y="0" width="640" height="480" fill="white" opacity="0"/>
+    </svg>
+
+    <!-- Ring de captura -->
+    <div id="capture-ring"></div>
+
+    <div id="cam-status">
+      <div id="cam-dot"></div>
+      <span id="cam-text">Iniciando camara...</span>
+    </div>
+  </div>
+
+  <!-- ══ FORMULARIO ══ -->
+  <div class="form-panel">
+
+    <div class="logo">
+      <div class="logo-icon">
+        <i data-lucide="user-plus" style="width:20px;height:20px;color:#fff"></i>
+      </div>
+      <div>
+        <div style="font-weight:800;font-size:1.05rem">Registro Biometrico</div>
+        <div style="font-size:.75rem;color:var(--muted)">Edu-Insight · Tutor</div>
+      </div>
+    </div>
+
+    <!-- Campos -->
+    <div>
+      <label for="inp-nombre">Nombre completo</label>
+      <input type="text" id="inp-nombre" placeholder="Ej: Prof. Ana Garcia" maxlength="60"/>
+    </div>
+    <div>
+      <label for="inp-user">Usuario</label>
+      <input type="text" id="inp-user" placeholder="Ej: ana_garcia" maxlength="30"/>
+    </div>
+
+    <!-- Guia de condiciones -->
+    <div class="guide-box">
+      <div style="font-size:.78rem;font-weight:700;color:var(--accent2);margin-bottom:8px">
+        Condiciones para el registro
+      </div>
+      <div class="guide-row guide-ok">
+        <i data-lucide="sun" class="guide-icon"></i>
+        <span>Buena iluminacion frontal</span>
+      </div>
+      <div class="guide-row guide-ok">
+        <i data-lucide="focus" class="guide-icon"></i>
+        <span>Rostro centrado en el marco</span>
+      </div>
+      <div class="guide-row guide-warn">
+        <i data-lucide="eye" class="guide-icon"></i>
+        <span>Al hacer clic, parpadeá naturalmente</span>
+      </div>
+      <div class="guide-row guide-warn">
+        <i data-lucide="glasses" class="guide-icon"></i>
+        <span>Sin lentes oscuros ni mascarilla</span>
+      </div>
+    </div>
+
+    <!-- Pasos -->
+    <div class="reg-steps" id="reg-steps">
+      <div class="reg-step active" id="rs-1">
+        <div class="reg-step-dot">1</div>
+        <div>
+          <div style="font-size:.82rem;font-weight:600">Completar datos</div>
+          <div style="font-size:.74rem;color:var(--muted)">Nombre y usuario</div>
+        </div>
+      </div>
+      <div class="reg-step" id="rs-2">
+        <div class="reg-step-dot">2</div>
+        <div>
+          <div style="font-size:.82rem;font-weight:600">Liveness check</div>
+          <div style="font-size:.74rem;color:var(--muted)">Parpadeo real requerido</div>
+        </div>
+      </div>
+      <div class="reg-step" id="rs-3">
+        <div class="reg-step-dot">3</div>
+        <div>
+          <div style="font-size:.82rem;font-weight:600">Captura y embedding</div>
+          <div style="font-size:.74rem;color:var(--muted)">Facenet512 · 512 dimensiones</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="error-box"></div>
+
+    <div id="success-box" class="pulse-anim">
+      <div style="font-size:2rem">&#10003;</div>
+      <div style="font-weight:700;font-size:1rem;color:var(--green)" id="suc-text">Registro exitoso</div>
+      <div style="font-size:.78rem;color:var(--muted);margin-top:4px">Redirigiendo al login...</div>
+    </div>
+
+    <button id="btn-register" class="btn-main" onclick="startEnroll()">
+      <i data-lucide="fingerprint" style="width:20px;height:20px"></i>
+      <span id="btn-text">Registrarme con mi Rostro</span>
+      <div class="spinner" id="btn-spinner"></div>
+    </button>
+
+    <a href="/login" class="link-muted">&larr; Ya tengo cuenta · Iniciar sesion</a>
+
+  </div>
+</div>
+
+<script>
+  lucide.createIcons();
+
+  const faceRect = document.getElementById('face-rect');
+  const camDot   = document.getElementById('cam-dot');
+  const camText  = document.getElementById('cam-text');
+  const corners  = ['c-tl','c-tr','c-bl','c-br'].map(id => document.getElementById(id));
+  const errorBox = document.getElementById('error-box');
+  const sucBox   = document.getElementById('success-box');
+  const btnReg   = document.getElementById('btn-register');
+  const btnText  = document.getElementById('btn-text');
+  const btnSpin  = document.getElementById('btn-spinner');
+
+  let registering = false;
+
+  // Monitor de cara via WS
+  let ws = new WebSocket(`ws://${location.host}/ws`);
+  ws.onmessage = (evt) => {
+    const d   = JSON.parse(evt.data);
+    const ear = d.ear ?? 0;
+    const ok  = ear > 0.01;
+    faceRect.style.stroke = ok ? '#22c55e' : '#475569';
+    corners.forEach(c => c.style.stroke = ok ? '#10b981' : '#475569');
+    camDot.style.background  = ok ? 'var(--green)' : 'var(--muted)';
+    camText.textContent      = ok ? 'Rostro detectado — listo' : 'Posiciona tu rostro';
+  };
+  ws.onclose = () => setTimeout(() => { ws = new WebSocket(`ws://${location.host}/ws`); }, 2000);
+
+  function setStep(active, done = []) {
+    [1,2,3].forEach(n => {
+      const el = document.getElementById(`rs-${n}`);
+      el.className = 'reg-step';
+      if (done.includes(n)) el.classList.add('done');
+      if (n === active)     el.classList.add('active');
+      el.querySelector('.reg-step-dot').innerHTML = done.includes(n) ? '&#10003;' : n;
+    });
+  }
+
+  async function startEnroll() {
+    if (registering) return;
+
+    const nombre   = document.getElementById('inp-nombre').value.trim();
+    const username = document.getElementById('inp-user').value.trim().toLowerCase();
+
+    if (!nombre || !username) {
+      showError('Completá el nombre y el usuario antes de continuar.');
+      return;
+    }
+    if (username.length < 3) {
+      showError('El usuario debe tener al menos 3 caracteres.');
+      return;
+    }
+
+    registering = true;
+    errorBox.style.display = 'none';
+    btnReg.disabled        = true;
+    btnSpin.style.display  = 'block';
+    btnText.textContent    = 'Esperando parpadeo...';
+    setStep(2, [1]);
+
+    // Flash animado de captura al detectar
+    faceRect.classList.add('rect-pulse');
+
+    try {
+      const res  = await fetch('/api/auth/enroll', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ nombre, username }),
+      });
+      const data = await res.json();
+
+      faceRect.classList.remove('rect-pulse');
+
+      if (res.ok && data.ok) {
+        // Flash de captura visual
+        setStep(3, [1, 2]);
+        btnText.textContent = 'Procesando embedding...';
+        await flashCapture();
+        await sleep(600);
+        setStep(3, [1, 2, 3]);
+
+        sucBox.style.display = 'block';
+        document.getElementById('suc-text').textContent = data.message;
+        btnReg.style.display = 'none';
+
+        if (window.speechSynthesis) {
+          const u = new SpeechSynthesisUtterance(`Registro exitoso. Bienvenido ${nombre}.`);
+          u.lang = 'es-ES'; u.rate = .95;
+          speechSynthesis.speak(u);
+        }
+
+        setTimeout(() => { location.href = '/login'; }, 3000);
+      } else {
+        faceRect.classList.remove('rect-pulse');
+        const MSGS = {
+          username_taken:  `El usuario "${username}" ya existe. Elegí otro.`,
+          liveness_failed: 'No se detectó parpadeo. Parpadeá naturalmente al hacer clic.',
+          no_face:         'No se detectó un rostro claro. Mejorá la iluminación.',
+          no_frame:        'Sin señal de cámara. Verificá que el servidor esté corriendo.',
+        };
+        showError(MSGS[data.error] ?? data.message ?? 'Error desconocido.');
+        resetBtn();
+      }
+    } catch (err) {
+      showError('Error de conexión. Verificá que el servidor esté activo.');
+      resetBtn();
+    }
+  }
+
+  function resetBtn() {
+    registering          = false;
+    btnReg.disabled      = false;
+    btnSpin.style.display = 'none';
+    btnText.textContent   = 'Registrarme con mi Rostro';
+    faceRect.classList.remove('rect-pulse');
+    setStep(1);
+  }
+
+  async function flashCapture() {
+    const flash = document.getElementById('flash-rect');
+    const ring  = document.getElementById('capture-ring');
+    ring.style.opacity = '1';
+    // Animar opacidad del flash SVG
+    for (let i = 0; i <= 5; i++) {
+      flash.style.opacity = (0.6 - i * 0.12).toString();
+      await sleep(60);
+    }
+    flash.style.opacity = '0';
+    await sleep(200);
+    ring.style.opacity = '0';
+  }
+
+  function showError(msg) {
+    errorBox.style.display = 'block';
+    errorBox.innerHTML = `<div style="display:flex;align-items:center;gap:8px">
+      <i data-lucide="alert-circle" style="width:16px;height:16px;color:var(--red);flex-shrink:0"></i>
+      <span>${msg}</span></div>`;
+    lucide.createIcons();
+  }
+
+  function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+</script>
+</body>
+</html>

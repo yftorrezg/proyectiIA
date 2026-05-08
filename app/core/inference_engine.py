@@ -65,6 +65,9 @@ estado_api_global = {
     "emocion_model":    "deepface_vggface",
     "semantica_model":  "robertuito",
     "max_num_faces":    1,
+    # ── Estado individual por cara (multi-alumno) ───────────────
+    # face_idx → {ear, atencion, mirada, emocion, sentimiento, indice_comprension}
+    "alumnos":          {},
 }
 
 frame_global_bytes: Optional[bytes] = None   # bytes MJPEG del frame actual
@@ -128,6 +131,10 @@ class InferenceEngine:
         self.whisper        = None
         self.analizador_nlp = None
         self.face_cascade   = None
+
+        # Estado por cara (multi-alumno)
+        self._somnolencia_counters: dict = {}   # face_idx → contador somnolencia
+        self._prev_indice_per_face: dict = {}   # face_idx → índice suavizado
 
         # Modelo de atención (sklearn joblib)
         self._ml_package    = None   # dict: model, label_encoder, features, …
@@ -352,6 +359,22 @@ class InferenceEngine:
             estado_api_global["indice_comprension"] * 0.7 + crudo * 0.3
         )
 
+    def _calcular_indice_cara(self, atencion: str, face_idx: int) -> int:
+        """Índice de comprensión por cara: usa atencion individual + emocion/sentimiento globales."""
+        score_facial = {"Felicidad": 25, "Neutral": 15, "Sorpresa": 15,
+                        "Tristeza": -15, "Miedo": -15, "Enojo": -25, "Disgusto": -25
+                        }.get(estado_api_global["emocion"], 0)
+        score_texto  = {"POS": 25, "NEU": 5, "NEG": -25}.get(
+            estado_api_global["sentimiento"], 0)
+        crudo = 50 + score_facial + score_texto
+        if atencion == "Distraído":    crudo -= 30
+        elif atencion == "Somnoliento": crudo -= 40
+        crudo = max(0, min(100, crudo))
+        prev     = self._prev_indice_per_face.get(face_idx, 50)
+        smoothed = int(prev * 0.7 + crudo * 0.3)
+        self._prev_indice_per_face[face_idx] = smoothed
+        return smoothed
+
     # ── Audio ──────────────────────────────────────────────────────────────────
 
     def _productor_audio(self) -> None:
@@ -544,7 +567,8 @@ class InferenceEngine:
                 results = self.face_mesh.process(rgb)
 
                 if results.multi_face_landmarks:
-                    for face_lm in results.multi_face_landmarks:
+                    alumnos_frame = {}
+                    for face_idx, face_lm in enumerate(results.multi_face_landmarks):
                         lm = face_lm.landmark
 
                         # Bounding box
@@ -553,27 +577,28 @@ class InferenceEngine:
                         x_min, x_max = min(xs), max(xs)
                         y_min, y_max = min(ys), max(ys)
 
-                        # Crop para DeepFace / CNN
+                        # Crop para DeepFace / CNN (solo cara 0 alimenta el worker de emocion)
                         mg  = int((x_max - x_min) * 0.25)
                         cx1 = max(0, x_min - mg);  cx2 = min(w, x_max + mg)
                         cy1 = max(0, y_min - mg);  cy2 = min(h, y_max + mg)
                         crop = frame_limpio[cy1:cy2, cx1:cx2]
-                        if crop.size > 0:
+                        if crop.size > 0 and face_idx == 0:
                             self._mediapipe_crop = crop.copy()
 
-                        # EAR
+                        # EAR (por cara)
                         ear_izq = _calcular_ear(lm, OJO_IZQ_EAR, w, h)
                         ear_der = _calcular_ear(lm, OJO_DER_EAR, w, h)
                         ear     = (ear_izq + ear_der) / 2.0
-                        estado_api_global["ear"] = round(ear, 3)
 
+                        cnt = self._somnolencia_counters.get(face_idx, 0)
                         if ear < EAR_UMBRAL:
-                            self.somnolencia_counter += 1
+                            cnt += 1
                         else:
-                            self.somnolencia_counter = max(0, self.somnolencia_counter - 1)
-                        es_somnoliento = self.somnolencia_counter >= EAR_FRAMES_SOMNO
+                            cnt = max(0, cnt - 1)
+                        self._somnolencia_counters[face_idx] = cnt
+                        es_somnoliento = cnt >= EAR_FRAMES_SOMNO
 
-                        # Iris gaze
+                        # Iris gaze (por cara)
                         iris_izq = lm[IRIS_IZQ];  iris_der = lm[IRIS_DER]
                         rng_h_izq = (lm[OJO_IZQ_INT].x - lm[OJO_IZQ_EXT].x) + 1e-6
                         rng_h_der = (lm[OJO_DER_EXT].x - lm[OJO_DER_INT].x) + 1e-6
@@ -588,9 +613,9 @@ class InferenceEngine:
                         mir_h = "Izquierda" if ratio_h < 0.35 else ("Derecha" if ratio_h > 0.65 else "Centro")
                         mir_v = "Abajo"     if ratio_v > 0.65 else ("Arriba"  if ratio_v < 0.35 else "Centro")
                         partes = [p for p in [mir_v, mir_h] if p != "Centro"]
-                        estado_api_global["mirada"] = "-".join(partes) if partes else "Centro"
+                        face_mirada = "-".join(partes) if partes else "Centro"
 
-                        # Head Pose 3D
+                        # Head Pose 3D (por cara)
                         face_2d = np.array([
                             [int(lm[1].x*w),   int(lm[1].y*h)],
                             [int(lm[152].x*w), int(lm[152].y*h)],
@@ -605,12 +630,17 @@ class InferenceEngine:
                         dist_m = np.zeros((4,1), dtype=np.float64)
                         ok, rot_vec, _ = cv2.solvePnP(face_3d_model, face_2d, cam_m, dist_m)
 
+                        face_atencion      = "Enfocado"
+                        face_ml_confidence = 0.0
+                        texto_atencion     = "ATENTO"
+                        color_ejes         = (0, 255, 0)
+
                         if ok:
                             rmat, _ = cv2.Rodrigues(rot_vec)
                             angles, *_ = cv2.RQDecomp3x3(rmat)
                             pitch, yaw = angles[0], angles[1]
 
-                            # ── Atención ────────────────────────────────────
+                            # ── Atención (por cara) ──────────────────────────────────
                             if (estado_api_global["modo_atencion"] == "ml"
                                     and estado_api_global["ml_disponible"]):
                                 # Solo recarga si el registry cambió (cache_key mismatch)
@@ -624,30 +654,27 @@ class InferenceEngine:
                                     pred_lbl  = pkg["label_encoder"].inverse_transform([pred_enc])[0]
                                     conf      = float(np.max(pred_prob))
                                     MAPA_ML   = {"Enfocado":"Enfocado","Distraido":"Distraído","Somnoliento":"Somnoliento"}
-                                    estado_api_global["atencion"]     = MAPA_ML.get(pred_lbl, pred_lbl)
-                                    estado_api_global["ml_confidence"] = round(conf, 3)
-                                    color_ejes   = {"Enfocado":(0,255,0),"Distraído":(0,0,255),"Somnoliento":(0,165,255)}.get(estado_api_global["atencion"],(0,255,0))
-                                    texto_atencion = f"ML:{pred_lbl.upper()} {conf*100:.0f}%"
+                                    face_atencion      = MAPA_ML.get(pred_lbl, pred_lbl)
+                                    face_ml_confidence = round(conf, 3)
+                                    color_ejes         = {"Enfocado":(0,255,0),"Distraído":(0,0,255),"Somnoliento":(0,165,255)}.get(face_atencion,(0,255,0))
+                                    texto_atencion     = f"ML:{pred_lbl.upper()} {conf*100:.0f}%"
                                 else:
                                     estado_api_global["modo_atencion"] = "heuristico"
                                     texto_atencion = "HEURISTICO"
                                     color_ejes = (0,255,0)
                             else:
-                                estado_api_global["ml_confidence"] = 0.0
                                 if es_somnoliento:
-                                    estado_api_global["atencion"] = "Somnoliento"
-                                    color_ejes   = (0, 165, 255)
+                                    face_atencion  = "Somnoliento"
+                                    color_ejes     = (0, 165, 255)
                                     texto_atencion = "SOMNOLIENTO"
                                 elif pitch < -30 or pitch > 35 or yaw < -35 or yaw > 35:
-                                    estado_api_global["atencion"] = "Distraído"
-                                    color_ejes   = (0, 0, 255)
+                                    face_atencion  = "Distraído"
+                                    color_ejes     = (0, 0, 255)
                                     texto_atencion = "DISTRAIDO"
                                 else:
-                                    estado_api_global["atencion"] = "Enfocado"
-                                    color_ejes   = (0, 255, 0)
+                                    face_atencion  = "Enfocado"
+                                    color_ejes     = (0, 255, 0)
                                     texto_atencion = "ATENTO"
-
-                            self._calcular_indice()
 
                             # Overlay
                             cv2.rectangle(frame, (x_min,y_min),(x_max,y_max), color_ejes, 2)
@@ -659,14 +686,45 @@ class InferenceEngine:
                                 (x_min+5, by+18), cv2.FONT_HERSHEY_SIMPLEX, 0.48,(0,255,255),2)
                             cv2.putText(frame, texto_atencion,
                                 (x_min+5, by+38), cv2.FONT_HERSHEY_SIMPLEX, 0.48, color_ejes, 2)
-                            cv2.putText(frame, f"MIRADA: {estado_api_global['mirada'].upper()}",
+                            cv2.putText(frame, f"MIRADA: {face_mirada.upper()}",
                                 (x_min+5, by+58), cv2.FONT_HERSHEY_SIMPLEX, 0.44,(255,200,0),1)
 
                             # Puntos iris
                             cv2.circle(frame,(int(iris_izq.x*w),int(iris_izq.y*h)),3,(0,255,255),-1)
                             cv2.circle(frame,(int(iris_der.x*w),int(iris_der.y*h)),3,(0,255,255),-1)
+
+                        # Indice de comprension individual (atencion per-face + emocion/sentimiento globales)
+                        face_indice = self._calcular_indice_cara(face_atencion, face_idx)
+
+                        # Actualizar global solo con cara 0 (dashboard, liveness, compatibilidad)
+                        if face_idx == 0:
+                            estado_api_global["ear"]           = round(ear, 3)
+                            estado_api_global["mirada"]        = face_mirada
+                            estado_api_global["atencion"]      = face_atencion
+                            estado_api_global["ml_confidence"] = face_ml_confidence
+                            self._calcular_indice()
+
+                        # Guardar estado individual de esta cara
+                        alumnos_frame[face_idx] = {
+                            "ear":                round(ear, 3),
+                            "atencion":           face_atencion,
+                            "mirada":             face_mirada,
+                            "emocion":            estado_api_global["emocion"],
+                            "sentimiento":        estado_api_global["sentimiento"],
+                            "indice_comprension": face_indice,
+                        }
+
+                    # Publicar estado multi-cara
+                    estado_api_global["alumnos"] = alumnos_frame
+                    # Limpiar contadores de caras que ya no se detectan
+                    detected = set(range(len(results.multi_face_landmarks)))
+                    for old_idx in list(self._somnolencia_counters.keys()):
+                        if old_idx not in detected:
+                            del self._somnolencia_counters[old_idx]
+                            self._prev_indice_per_face.pop(old_idx, None)
                 else:
-                    self.somnolencia_counter = 0
+                    self._somnolencia_counters = {}
+                    estado_api_global["alumnos"] = {}
 
             # Enviar crop a DeepFace/CNN
             if (CONFIG["emocion_activa"]

@@ -81,15 +81,55 @@ app.add_middleware(
 from app.api.models_api   import router as models_router
 from app.api.training_api import router as training_router
 from app.api.telemetry    import router as telemetry_router
+from app.api.auth_api     import router as auth_router
+from app.api.students_api import router as students_router
+from app.api.sessions_api import router as sessions_router
+from app.api.reports_api  import router as reports_router
 
 app.include_router(models_router)
 app.include_router(training_router)
 app.include_router(telemetry_router)
+app.include_router(auth_router)
+app.include_router(students_router)
+app.include_router(sessions_router)
+app.include_router(reports_router)
 
 # ══════════════════════════════════════════════════════════════
 #  4. PÁGINAS HTML
 # ══════════════════════════════════════════════════════════════
 _ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+
+@app.get("/session-setup", include_in_schema=False)
+async def session_setup_page():
+    path = os.path.join(_ROOT, "frontend", "session_setup.html")
+    if os.path.exists(path):
+        return FileResponse(path)
+    return JSONResponse({"error": "session_setup.html no encontrado"}, status_code=404)
+
+
+@app.get("/reports", include_in_schema=False)
+async def reports_page():
+    path = os.path.join(_ROOT, "frontend", "reports.html")
+    if os.path.exists(path):
+        return FileResponse(path)
+    return JSONResponse({"error": "reports.html no encontrado"}, status_code=404)
+
+
+@app.get("/login", include_in_schema=False)
+async def login_page():
+    path = os.path.join(_ROOT, "frontend", "login.html")
+    if os.path.exists(path):
+        return FileResponse(path)
+    return JSONResponse({"error": "login.html no encontrado"}, status_code=404)
+
+
+@app.get("/register", include_in_schema=False)
+async def register_page():
+    path = os.path.join(_ROOT, "frontend", "register.html")
+    if os.path.exists(path):
+        return FileResponse(path)
+    return JSONResponse({"error": "register.html no encontrado"}, status_code=404)
 
 
 @app.get("/", include_in_schema=False)
@@ -137,8 +177,14 @@ async def health():
 # ══════════════════════════════════════════════════════════════
 @app.on_event("startup")
 async def on_startup():
+    # Inicializar base de datos SQLite
+    from app.storage.database import init_db
+    init_db()
+
     logger.info("=" * 62)
     logger.info("  Edu-Insight MLOps v2.0 — Iniciando")
+    logger.info("  Login       : http://localhost:8080/login")
+    logger.info("  Registro    : http://localhost:8080/register")
     logger.info("  Dashboard   : http://localhost:8080/")
     logger.info("  Admin Lab   : http://localhost:8080/admin")
     logger.info("  API Docs    : http://localhost:8080/docs")

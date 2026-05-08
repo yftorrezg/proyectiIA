@@ -31,6 +31,45 @@
             100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
         }
 
+        /* ── Modales de confirmación ───────────────────────────────── */
+        .dlg-backdrop {
+            display: none; position: fixed; inset: 0; z-index: 200;
+            background: rgba(0,0,0,.75); backdrop-filter: blur(6px);
+            align-items: center; justify-content: center;
+        }
+        .dlg-backdrop.open { display: flex; }
+        .dlg-box {
+            background: #1e293b; border: 1px solid #334155;
+            border-radius: 18px; padding: 28px 26px;
+            max-width: 380px; width: 92%; text-align: center;
+            box-shadow: 0 24px 64px rgba(0,0,0,.6);
+            animation: dlgPop .22s cubic-bezier(.4,0,.2,1);
+        }
+        @keyframes dlgPop { from{opacity:0;transform:scale(.92)} to{opacity:1;transform:scale(1)} }
+        .dlg-icon { width: 52px; height: 52px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center; margin: 0 auto 14px; }
+        .dlg-title { font-weight: 800; font-size: 1rem; color: #e2e8f0; margin-bottom: 6px; }
+        .dlg-body  { font-size: .83rem; color: #94a3b8; margin-bottom: 22px; line-height: 1.55; }
+        .dlg-actions { display: flex; gap: 10px; }
+        .dlg-btn { flex: 1; padding: 11px; border-radius: 10px; font-weight: 700;
+            font-size: .88rem; cursor: pointer; border: none; transition: opacity .2s; }
+        .dlg-btn:hover { opacity: .85; }
+        .dlg-btn-cancel { background: #263348; color: #e2e8f0; border: 1px solid #334155 !important; }
+        .dlg-btn-danger { background: #ef4444; color: #fff; }
+        .dlg-btn-logout { background: #dc2626; color: #fff; }
+        /* Toast */
+        #dash-toast {
+            position: fixed; bottom: 28px; left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            z-index: 300; background: #1e293b; border: 1px solid #334155;
+            border-radius: 12px; padding: 13px 22px; font-size: .85rem;
+            font-weight: 600; color: #e2e8f0;
+            display: flex; align-items: center; gap: 10px;
+            box-shadow: 0 8px 32px rgba(0,0,0,.5);
+            opacity: 0; transition: all .3s; pointer-events: none; white-space: nowrap;
+        }
+        #dash-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
         /* ── Modal de Configuración ────────────────────────────────── */
         #modal-config {
             display: none;
@@ -115,13 +154,75 @@
             font-size: .75rem; font-weight: 800;
             transition: all .4s;
         }
+
+        /* ── Paneles de alumno en vivo ────────────────────────────────── */
+        .student-card {
+            background: #1e293b;
+            border: 2px solid #334155;
+            border-radius: 14px;
+            padding: 14px 16px;
+            transition: border-color .3s, box-shadow .3s;
+            position: relative;
+            overflow: hidden;
+        }
+        .student-card::before {
+            content: '';
+            position: absolute; top: 0; left: 0; right: 0; height: 3px;
+            border-radius: 14px 14px 0 0;
+            transition: background .3s;
+        }
+        .student-card.enfocado  { border-color: #166534; box-shadow: 0 0 0 1px #22c55e22; }
+        .student-card.enfocado::before  { background: #22c55e; }
+        .student-card.distraido { border-color: #7f1d1d; box-shadow: 0 0 0 1px #ef444422; }
+        .student-card.distraido::before { background: #ef4444; }
+        .student-card.somnoliento { border-color: #7c3900; box-shadow: 0 0 0 1px #f9731622; }
+        .student-card.somnoliento::before { background: #f97316; }
+
+        .sc-comp-num {
+            font-size: 2.2rem; font-weight: 900; line-height: 1;
+            transition: color .4s;
+        }
+        .sc-badge {
+            display: inline-flex; align-items: center; gap: 4px;
+            padding: 3px 10px; border-radius: 99px;
+            font-size: .68rem; font-weight: 700;
+            text-transform: uppercase; letter-spacing: .04em;
+        }
+        .sc-badge.enfocado   { background: #14532d44; border: 1px solid #22c55e55; color: #22c55e; }
+        .sc-badge.distraido  { background: #450a0a44; border: 1px solid #ef444455; color: #ef4444; }
+        .sc-badge.somnoliento{ background: #42300044; border: 1px solid #f9731655; color: #f97316; }
+
+        .sc-row {
+            display: flex; justify-content: space-between; align-items: center;
+            font-size: .75rem; padding: 3px 0;
+            border-bottom: 1px solid #1e293b;
+        }
+        .sc-row:last-child { border-bottom: none; }
+        .sc-key { color: #64748b; }
+        .sc-val { font-weight: 600; color: #e2e8f0; }
+
+        /* Barra de comprension dentro de la card */
+        .sc-comp-bar {
+            height: 5px; border-radius: 99px;
+            background: #263348; overflow: hidden; margin-top: 6px;
+        }
+        .sc-comp-fill {
+            height: 100%; border-radius: 99px;
+            transition: width .5s ease, background .4s;
+        }
+
+        @keyframes alertPulse {
+            0%,100% { opacity: 1; } 50% { opacity: .5; }
+        }
+        .student-card.distraido { animation: alertPulse 2s ease-in-out infinite; }
+        .student-card.distraido:hover { animation: none; }
     </style>
 </head>
 <body class="min-h-screen bg-slate-50 font-sans text-slate-800 selection:bg-indigo-200">
 
     <!-- BARRA DE NAVEGACIÓN SUPERIOR -->
     <nav class="bg-slate-900 text-white p-4 shadow-lg sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto flex justify-between items-center">
+        <div class="max-w-[1600px] mx-auto flex justify-between items-center">
             <div class="flex items-center gap-4">
                 <div class="bg-indigo-500/20 text-indigo-400 p-2.5 rounded-xl border border-indigo-500/30">
                     <i data-lucide="scan-face" class="w-6 h-6"></i>
@@ -163,9 +264,15 @@
                     <i data-lucide="settings-2" class="w-3.5 h-3.5"></i>
                     <span>Configuración</span>
                 </button>
+
             </div>
         </div>
     </nav>
+
+    <!-- IDs legacy mantenidos por compatibilidad JS (ocultos) -->
+    <div id="session-bar" style="display:none"></div>
+    <div id="no-session-bar" style="display:none"></div>
+    <div id="student-panels-wrap" style="display:none"><div id="student-panels-grid"></div></div>
 
     <!-- ══════════════════════════════════════════════════════════════════════
          MODAL DE CONFIGURACIÓN
@@ -275,11 +382,116 @@
         </div>
     </div>
 
-    <main class="max-w-7xl mx-auto p-4 md:p-6 mt-4">
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            
+    <main class="max-w-[1600px] mx-auto p-4 md:p-6 mt-4">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+
+            <!-- ══════════════════════════════════════════
+                 COLUMNA IZQUIERDA — Tutor · Sesión · Alumnos
+                 ══════════════════════════════════════════ -->
+            <div class="lg:col-span-2 flex flex-col gap-4">
+
+                <!-- ── Tutor card ──────────────────────── -->
+                <div class="bg-slate-900 border border-slate-700 rounded-2xl p-4">
+                    <p class="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-3">Tutor activo</p>
+                    <div class="flex items-center gap-3 mb-4">
+                        <div id="sidebar-tutor-avatar"
+                             class="w-11 h-11 rounded-full bg-indigo-600 flex items-center justify-center
+                                    text-white font-extrabold text-lg flex-shrink-0">?</div>
+                        <div class="min-w-0">
+                            <p id="sidebar-tutor-name" class="text-white font-bold text-sm leading-tight truncate">—</p>
+                            <p class="text-slate-500 text-[10px]">Sesión iniciada</p>
+                        </div>
+                    </div>
+                    <button onclick="logoutTutor()"
+                        class="w-full flex items-center justify-center gap-2 bg-red-900/20 hover:bg-red-900/40
+                               text-red-400 py-2 rounded-xl border border-red-900/40 text-[11px] font-bold
+                               transition-smooth">
+                        <i data-lucide="log-out" class="w-3 h-3"></i> Cerrar sesión
+                    </button>
+                </div>
+
+                <!-- ── Sesión activa ───────────────────── -->
+                <div id="sidebar-session-active" class="bg-slate-900 border border-slate-700 rounded-2xl p-4" style="display:none">
+                    <div class="flex items-center gap-2 mb-3">
+                        <div class="w-2 h-2 rounded-full bg-green-400 animate-pulse flex-shrink-0"></div>
+                        <span class="text-green-400 text-[9px] font-bold uppercase tracking-widest">Sesión activa</span>
+                    </div>
+                    <p id="sidebar-session-title" class="text-white font-bold text-sm leading-tight mb-0.5 truncate">—</p>
+                    <p id="sidebar-session-materia" class="text-slate-400 text-[11px] mb-4 truncate">—</p>
+
+                    <div class="grid grid-cols-2 gap-2 mb-4">
+                        <div class="bg-slate-800 rounded-xl p-2.5 text-center">
+                            <p class="text-[9px] text-slate-500 uppercase font-bold tracking-wider mb-1">Duración</p>
+                            <p id="sidebar-timer" class="font-mono font-extrabold text-white text-sm">00:00:00</p>
+                        </div>
+                        <div class="bg-slate-800 rounded-xl p-2.5 text-center">
+                            <p class="text-[9px] text-slate-500 uppercase font-bold tracking-wider mb-1">Alumnos</p>
+                            <p id="sidebar-alumnos-count" class="font-extrabold text-white text-lg">0</p>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col gap-2">
+                        <button onclick="verReporte()"
+                            class="w-full flex items-center justify-center gap-1.5 bg-indigo-600/20
+                                   hover:bg-indigo-600/40 text-indigo-400 py-2 rounded-xl
+                                   border border-indigo-600/40 text-[11px] font-bold transition-smooth">
+                            <i data-lucide="bar-chart-3" class="w-3 h-3"></i> Ver Reporte
+                        </button>
+                        <a href="/session-setup"
+                            class="w-full flex items-center justify-center gap-1.5 bg-slate-800
+                                   hover:bg-slate-700 text-slate-300 py-2 rounded-xl
+                                   border border-slate-700 text-[11px] font-bold transition-smooth">
+                            <i data-lucide="plus-circle" class="w-3 h-3"></i> Nueva Sesión
+                        </a>
+                        <button onclick="cerrarSesion()"
+                            class="w-full flex items-center justify-center gap-1.5 bg-red-900/20
+                                   hover:bg-red-900/40 text-red-400 py-2 rounded-xl
+                                   border border-red-900/40 text-[11px] font-bold transition-smooth">
+                            <i data-lucide="square" class="w-3 h-3"></i> Terminar Sesión
+                        </button>
+                    </div>
+                </div>
+
+                <!-- ── Sin sesión ──────────────────────── -->
+                <div id="sidebar-no-session" class="bg-slate-900 border border-slate-700 rounded-2xl p-4">
+                    <div class="flex items-center gap-2 mb-2">
+                        <div class="w-2 h-2 rounded-full bg-slate-600 flex-shrink-0"></div>
+                        <span class="text-slate-500 text-[9px] font-bold uppercase tracking-widest">Sin sesión</span>
+                    </div>
+                    <p class="text-slate-500 text-[11px] leading-relaxed mb-3">
+                        No hay sesión de monitoreo activa. Los datos no se guardan.
+                    </p>
+                    <!-- Botón Último Reporte: visible si hay una sesión previa guardada -->
+                    <button id="btn-ultimo-reporte" onclick="verUltimoReporte()"
+                        style="display:none"
+                        class="w-full flex items-center justify-center gap-1.5 bg-indigo-600/20
+                               hover:bg-indigo-600/40 text-indigo-400 py-2 rounded-xl
+                               border border-indigo-600/40 text-[11px] font-bold transition-smooth mb-2">
+                        <i data-lucide="bar-chart-3" class="w-3 h-3"></i> Ver Último Reporte
+                    </button>
+                    <a href="/session-setup"
+                        class="w-full flex items-center justify-center gap-1.5 bg-indigo-600
+                               hover:bg-indigo-700 text-white py-2 rounded-xl text-[11px] font-bold
+                               transition-smooth">
+                        <i data-lucide="play" class="w-3 h-3"></i> Iniciar Sesión
+                    </a>
+                </div>
+
+                <!-- ── Paneles de alumnos en vivo ──────── -->
+                <div id="sidebar-student-panels" style="display:none">
+                    <div class="flex items-center gap-2 mb-2 px-1">
+                        <i data-lucide="activity" class="w-3.5 h-3.5 text-indigo-400 flex-shrink-0"></i>
+                        <span class="text-slate-300 text-[11px] font-bold uppercase tracking-wider">Monitoreo</span>
+                    </div>
+                    <div id="sidebar-student-grid" class="flex flex-col gap-3">
+                        <!-- Generado por JS -->
+                    </div>
+                </div>
+
+            </div><!-- /columna izquierda -->
+
             <!-- ==========================================
-                 PANEL IZQUIERDO (VIDEO MJPEG Y AUDIO WHISPER)
+                 COLUMNA CENTRAL — Auditoría Visual + Audio
                  ========================================== -->
             <div class="lg:col-span-7 flex flex-col gap-6">
                 
@@ -344,9 +556,9 @@
             </div>
 
             <!-- ==========================================
-                 PANEL DERECHO (MÉTRICAS Y GRÁFICAS DE IA)
+                 COLUMNA DERECHA — Métricas y Gráficas de IA
                  ========================================== -->
-            <div class="lg:col-span-5 flex flex-col gap-6">
+            <div class="lg:col-span-3 flex flex-col gap-4">
                 
                 <!-- 1. Radar de Atención (Geometría Epipolar de MediaPipe) -->
                 <div id="panel-atencion" class="glass-panel rounded-2xl p-5 transition-smooth border-l-4 border-l-emerald-500">
@@ -391,17 +603,17 @@
                 </div>
 
                 <!-- 3. Gráfica de Seguimiento (Fusión Multimodal) -->
-                <div class="glass-panel rounded-2xl p-6 flex-1 flex flex-col shadow-sm">
-                    <div class="flex justify-between items-start mb-6">
+                <div class="glass-panel rounded-2xl p-4 flex-1 flex flex-col shadow-sm">
+                    <div class="flex justify-between items-start mb-3">
                         <div>
-                            <h3 class="text-slate-800 font-bold text-lg flex items-center gap-2">
-                                <i data-lucide="activity" class="w-5 h-5 text-indigo-500"></i> Índice de Comprensión
+                            <h3 class="text-slate-800 font-bold text-sm flex items-center gap-1.5">
+                                <i data-lucide="activity" class="w-4 h-4 text-indigo-500"></i> Comprensión
                             </h3>
-                            <p class="text-slate-400 text-xs mt-1">Fusión Multimodal (Visión + NLP)</p>
+                            <p class="text-slate-400 text-[10px] mt-0.5">Visión + NLP</p>
                         </div>
                         <div class="text-right">
-                            <span id="indice-val" class="text-5xl font-black tracking-tighter text-indigo-600 transition-smooth">0</span>
-                            <span class="text-xl font-bold text-slate-400">%</span>
+                            <span id="indice-val" class="text-4xl font-black tracking-tighter text-indigo-600 transition-smooth">0</span>
+                            <span class="text-base font-bold text-slate-400">%</span>
                         </div>
                     </div>
 
@@ -1104,7 +1316,389 @@
             document.getElementById('ml-features').innerHTML = htmlFi;
             lucide.createIcons();
         }
+
+        // ══════════════════════════════════════════════════════════════════════
+        // TUTOR + SESIÓN + PANELES DE ALUMNOS
+        // ══════════════════════════════════════════════════════════════════════
+
+        const _token      = sessionStorage.getItem('edu_token');
+        const _tutorName  = sessionStorage.getItem('edu_tutor') || '';
+        let   _sessionId  = sessionStorage.getItem('edu_session_id');
+        let   _slots      = [];    // [{face_slot, student_id, nombre, codigo}]
+        let   _sessionStart = null;
+        let   _timerInterval = null;
+
+        // Colores por slot
+        const SLOT_COLORS = ['#6366f1','#22c55e','#f97316','#ec4899','#06b6d4','#eab308'];
+
+        // ── Inicializar tutor pill ────────────────────────────────────────────
+        function initTutorUI() {
+            if (!_tutorName) return;
+            const initials = _tutorName.split(' ').slice(0,2).map(w => w[0]||'').join('').toUpperCase();
+            // Sidebar
+            const sAvatar = document.getElementById('sidebar-tutor-avatar');
+            const sName   = document.getElementById('sidebar-tutor-name');
+            if (sAvatar) sAvatar.textContent = initials;
+            if (sName)   sName.textContent   = _tutorName;
+            // Colores de avatar por inicial
+            const colors = ['#6366f1','#22c55e','#f97316','#ec4899','#06b6d4','#eab308','#a855f7'];
+            const color  = colors[(initials.charCodeAt(0) || 0) % colors.length];
+            if (sAvatar) sAvatar.style.background = color;
+            // Si ya hay un reporte guardado (de sesión anterior), mostrar botón
+            if (sessionStorage.getItem('report_session_id')) {
+                const btn = document.getElementById('btn-ultimo-reporte');
+                if (btn) btn.style.display = 'flex';
+            }
+        }
+
+        // ── Ver reporte de la última sesión cerrada ────────────────────────────
+        function verUltimoReporte() {
+            const id = sessionStorage.getItem('report_session_id');
+            if (id) location.href = '/reports';
+        }
+
+        // ── Logout ───────────────────────────────────────────────────────────
+        function logoutTutor() {
+            // Delegado al modal externo (ver bloque <script> al final del body)
+            window._tutorName = _tutorName;
+            window._token = _token;
+            if (typeof window._showLogoutDlg === 'function') window._showLogoutDlg();
+            else { document.getElementById('dlg-logout').classList.add('open'); lucide.createIcons(); }
+        }
+
+        // ── Cargar sesión activa ──────────────────────────────────────────────
+        async function loadActiveSession() {
+            if (!_token) return;
+            try {
+                const res  = await fetch('/api/sessions/active', {
+                    headers: { Authorization: 'Bearer ' + _token }
+                });
+                const data = await res.json();
+
+                if (data.active) {
+                    _sessionId    = data.session.id;
+                    _sessionStart = new Date(data.session.started_at.replace(' ','T'));
+                    _slots        = data.slots || [];
+
+                    // Guardar en sessionStorage para reportes
+                    sessionStorage.setItem('edu_session_id', _sessionId);
+                    sessionStorage.setItem('edu_session_titulo', data.session.titulo);
+
+                    // Sidebar sesión
+                    document.getElementById('sidebar-session-active').style.display = 'block';
+                    document.getElementById('sidebar-no-session').style.display     = 'none';
+                    document.getElementById('sidebar-session-title').textContent    = data.session.titulo;
+                    document.getElementById('sidebar-session-materia').textContent  =
+                        data.session.materia || '—';
+                    document.getElementById('sidebar-alumnos-count').textContent    = _slots.length;
+
+                    // Timer
+                    if (_timerInterval) clearInterval(_timerInterval);
+                    _timerInterval = setInterval(updateTimer, 1000);
+                    updateTimer();
+
+                    // Paneles de alumnos en sidebar
+                    if (_slots.length > 0) {
+                        document.getElementById('sidebar-student-panels').style.display = 'block';
+                        buildStudentPanels();
+                    }
+                } else {
+                    document.getElementById('sidebar-session-active').style.display = 'none';
+                    document.getElementById('sidebar-no-session').style.display     = 'block';
+                    document.getElementById('sidebar-student-panels').style.display = 'none';
+                }
+            } catch (e) {
+                console.warn('No se pudo cargar sesión activa:', e);
+            }
+            lucide.createIcons();
+        }
+
+        // ── Timer de sesión ───────────────────────────────────────────────────
+        function updateTimer() {
+            if (!_sessionStart) return;
+            const elapsed = Math.floor((Date.now() - _sessionStart.getTime()) / 1000);
+            const h = Math.floor(elapsed / 3600);
+            const m = Math.floor((elapsed % 3600) / 60);
+            const s = elapsed % 60;
+            const txt = String(h).padStart(2,'0') + ':' +
+                        String(m).padStart(2,'0') + ':' +
+                        String(s).padStart(2,'0');
+            const el = document.getElementById('sidebar-timer');
+            if (el) el.textContent = txt;
+        }
+
+        // ── Cerrar sesión de monitoreo ─────────────────────────────────────────
+        async function cerrarSesion() {
+            if (!_sessionId) return;
+            // Expone variables necesarias al modal externo
+            window._sessionId     = _sessionId;
+            window._token         = _token;
+            window._timerInterval = _timerInterval;
+            window._cleanupSession = () => {
+                if (_timerInterval) { clearInterval(_timerInterval); _timerInterval = null; }
+                _slots     = [];
+                _sessionId = null;
+            };
+            document.getElementById('dlg-cerrar-sesion').classList.add('open');
+            lucide.createIcons();
+        }
+
+        // ── Ver reporte (sesión activa o cerrada) ──────────────────────────────
+        function verReporte() {
+            const id = _sessionId || sessionStorage.getItem('report_session_id');
+            if (id) {
+                sessionStorage.setItem('report_session_id', id);
+                location.href = '/reports';
+            }
+        }
+
+        // ══ PANELES DE ALUMNOS ════════════════════════════════════════════════
+
+        // Construye los paneles compactos en el sidebar
+        function buildStudentPanels() {
+            const grid = document.getElementById('sidebar-student-grid');
+            if (!grid) return;
+            grid.innerHTML = _slots.map((slot, i) => {
+                const col = SLOT_COLORS[slot.face_slot] || SLOT_COLORS[i % SLOT_COLORS.length];
+                return `
+                <div class="student-card" id="sc-${slot.student_id}"
+                     style="padding:12px 14px;border-radius:12px">
+                    <!-- Header -->
+                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+                        <div style="width:26px;height:26px;border-radius:50%;
+                                    background:${col}33;border:2px solid ${col};
+                                    display:flex;align-items:center;justify-content:center;
+                                    font-size:.65rem;font-weight:800;color:${col};flex-shrink:0">
+                            ${slot.nombre.charAt(0).toUpperCase()}
+                        </div>
+                        <div style="min-width:0;flex:1">
+                            <div style="font-weight:700;font-size:.8rem;color:#e2e8f0;
+                                        white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+                                ${slot.nombre}
+                            </div>
+                            <div style="font-size:.63rem;color:#64748b">${slot.codigo}</div>
+                        </div>
+                        <span class="sc-badge enfocado" id="sc-badge-${slot.student_id}"
+                              style="font-size:.58rem;padding:2px 7px">—</span>
+                    </div>
+                    <!-- Comprensión -->
+                    <div style="display:flex;align-items:center;gap:6px;margin-bottom:5px">
+                        <span class="sc-comp-num" id="sc-comp-${slot.student_id}"
+                              style="color:${col};font-size:1.5rem">—</span>
+                        <span style="font-size:.7rem;color:#64748b;font-weight:600">%</span>
+                        <span style="font-size:.63rem;color:#64748b;margin-left:auto">Comprensión</span>
+                    </div>
+                    <div class="sc-comp-bar">
+                        <div class="sc-comp-fill" id="sc-compbar-${slot.student_id}"
+                             style="width:50%;background:${col}"></div>
+                    </div>
+                    <!-- Métricas compactas -->
+                    <div style="margin-top:8px;display:flex;flex-direction:column;gap:0">
+                        <div class="sc-row">
+                            <span class="sc-key">Emoción</span>
+                            <span class="sc-val" id="sc-emo-${slot.student_id}" style="font-size:.7rem">—</span>
+                        </div>
+                        <div class="sc-row">
+                            <span class="sc-key">Mirada</span>
+                            <span class="sc-val" id="sc-mir-${slot.student_id}" style="font-size:.7rem">—</span>
+                        </div>
+                        <div class="sc-row" style="border-bottom:none">
+                            <span class="sc-key">Sentimiento</span>
+                            <span class="sc-val" id="sc-sent-${slot.student_id}" style="font-size:.7rem">—</span>
+                        </div>
+                    </div>
+                </div>`;
+            }).join('');
+            lucide.createIcons();
+        }
+
+        // Actualiza los paneles con datos del WebSocket
+        function updateStudentPanels(wsData) {
+            if (!_slots.length) return;
+
+            _slots.forEach((slot, i) => {
+                // Si el engine tiene estado por alumno, usarlo; si no, todos ven el global
+                const state = (wsData.alumnos && wsData.alumnos[slot.face_slot])
+                              ? wsData.alumnos[slot.face_slot]
+                              : wsData;
+
+                const sid   = slot.student_id;
+                const comp  = state.indice_comprension ?? 50;
+                const aten  = (state.atencion || 'Enfocado').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+                const card  = document.getElementById('sc-' + sid);
+
+                if (!card) return;
+
+                // Color de comprensión
+                const compColor = comp >= 70 ? '#22c55e' : comp >= 50 ? '#eab308' : '#ef4444';
+
+                // Actualizar número
+                const compEl = document.getElementById('sc-comp-' + sid);
+                if (compEl) { compEl.textContent = comp; compEl.style.color = compColor; }
+
+                // Barra
+                const barEl = document.getElementById('sc-compbar-' + sid);
+                if (barEl) { barEl.style.width = comp + '%'; barEl.style.background = compColor; }
+
+                // Badge de atención
+                const badgeEl = document.getElementById('sc-badge-' + sid);
+                if (badgeEl) {
+                    const label = state.atencion || 'Enfocado';
+                    const cls   = aten === 'distraido' ? 'distraido'
+                                : aten === 'somnoliento' ? 'somnoliento' : 'enfocado';
+                    badgeEl.className = 'sc-badge ' + cls;
+                    badgeEl.textContent = label;
+                }
+
+                // Card border
+                const cardCls = aten === 'distraido' ? 'student-card distraido'
+                              : aten === 'somnoliento' ? 'student-card somnoliento'
+                              : 'student-card enfocado';
+                card.className = cardCls;
+
+                // Métricas de texto
+                const emoEl  = document.getElementById('sc-emo-'  + sid);
+                const mirEl  = document.getElementById('sc-mir-'  + sid);
+                const sentEl = document.getElementById('sc-sent-' + sid);
+                if (emoEl)  emoEl.textContent  = state.emocion     || '—';
+                if (mirEl)  mirEl.textContent  = state.mirada      || '—';
+                if (sentEl) {
+                    const s = state.sentimiento || 'NEU';
+                    sentEl.textContent = s === 'POS' ? '😊 Positivo'
+                                      : s === 'NEG' ? '😔 Negativo' : '😐 Neutro';
+                }
+            });
+        }
+
+        // ── Patch al WebSocket existente para alimentar paneles ───────────────
+        // Se ejecuta después de que el WS ya esté definido en el código original
+        function patchWS() {
+            // El WS se crea en el código original con variable "ws"
+            // Esperamos a que exista y luego interceptamos onmessage
+            const origInterval = setInterval(() => {
+                if (typeof ws !== 'undefined' && ws) {
+                    const origOnMsg = ws.onmessage;
+                    ws.onmessage = function(evt) {
+                        if (origOnMsg) origOnMsg.call(this, evt);
+                        try {
+                            const d = JSON.parse(evt.data);
+                            updateStudentPanels(d);
+                        } catch {}
+                    };
+                    clearInterval(origInterval);
+                }
+            }, 200);
+        }
+
+        // ── Init ──────────────────────────────────────────────────────────────
+        initTutorUI();
+        loadActiveSession();
+        setTimeout(patchWS, 500);
+
+        // Si no hay token, redirigir a login
+        if (!_token) { location.href = '/login'; }
     </script>
+
+<!-- ── Modal: Cerrar sesión de tutor ── -->
+<div class="dlg-backdrop" id="dlg-logout">
+  <div class="dlg-box">
+    <div class="dlg-icon" style="background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3)">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+        <polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+      </svg>
+    </div>
+    <div class="dlg-title" id="dlg-logout-title">¿Cerrar sesión?</div>
+    <div class="dlg-body">Se cerrará tu sesión de tutor. Podés volver a ingresar con reconocimiento facial en cualquier momento.</div>
+    <div class="dlg-actions">
+      <button class="dlg-btn dlg-btn-cancel" onclick="document.getElementById('dlg-logout').classList.remove('open')">Cancelar</button>
+      <button class="dlg-btn dlg-btn-logout" onclick="_confirmLogout()">Sí, salir</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Modal: Finalizar sesión de monitoreo ── -->
+<div class="dlg-backdrop" id="dlg-cerrar-sesion">
+  <div class="dlg-box">
+    <div class="dlg-icon" style="background:rgba(234,179,8,.12);border:1px solid rgba(234,179,8,.3)">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#eab308" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
+      </svg>
+    </div>
+    <div class="dlg-title">¿Finalizar monitoreo?</div>
+    <div class="dlg-body">Los datos de la sesión quedarán guardados y podrás ver el reporte completo al cerrar.</div>
+    <div class="dlg-actions">
+      <button class="dlg-btn dlg-btn-cancel" onclick="document.getElementById('dlg-cerrar-sesion').classList.remove('open')">Cancelar</button>
+      <button class="dlg-btn dlg-btn-danger" onclick="_confirmCerrarSesion()">Finalizar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="dash-toast">
+  <span id="dash-toast-icon"></span>
+  <span id="dash-toast-msg"></span>
+</div>
+
+<script>
+  // ── Dialog helpers ────────────────────────────────────────────────────────
+  let _dashToastTimer = null;
+  function _showDashToast(msg, type) {
+    const el  = document.getElementById('dash-toast');
+    const colors = { error:'#ef4444', ok:'#22c55e', info:'#818cf8' };
+    document.getElementById('dash-toast-icon').innerHTML =
+      `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="${colors[type]||colors.info}" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`;
+    document.getElementById('dash-toast-msg').textContent = msg;
+    el.style.borderColor = colors[type] || colors.info;
+    el.classList.add('show');
+    if (_dashToastTimer) clearTimeout(_dashToastTimer);
+    _dashToastTimer = setTimeout(() => el.classList.remove('show'), 3500);
+  }
+
+  // Reemplaza logoutTutor para usar modal
+  function logoutTutor() {
+    const title = document.getElementById('dlg-logout-title');
+    if (title) title.textContent = `¿Cerrar sesión de ${window._tutorName || 'tutor'}?`;
+    document.getElementById('dlg-logout').classList.add('open');
+    lucide.createIcons();
+  }
+  function _confirmLogout() {
+    document.getElementById('dlg-logout').classList.remove('open');
+    if (window._token) {
+      fetch('/api/auth/logout', { method:'POST', headers:{ Authorization:'Bearer '+window._token }}).catch(()=>{});
+    }
+    sessionStorage.clear();
+    location.href = '/login';
+  }
+
+  // Reemplaza cerrarSesion para usar modal
+  function cerrarSesion() {
+    if (!window._sessionId) return;
+    document.getElementById('dlg-cerrar-sesion').classList.add('open');
+    lucide.createIcons();
+  }
+  async function _confirmCerrarSesion() {
+    document.getElementById('dlg-cerrar-sesion').classList.remove('open');
+    try {
+      const closedId = window._sessionId;
+      await fetch('/api/sessions/' + closedId + '/close', {
+        method: 'POST', headers: { Authorization: 'Bearer ' + window._token }
+      });
+      // Limpia estado interno del script principal
+      if (typeof window._cleanupSession === 'function') window._cleanupSession();
+      sessionStorage.setItem('report_session_id', closedId);
+      sessionStorage.removeItem('edu_session_id');
+      sessionStorage.removeItem('edu_session_titulo');
+      document.getElementById('sidebar-session-active').style.display = 'none';
+      document.getElementById('sidebar-no-session').style.display     = 'block';
+      document.getElementById('sidebar-student-panels').style.display = 'none';
+      const btnRep = document.getElementById('btn-ultimo-reporte');
+      if (btnRep) { btnRep.style.display = 'flex'; lucide.createIcons(); }
+      if (typeof loadActiveSession === 'function') await loadActiveSession();
+    } catch { _showDashToast('Error al cerrar la sesión.', 'error'); }
+  }
+</script>
+
 </body>
 </html>
 
