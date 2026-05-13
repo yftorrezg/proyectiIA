@@ -99,6 +99,28 @@ def get_slots(session_id: int) -> list:
     return [dict(r) for r in rows]
 
 
+def update_session(session_id: int, titulo: str, materia: str) -> None:
+    with _lock:
+        conn = get_connection()
+        with conn:
+            conn.execute(
+                "UPDATE sessions SET titulo=?, materia=? WHERE id=?",
+                (titulo, materia, session_id),
+            )
+        conn.close()
+    logger.info(f"Sesion actualizada: id={session_id} titulo='{titulo}'")
+
+
+def delete_session(session_id: int) -> None:
+    with _lock:
+        conn = get_connection()
+        with conn:
+            conn.execute("DELETE FROM session_slots WHERE session_id=?", (session_id,))
+            conn.execute("DELETE FROM sessions WHERE id=?", (session_id,))
+        conn.close()
+    logger.info(f"Sesion eliminada: id={session_id}")
+
+
 def reorder_slots(session_id: int, new_assignments: list) -> list:
     """
     Reasigna los slots de cara en la sesion activa.

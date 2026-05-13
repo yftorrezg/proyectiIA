@@ -3,161 +3,409 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-  <title>Edu-Insight — Nueva Sesion</title>
+  <title>Edu-Insight — Nueva Sesión</title>
   <script>(function(){if(!sessionStorage.getItem('edu_token')){location.replace('/login');throw 0;}})();</script>
-  <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
   <style>
-    :root{--bg:#0f172a;--surface:#1e293b;--surface2:#263348;--border:#334155;
-          --accent:#6366f1;--accent2:#818cf8;--green:#22c55e;--yellow:#eab308;
-          --red:#ef4444;--text:#e2e8f0;--muted:#94a3b8;}
-    *{box-sizing:border-box;margin:0;padding:0;}
-    body{background:var(--bg);color:var(--text);font-family:system-ui,sans-serif;
-         min-height:100vh;display:flex;flex-direction:column;}
-    .bg-grid{position:fixed;inset:0;z-index:0;
-      background-image:linear-gradient(rgba(99,102,241,.04) 1px,transparent 1px),
-                       linear-gradient(90deg,rgba(99,102,241,.04) 1px,transparent 1px);
-      background-size:40px 40px;pointer-events:none;}
+    :root{
+      --bg:#070c18; --glass:rgba(13,21,44,.78); --glass2:rgba(19,30,60,.65);
+      --border:rgba(99,102,241,.14); --border2:rgba(148,163,184,.08);
+      --accent:#6366f1; --accent2:#818cf8; --accent3:#a5b4fc;
+      --purple:#a855f7; --green:#22c55e; --yellow:#eab308;
+      --red:#ef4444; --text:#e2e8f0; --muted:#94a3b8; --muted2:#64748b;
+      --h:58px;
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    html,body{height:100%;overflow:hidden;}
+    body{background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,sans-serif;}
 
-    header{position:relative;z-index:1;background:var(--surface);
-           border-bottom:1px solid var(--border);padding:12px 24px;
-           display:flex;align-items:center;justify-content:space-between;}
+    /* ── Aurora ── */
+    .aurora{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;}
+    .blob{position:absolute;border-radius:50%;filter:blur(90px);opacity:.28;}
+    .b1{width:650px;height:650px;top:-200px;left:-150px;
+        background:radial-gradient(circle,rgba(99,102,241,.55),transparent 65%);
+        animation:ab1 14s ease-in-out infinite;}
+    .b2{width:550px;height:550px;bottom:-160px;right:-100px;
+        background:radial-gradient(circle,rgba(168,85,247,.45),transparent 65%);
+        animation:ab2 17s ease-in-out infinite;}
+    .b3{width:450px;height:450px;top:30%;left:50%;
+        background:radial-gradient(circle,rgba(6,182,212,.28),transparent 65%);
+        animation:ab3 11s ease-in-out infinite;}
+    @keyframes ab1{0%,100%{transform:translate(0,0)scale(1)}50%{transform:translate(40px,-30px)scale(1.06)}}
+    @keyframes ab2{0%,100%{transform:translate(0,0)scale(1)}50%{transform:translate(-30px,22px)scale(1.05)}}
+    @keyframes ab3{0%,100%{transform:translate(0,0)scale(1)}50%{transform:translate(-20px,30px)scale(1.07)}}
+    .grid-bg{position:fixed;inset:0;z-index:0;pointer-events:none;
+      background-image:linear-gradient(rgba(99,102,241,.03) 1px,transparent 1px),
+                       linear-gradient(90deg,rgba(99,102,241,.03) 1px,transparent 1px);
+      background-size:48px 48px;}
+
+    /* ── Header ── */
+    header{
+      position:fixed;top:0;left:0;right:0;z-index:100;height:var(--h);
+      background:rgba(7,12,24,.92);backdrop-filter:blur(20px);
+      border-bottom:1px solid var(--border);
+      display:flex;align-items:center;justify-content:space-between;padding:0 22px;
+    }
     .logo-row{display:flex;align-items:center;gap:12px;}
-    .logo-ico{width:36px;height:36px;border-radius:10px;
-              background:linear-gradient(135deg,var(--accent),#a855f7);
-              display:flex;align-items:center;justify-content:center;}
+    .logo-ico{
+      width:36px;height:36px;border-radius:10px;
+      background:linear-gradient(135deg,var(--accent),var(--purple));
+      display:flex;align-items:center;justify-content:center;
+      box-shadow:0 0 20px rgba(99,102,241,.4);
+    }
+    .logo-title{
+      font-size:1rem;font-weight:900;
+      background:linear-gradient(135deg,#fff 30%,var(--accent3));
+      -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+    }
+    .hdr-nav{display:flex;align-items:center;gap:8px;}
+    .hdr-btn{
+      display:inline-flex;align-items:center;gap:7px;
+      padding:8px 15px;border-radius:9px;font-weight:600;font-size:.8rem;
+      cursor:pointer;border:1px solid var(--border2);
+      background:rgba(19,30,60,.6);color:var(--text);
+      text-decoration:none;transition:all .22s;
+    }
+    .hdr-btn:hover{background:rgba(99,102,241,.12);border-color:rgba(99,102,241,.3);transform:translateY(-1px);}
+    .hdr-btn.danger:hover{background:rgba(239,68,68,.1);border-color:rgba(239,68,68,.3);color:var(--red);}
 
-    main{position:relative;z-index:1;flex:1;display:grid;
-         grid-template-columns:1fr 360px;gap:24px;
-         max-width:1100px;width:100%;margin:0 auto;padding:24px;}
+    /* ── Main layout ── */
+    .main{
+      position:relative;z-index:1;
+      padding-top:var(--h);
+      height:100vh;
+      display:grid;
+      grid-template-columns:1fr 350px;
+      gap:14px;padding-left:14px;padding-right:14px;padding-bottom:14px;
+    }
 
-    .card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:24px;}
-    .section-title{font-size:.78rem;font-weight:700;color:var(--muted);
-                   text-transform:uppercase;letter-spacing:.06em;margin-bottom:14px;}
+    /* ── Glass card ── */
+    .glass{
+      background:var(--glass);
+      backdrop-filter:blur(22px) saturate(1.4);
+      -webkit-backdrop-filter:blur(22px) saturate(1.4);
+      border:1px solid var(--border);border-radius:18px;
+      box-shadow:0 16px 50px rgba(0,0,0,.45),0 0 0 1px rgba(255,255,255,.03),
+                 inset 0 1px 0 rgba(255,255,255,.04);
+    }
+    .card-header{
+      padding:13px 16px;border-bottom:1px solid var(--border2);
+      display:flex;align-items:center;justify-content:space-between;flex-shrink:0;
+    }
+    .card-title{
+      font-size:.7rem;font-weight:700;color:var(--muted);
+      text-transform:uppercase;letter-spacing:.07em;
+      display:flex;align-items:center;gap:6px;
+    }
+    .step-badge{
+      width:20px;height:20px;border-radius:50%;flex-shrink:0;
+      background:linear-gradient(135deg,var(--accent),var(--purple));
+      color:#fff;font-size:.62rem;font-weight:900;
+      display:flex;align-items:center;justify-content:center;
+    }
 
-    label{display:block;font-size:.78rem;font-weight:600;color:var(--muted);
-          text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;}
-    input[type=text]{width:100%;background:var(--surface2);border:1px solid var(--border);
-                     border-radius:8px;color:var(--text);padding:10px 12px;font-size:.9rem;
-                     outline:none;transition:border-color .2s;}
-    input[type=text]:focus{border-color:var(--accent);}
-    input[type=text]::placeholder{color:var(--muted);}
+    /* ── LEFT COLUMN ── */
+    .left-col{
+      display:flex;flex-direction:column;gap:12px;
+      overflow:hidden;height:100%;
+      padding-top:14px;
+    }
 
-    /* Tabla alumnos */
-    .student-row{display:grid;grid-template-columns:auto 1fr 110px auto auto;
-                 align-items:center;gap:8px;padding:10px 12px;
-                 border-radius:10px;border:1px solid var(--border);
-                 background:var(--surface2);transition:border-color .2s;}
-    .student-row.selected{border-color:var(--accent);}
-    .student-row.del-selected{border-color:rgba(239,68,68,.5);background:rgba(239,68,68,.06);}
-    .student-row .check{width:20px;height:20px;border-radius:5px;
-                        border:2px solid var(--border);cursor:pointer;
-                        display:flex;align-items:center;justify-content:center;
-                        transition:all .15s;flex-shrink:0;}
-    .student-row.selected .check{background:var(--accent);border-color:var(--accent);}
+    /* Step 1 — Class info */
+    .step1{flex-shrink:0;display:flex;flex-direction:column;}
+    .step1-body{padding:14px 16px;display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+    .field label{
+      display:block;font-size:.68rem;font-weight:700;color:var(--muted);
+      text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px;
+    }
+    .field input{
+      width:100%;background:rgba(19,30,60,.7);
+      border:1px solid rgba(99,102,241,.15);border-radius:10px;
+      color:var(--text);padding:9px 12px;font-size:.88rem;
+      outline:none;transition:all .22s;
+    }
+    .field input:focus{
+      border-color:var(--accent);
+      box-shadow:0 0 0 3px rgba(99,102,241,.14);
+    }
+    .field input::placeholder{color:var(--muted2);}
+
+    /* Step 2 — Students */
+    .step2{flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden;}
+    .step2-actions{display:flex;gap:7px;}
+    .btn-sm{
+      display:inline-flex;align-items:center;gap:6px;
+      padding:6px 12px;border-radius:8px;font-weight:600;font-size:.77rem;
+      cursor:pointer;border:1px solid var(--border2);
+      background:rgba(19,30,60,.6);color:var(--text);
+      transition:all .2s;
+    }
+    .btn-sm:hover{background:rgba(99,102,241,.12);border-color:rgba(99,102,241,.3);}
+    .btn-sm.danger:hover{background:rgba(239,68,68,.1);border-color:rgba(239,68,68,.3);color:var(--red);}
+
+    /* Add student form */
+    .add-form{
+      display:none;background:rgba(99,102,241,.06);
+      border:1px solid rgba(99,102,241,.18);border-radius:11px;
+      padding:13px;margin:10px 14px 0;flex-shrink:0;
+    }
+    .add-form.visible{display:block;}
+    .add-form-grid{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:end;}
+    .add-form label{font-size:.66rem;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:4px;}
+    .add-form input{
+      width:100%;background:rgba(13,21,44,.8);border:1px solid rgba(99,102,241,.18);
+      border-radius:8px;color:var(--text);padding:8px 11px;font-size:.84rem;outline:none;transition:all .2s;
+    }
+    .add-form input:focus{border-color:var(--accent);box-shadow:0 0 0 2px rgba(99,102,241,.12);}
+    .add-form input::placeholder{color:var(--muted2);}
+    .btn-add-icon{
+      width:34px;height:34px;border-radius:8px;border:none;
+      background:linear-gradient(135deg,var(--accent),var(--purple));color:#fff;
+      cursor:pointer;display:flex;align-items:center;justify-content:center;
+      transition:all .2s;flex-shrink:0;
+    }
+    .btn-add-icon:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(99,102,241,.4);}
+    #add-error{color:var(--red);font-size:.75rem;margin-top:5px;display:none;}
+
+    /* Student list */
+    .student-list-wrap{flex:1;overflow-y:auto;padding:10px 14px;}
+    .student-list-wrap::-webkit-scrollbar{width:3px;}
+    .student-list-wrap::-webkit-scrollbar-thumb{background:rgba(99,102,241,.3);border-radius:99px;}
+
+    .student-row{
+      display:grid;grid-template-columns:auto 1fr auto auto auto;
+      align-items:center;gap:8px;padding:9px 12px;
+      border-radius:11px;border:1.5px solid rgba(148,163,184,.1);
+      background:rgba(19,30,60,.45);transition:all .22s;
+      margin-bottom:6px;
+    }
+    .student-row:hover{border-color:rgba(99,102,241,.22);background:rgba(99,102,241,.05);}
+    .student-row.selected{border-color:var(--accent);background:rgba(99,102,241,.1);}
+    .student-row.del-selected{border-color:rgba(239,68,68,.4);background:rgba(239,68,68,.06);}
+    .check{
+      width:19px;height:19px;border-radius:5px;border:2px solid rgba(148,163,184,.25);
+      cursor:pointer;display:flex;align-items:center;justify-content:center;
+      transition:all .18s;flex-shrink:0;
+    }
+    .student-row.selected .check{background:var(--accent);border-color:var(--accent);box-shadow:0 0 10px rgba(99,102,241,.4);}
     .student-row.del-selected .check{background:var(--red);border-color:var(--red);}
+    .s-name{font-weight:600;font-size:.85rem;}
+    .s-code{font-size:.7rem;color:var(--muted);}
+    .slot-tag{
+      display:inline-block;font-size:.66rem;padding:2px 8px;border-radius:99px;
+      background:rgba(99,102,241,.12);border:1px solid rgba(99,102,241,.25);color:var(--accent2);
+    }
+    .btn-icon{
+      background:transparent;border:none;cursor:pointer;padding:4px;border-radius:6px;
+      display:inline-flex;align-items:center;justify-content:center;
+      transition:all .18s;line-height:1;
+    }
+    .btn-icon.edit{color:var(--accent2);}
+    .btn-icon.edit:hover{background:rgba(99,102,241,.15);}
+    .btn-icon.del{color:var(--muted2);}
+    .btn-icon.del:hover{background:rgba(239,68,68,.12);color:var(--red);}
 
-    /* Botones inline de alumno */
-    .btn-edit-s{background:transparent;border:none;color:var(--accent2);cursor:pointer;
-                padding:5px;border-radius:6px;display:inline-flex;align-items:center;
-                justify-content:center;line-height:1;transition:background .2s;}
-    .btn-edit-s:hover{background:rgba(99,102,241,.15);}
-    .btn-red{padding:5px;border-radius:6px;transition:background .2s;}
-    .btn-red:hover{background:rgba(239,68,68,.12);}
+    /* Manage bar */
+    .manage-bar{
+      display:none;align-items:center;gap:8px;
+      margin:8px 14px 4px;padding:9px 12px;
+      background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.18);
+      border-radius:10px;flex-shrink:0;
+    }
+    .manage-bar.visible{display:flex;}
+    .btn-del-sel{
+      flex:1;padding:7px;background:rgba(239,68,68,.08);
+      border:1px solid rgba(239,68,68,.28);border-radius:8px;
+      color:var(--red);font-size:.77rem;font-weight:700;cursor:pointer;transition:all .2s;
+    }
+    .btn-del-sel:hover{background:rgba(239,68,68,.18);}
+    .btn-del-sel:disabled{opacity:.35;cursor:not-allowed;}
 
-    /* Toast de notificación */
-    #app-toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(20px);
-               z-index:300;background:var(--surface);border:1px solid var(--border);
-               border-radius:12px;padding:13px 22px;font-size:.85rem;font-weight:600;
-               display:flex;align-items:center;gap:10px;box-shadow:0 8px 32px rgba(0,0,0,.5);
-               opacity:0;transition:all .3s;pointer-events:none;white-space:nowrap;}
-    #app-toast.show{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto;}
+    /* ── RIGHT COLUMN ── */
+    .right-col{
+      display:flex;flex-direction:column;gap:12px;
+      overflow:hidden;height:100%;
+      padding-top:14px;
+    }
 
-    /* Gestionar alumnos — footer */
-    .student-manage-bar{display:none;align-items:center;gap:8px;
-                        margin-top:10px;padding:10px 12px;
-                        background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.2);
-                        border-radius:10px;}
-    .student-manage-bar.visible{display:flex;}
+    /* Step 3 — Seat diagram */
+    .seat-diagram{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;padding:12px 14px;}
+    .seat{
+      border:1.5px solid rgba(148,163,184,.12);border-radius:10px;
+      padding:9px 6px;text-align:center;font-size:.72rem;
+      display:flex;flex-direction:column;align-items:center;justify-content:center;
+      gap:3px;transition:all .22s;min-height:60px;
+    }
+    .seat.empty{color:var(--muted2);}
+    .seat.occupied{
+      border-color:rgba(99,102,241,.35);background:rgba(99,102,241,.08);
+    }
+    .seat.occupied:hover{background:rgba(99,102,241,.14);}
+    .seat-label{font-size:.62rem;color:var(--muted2);}
+    .cam-bar-label{
+      margin:0 14px 8px;padding:8px 12px;
+      background:rgba(99,102,241,.06);border:1px solid rgba(99,102,241,.14);
+      border-radius:9px;font-size:.7rem;color:var(--muted);text-align:center;
+    }
 
-    /* Modales */
-    .modal-backdrop{display:none;position:fixed;inset:0;z-index:100;
-                    background:rgba(0,0,0,.7);backdrop-filter:blur(4px);
-                    align-items:center;justify-content:center;}
-    .modal-backdrop.open{display:flex;}
-    .modal-box{background:var(--surface);border:1px solid var(--border);border-radius:16px;
-               padding:28px 24px;max-width:380px;width:90%;}
-    .modal-title{font-weight:800;font-size:1rem;margin-bottom:6px;}
-    .modal-body-text{font-size:.82rem;color:var(--muted);margin-bottom:20px;line-height:1.5;}
-    .modal-actions{display:flex;gap:10px;}
-    .btn-modal-cancel{flex:1;padding:10px;border:1px solid var(--border);border-radius:10px;
-                      background:none;color:var(--text);font-weight:600;cursor:pointer;
-                      font-size:.85rem;transition:all .2s;}
-    .btn-modal-cancel:hover{background:var(--surface2);}
-    .btn-modal-confirm{flex:1;padding:10px;border:none;border-radius:10px;
-                       background:var(--red);color:#fff;font-weight:700;cursor:pointer;
-                       font-size:.85rem;transition:opacity .2s;}
-    .btn-modal-confirm:hover{opacity:.85;}
-    .btn-modal-save{flex:1;padding:10px;border:none;border-radius:10px;
-                    background:var(--accent);color:#fff;font-weight:700;cursor:pointer;
-                    font-size:.85rem;transition:opacity .2s;}
-    .btn-modal-save:hover{opacity:.85;}
-    .modal-field label{display:block;font-size:.72rem;font-weight:700;color:var(--muted);
-                       text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px;}
-    .modal-field input{width:100%;background:var(--surface2);border:1px solid var(--border);
-                       border-radius:8px;color:var(--text);padding:9px 12px;font-size:.88rem;
-                       outline:none;transition:border-color .2s;}
-    .modal-field input:focus{border-color:var(--accent);}
-    select{background:var(--surface);border:1px solid var(--border);border-radius:6px;
-           color:var(--text);padding:6px 8px;font-size:.8rem;outline:none;width:100%;}
-    select:focus{border-color:var(--accent);}
+    /* Summary */
+    .summary-card{flex-shrink:0;}
+    .summary-body{padding:12px 16px;display:flex;flex-direction:column;gap:7px;}
+    .sum-row{display:flex;justify-content:space-between;font-size:.82rem;}
+    .sum-label{color:var(--muted);}
+    .sum-val{font-weight:600;}
 
-    /* Diagrama de asientos */
-    .seat-diagram{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px;}
-    .seat{border:2px solid var(--border);border-radius:10px;padding:10px 8px;
-          text-align:center;font-size:.75rem;min-height:64px;
-          display:flex;flex-direction:column;align-items:center;justify-content:center;
-          gap:4px;transition:all .2s;}
-    .seat.occupied{border-color:var(--accent);background:rgba(99,102,241,.1);}
-    .seat.empty{color:var(--muted);}
-    .seat-label{font-size:.65rem;color:var(--muted);}
-
-    /* Boton */
-    .btn{display:inline-flex;align-items:center;gap:8px;padding:10px 20px;
-         border-radius:8px;font-weight:600;font-size:.88rem;cursor:pointer;
-         border:none;transition:opacity .2s,transform .1s;}
-    .btn:hover:not(:disabled){opacity:.88;transform:translateY(-1px);}
-    .btn:disabled{opacity:.4;cursor:not-allowed;transform:none;}
-    .btn-primary{background:var(--accent);color:#fff;}
-    .btn-green{background:#16a34a;color:#fff;width:100%;justify-content:center;padding:14px;}
-    .btn-ghost{background:var(--surface2);color:var(--text);border:1px solid var(--border);}
-    .btn-red{background:transparent;border:none;color:var(--red);cursor:pointer;
-             padding:4px;border-radius:4px;}
-
+    /* Start button */
+    .btn-start{
+      margin:0 14px 14px;padding:13px;
+      background:linear-gradient(135deg,#16a34a,#15803d,#166534);
+      color:#fff;font-weight:700;font-size:.92rem;border:none;border-radius:12px;
+      cursor:pointer;display:flex;align-items:center;justify-content:center;gap:9px;
+      position:relative;overflow:hidden;transition:all .3s;
+      box-shadow:0 4px 22px rgba(22,163,74,.3);
+    }
+    .btn-start::before{
+      content:'';position:absolute;top:-50%;left:-80%;width:55%;height:200%;
+      background:rgba(255,255,255,.12);transform:skewX(-18deg);
+      transition:left .55s ease;
+    }
+    .btn-start:hover:not(:disabled)::before{left:130%;}
+    .btn-start:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 8px 28px rgba(22,163,74,.4);}
+    .btn-start:disabled{opacity:.38;cursor:not-allowed;transform:none;}
     @keyframes spin{to{transform:rotate(360deg)}}
     .spinner{width:16px;height:16px;border-radius:50%;border:2px solid rgba(255,255,255,.3);
              border-top-color:#fff;animation:spin .7s linear infinite;display:none;}
 
-    /* Tag de sede */
-    .slot-tag{display:inline-block;font-size:.7rem;padding:2px 8px;border-radius:99px;
-              background:rgba(99,102,241,.15);border:1px solid rgba(99,102,241,.3);
-              color:var(--accent2);}
+    #error-box{
+      display:none;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.22);
+      border-radius:9px;padding:9px 13px;font-size:.8rem;color:#fca5a5;
+      margin:0 14px 10px;
+    }
 
-    /* Lista de sesiones pasadas */
-    .session-item{padding:12px 14px;border-radius:10px;border:1px solid var(--border);
-                  background:var(--surface2);cursor:pointer;transition:border-color .2s;}
-    .session-item:hover{border-color:var(--accent);}
+    /* Past sessions */
+    .sessions-card{flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden;}
+    .sessions-list{flex:1;overflow-y:auto;padding:9px;}
+    .sessions-list::-webkit-scrollbar{width:3px;}
+    .sessions-list::-webkit-scrollbar-thumb{background:rgba(99,102,241,.25);border-radius:99px;}
 
-    #error-box{display:none;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);
-               border-radius:8px;padding:10px 14px;font-size:.82rem;color:#fca5a5;margin-top:8px;}
+    .session-item{
+      padding:11px 13px;border-radius:12px;
+      border:1.5px solid rgba(148,163,184,.1);
+      background:rgba(19,30,60,.45);
+      transition:all .22s;margin-bottom:7px;
+      position:relative;overflow:hidden;
+    }
+    .session-item::before{
+      content:'';position:absolute;left:0;top:0;bottom:0;width:3px;
+      background:linear-gradient(180deg,var(--accent),var(--purple));
+      border-radius:99px;opacity:0;transition:opacity .22s;
+    }
+    .session-item:hover{
+      border-color:rgba(99,102,241,.25);background:rgba(99,102,241,.07);
+    }
+    .session-item:hover::before{opacity:1;}
+    .session-item.active-session{
+      border-color:rgba(34,197,94,.3);background:rgba(34,197,94,.06);
+    }
+    .session-item.active-session::before{background:var(--green);opacity:1;}
+    .session-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;}
+    .session-title{font-weight:700;font-size:.84rem;}
+    .session-status{font-size:.68rem;}
+    .session-meta{font-size:.72rem;color:var(--muted);}
+    .session-actions{display:flex;gap:4px;margin-top:8px;}
+    .sact-btn{
+      display:inline-flex;align-items:center;gap:4px;
+      padding:4px 9px;border-radius:7px;font-size:.68rem;font-weight:600;
+      cursor:pointer;border:none;transition:all .2s;
+    }
+    .sact-view{background:rgba(99,102,241,.12);color:var(--accent2);}
+    .sact-view:hover{background:rgba(99,102,241,.22);transform:translateY(-1px);}
+    .sact-edit{background:rgba(234,179,8,.1);color:var(--yellow);}
+    .sact-edit:hover{background:rgba(234,179,8,.2);transform:translateY(-1px);}
+    .sact-del{background:rgba(239,68,68,.1);color:var(--red);}
+    .sact-del:hover{background:rgba(239,68,68,.2);transform:translateY(-1px);}
+    .sact-open{background:rgba(34,197,94,.1);color:var(--green);}
+    .sact-open:hover{background:rgba(34,197,94,.2);transform:translateY(-1px);}
 
-    ::-webkit-scrollbar{width:5px}
-    ::-webkit-scrollbar-track{background:var(--surface)}
-    ::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+    /* ── Toast ── */
+    #app-toast{
+      position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(16px);
+      z-index:400;background:rgba(12,19,40,.96);backdrop-filter:blur(16px);
+      border:1px solid var(--border);border-radius:12px;
+      padding:12px 22px;font-size:.84rem;font-weight:600;
+      display:flex;align-items:center;gap:10px;
+      box-shadow:0 8px 32px rgba(0,0,0,.55);
+      opacity:0;transition:all .28s;pointer-events:none;white-space:nowrap;
+    }
+    #app-toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+    /* ── Modals ── */
+    .modal-backdrop{
+      display:none;position:fixed;inset:0;z-index:200;
+      background:rgba(0,0,0,.8);backdrop-filter:blur(10px);
+      align-items:center;justify-content:center;
+    }
+    .modal-backdrop.open{display:flex;}
+    .modal-box{
+      background:rgba(12,19,40,.96);backdrop-filter:blur(24px);
+      border:1px solid rgba(99,102,241,.18);border-radius:20px;
+      padding:28px 24px;max-width:390px;width:92%;
+      box-shadow:0 28px 80px rgba(0,0,0,.65),0 0 0 1px rgba(255,255,255,.03);
+      animation:modalIn .25s cubic-bezier(.34,1.56,.64,1);
+    }
+    @keyframes modalIn{from{transform:scale(.9);opacity:0}to{transform:scale(1);opacity:1}}
+    .modal-icon{
+      width:52px;height:52px;border-radius:50%;
+      display:flex;align-items:center;justify-content:center;margin:0 auto 15px;
+    }
+    .modal-title{font-weight:800;font-size:1rem;margin-bottom:7px;text-align:center;}
+    .modal-body-text{font-size:.82rem;color:var(--muted);margin-bottom:20px;line-height:1.55;text-align:center;}
+    .modal-actions{display:flex;gap:10px;}
+    .btn-modal-cancel{
+      flex:1;padding:10px;border:1px solid rgba(148,163,184,.18);border-radius:10px;
+      background:rgba(148,163,184,.06);color:var(--text);
+      font-weight:600;cursor:pointer;font-size:.84rem;transition:all .2s;
+    }
+    .btn-modal-cancel:hover{background:rgba(148,163,184,.12);}
+    .btn-modal-confirm{
+      flex:1;padding:10px;border:none;border-radius:10px;
+      background:linear-gradient(135deg,var(--red),#c0392b);color:#fff;
+      font-weight:700;cursor:pointer;font-size:.84rem;
+      transition:all .2s;box-shadow:0 4px 14px rgba(239,68,68,.28);
+    }
+    .btn-modal-confirm:hover{opacity:.9;transform:translateY(-1px);}
+    .btn-modal-save{
+      flex:1;padding:10px;border:none;border-radius:10px;
+      background:linear-gradient(135deg,var(--accent),#7c3aed);color:#fff;
+      font-weight:700;cursor:pointer;font-size:.84rem;
+      transition:all .2s;box-shadow:0 4px 14px rgba(99,102,241,.28);
+    }
+    .btn-modal-save:hover{opacity:.9;transform:translateY(-1px);}
+    .modal-field{margin-bottom:14px;}
+    .modal-field label{
+      display:block;font-size:.68rem;font-weight:700;color:var(--muted);
+      text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px;
+    }
+    .modal-field input{
+      width:100%;background:rgba(19,30,60,.8);border:1px solid rgba(99,102,241,.18);
+      border-radius:9px;color:var(--text);padding:9px 12px;font-size:.88rem;
+      outline:none;transition:all .22s;
+    }
+    .modal-field input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(99,102,241,.14);}
+    .modal-field input::placeholder{color:var(--muted2);}
+
+    ::-webkit-scrollbar{width:4px;}
+    ::-webkit-scrollbar-track{background:transparent;}
+    ::-webkit-scrollbar-thumb{background:rgba(99,102,241,.22);border-radius:99px;}
   </style>
 </head>
 <body>
-<div class="bg-grid"></div>
+<div class="aurora">
+  <div class="blob b1"></div>
+  <div class="blob b2"></div>
+  <div class="blob b3"></div>
+</div>
+<div class="grid-bg"></div>
 
 <!-- HEADER -->
 <header>
@@ -166,173 +414,162 @@
       <i data-lucide="graduation-cap" style="width:18px;height:18px;color:#fff"></i>
     </div>
     <div>
-      <div style="font-weight:800;font-size:1rem">Edu-Insight</div>
-      <div style="font-size:.72rem;color:var(--muted)" id="hdr-tutor">Cargando...</div>
+      <div class="logo-title">Edu-Insight</div>
+      <div style="font-size:.7rem;color:var(--muted)" id="hdr-tutor">Cargando...</div>
     </div>
   </div>
-  <div style="display:flex;align-items:center;gap:10px">
-    <a href="/" class="btn btn-ghost" style="padding:8px 14px;font-size:.82rem">
-      <i data-lucide="layout-dashboard" style="width:15px;height:15px"></i> Dashboard
+  <div class="hdr-nav">
+    <a href="/" class="hdr-btn">
+      <i data-lucide="layout-dashboard" style="width:14px;height:14px"></i>Dashboard
     </a>
-    <button onclick="logout()" class="btn btn-ghost" style="padding:8px 14px;font-size:.82rem">
-      <i data-lucide="log-out" style="width:15px;height:15px"></i> Salir
+    <button onclick="logout()" class="hdr-btn danger">
+      <i data-lucide="log-out" style="width:14px;height:14px"></i>Salir
     </button>
   </div>
 </header>
 
 <!-- MAIN -->
-<main>
+<div class="main">
 
-  <!-- COLUMNA IZQUIERDA -->
-  <div style="display:flex;flex-direction:column;gap:20px">
+  <!-- ══ LEFT COLUMN ══ -->
+  <div class="left-col">
 
-    <!-- Informacion de la clase -->
-    <div class="card">
-      <div class="section-title">
-        <span style="display:inline-flex;align-items:center;gap:6px">
-          <i data-lucide="book-open" style="width:13px;height:13px"></i>
-          Paso 1 — Informacion de la Clase
-        </span>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-        <div>
-          <label for="inp-titulo">Titulo de la sesion</label>
-          <input type="text" id="inp-titulo" placeholder="Ej: Clase de Algebra Lineal"/>
+    <!-- Step 1: Class info -->
+    <div class="glass step1">
+      <div class="card-header">
+        <div class="card-title">
+          <div class="step-badge">1</div>
+          <i data-lucide="book-open" style="width:12px;height:12px"></i>
+          Información de la Clase
         </div>
-        <div>
+      </div>
+      <div class="step1-body">
+        <div class="field">
+          <label for="inp-titulo">Título de la sesión</label>
+          <input type="text" id="inp-titulo" placeholder="Ej: Clase de Álgebra Lineal"/>
+        </div>
+        <div class="field">
           <label for="inp-materia">Materia</label>
-          <input type="text" id="inp-materia" placeholder="Ej: Matematicas"/>
+          <input type="text" id="inp-materia" placeholder="Ej: Matemáticas"/>
         </div>
       </div>
     </div>
 
-    <!-- Seleccion de alumnos -->
-    <div class="card">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-        <div class="section-title" style="margin-bottom:0">
-          <span style="display:inline-flex;align-items:center;gap:6px">
-            <i data-lucide="users" style="width:13px;height:13px"></i>
-            Paso 2 — Seleccionar Alumnos
-          </span>
+    <!-- Step 2: Students -->
+    <div class="glass step2">
+      <div class="card-header">
+        <div class="card-title">
+          <div class="step-badge">2</div>
+          <i data-lucide="users" style="width:12px;height:12px"></i>
+          Seleccionar Alumnos
         </div>
-        <div style="display:flex;gap:8px">
-          <button id="btn-manage-students" onclick="toggleStudentManage()"
-                  class="btn btn-ghost" style="padding:7px 14px;font-size:.8rem">
-            <i data-lucide="settings-2" style="width:14px;height:14px"></i> Gestionar
+        <div class="step2-actions">
+          <button id="btn-manage-students" onclick="toggleStudentManage()" class="btn-sm">
+            <i data-lucide="settings-2" style="width:12px;height:12px"></i>Gestionar
           </button>
-          <button onclick="showAddStudent()" class="btn btn-ghost" style="padding:7px 14px;font-size:.8rem">
-            <i data-lucide="user-plus" style="width:14px;height:14px"></i> Agregar
+          <button onclick="showAddStudent()" class="btn-sm"
+                  style="background:rgba(99,102,241,.12);border-color:rgba(99,102,241,.25);color:var(--accent2)">
+            <i data-lucide="user-plus" style="width:12px;height:12px"></i>Agregar
           </button>
         </div>
       </div>
 
-      <!-- Formulario rapido de nuevo alumno (oculto por defecto) -->
-      <div id="add-form" style="display:none;background:var(--surface2);border:1px solid var(--border);
-                                border-radius:10px;padding:14px;margin-bottom:14px">
-        <div style="font-size:.82rem;font-weight:600;margin-bottom:10px;color:var(--accent2)">
-          Nuevo alumno
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:end">
+      <!-- Add form -->
+      <div id="add-form" class="add-form">
+        <div style="font-size:.78rem;font-weight:700;color:var(--accent2);margin-bottom:9px">Nuevo alumno</div>
+        <div class="add-form-grid">
           <div>
-            <label for="new-nombre">Nombre</label>
-            <input type="text" id="new-nombre" placeholder="Juan Perez"/>
+            <label>Nombre</label>
+            <input type="text" id="new-nombre" placeholder="Juan Pérez"/>
           </div>
           <div>
-            <label for="new-codigo">Codigo</label>
+            <label>Código</label>
             <input type="text" id="new-codigo" placeholder="2021-001"/>
           </div>
-          <button onclick="addStudent()" class="btn btn-primary" style="padding:10px 16px">
-            <i data-lucide="plus" style="width:14px;height:14px"></i>
+          <button onclick="addStudent()" class="btn-add-icon">
+            <i data-lucide="plus" style="width:15px;height:15px"></i>
           </button>
         </div>
-        <div id="add-error" style="display:none;color:var(--red);font-size:.78rem;margin-top:6px"></div>
+        <div id="add-error"></div>
       </div>
 
-      <!-- Lista de alumnos -->
-      <div id="student-list" style="display:flex;flex-direction:column;gap:8px">
-        <div style="color:var(--muted);font-size:.85rem;text-align:center;padding:24px">
-          Cargando alumnos...
-        </div>
-      </div>
-
-      <!-- Footer modo gestión alumnos -->
-      <div class="student-manage-bar" id="student-manage-bar">
-        <span id="student-sel-count" style="font-size:.78rem;color:var(--muted);white-space:nowrap">0 selec.</span>
-        <button id="btn-del-students" onclick="askDeleteStudents()" disabled
-                style="flex:1;padding:8px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.35);
-                       border-radius:8px;color:var(--red);font-size:.8rem;font-weight:700;cursor:pointer;
-                       transition:all .2s">
+      <!-- Manage bar -->
+      <div class="manage-bar" id="student-manage-bar">
+        <span id="student-sel-count" style="font-size:.76rem;color:var(--muted);white-space:nowrap">0 selec.</span>
+        <button id="btn-del-students" onclick="askDeleteStudents()" disabled class="btn-del-sel">
           Eliminar seleccionados
         </button>
         <button onclick="toggleStudentManage()"
-                style="padding:8px 14px;border:1px solid var(--border);border-radius:8px;
-                       background:none;color:var(--text);font-size:.8rem;font-weight:600;cursor:pointer">
-          Listo
-        </button>
+                style="padding:7px 13px;border:1px solid var(--border2);border-radius:8px;
+                       background:none;color:var(--text);font-size:.77rem;font-weight:600;cursor:pointer">Listo</button>
+      </div>
+
+      <div class="student-list-wrap" id="student-list">
+        <div style="color:var(--muted);font-size:.84rem;text-align:center;padding:22px">Cargando alumnos...</div>
       </div>
     </div>
 
   </div>
 
-  <!-- COLUMNA DERECHA -->
-  <div style="display:flex;flex-direction:column;gap:20px">
+  <!-- ══ RIGHT COLUMN ══ -->
+  <div class="right-col">
 
-    <!-- Diagrama de asientos -->
-    <div class="card">
-      <div class="section-title">
-        <span style="display:inline-flex;align-items:center;gap:6px">
-          <i data-lucide="layout-grid" style="width:13px;height:13px"></i>
-          Paso 3 — Vista de Asientos
-        </span>
+    <!-- Step 3: Seat diagram -->
+    <div class="glass" style="flex-shrink:0">
+      <div class="card-header">
+        <div class="card-title">
+          <div class="step-badge">3</div>
+          <i data-lucide="layout-grid" style="width:12px;height:12px"></i>
+          Vista de Asientos
+        </div>
+        <span style="font-size:.66rem;color:var(--muted2)">Face Mesh · máx 6</span>
       </div>
-      <div style="font-size:.78rem;color:var(--muted);margin-bottom:12px">
-        Los alumnos se asignan automaticamente de izquierda a derecha
-        segun su posicion en la camara.
+      <div class="cam-bar-label">
+        <i data-lucide="camera" style="width:11px;height:11px;display:inline;vertical-align:middle;margin-right:4px"></i>
+        Vista de cámara (izq → der)
       </div>
-      <!-- Diagrama de camara -->
-      <div style="background:var(--surface2);border-radius:10px;padding:10px;margin-bottom:12px;
-                  font-size:.72rem;color:var(--muted);text-align:center">
-        Vista de camara (izq → der)
-      </div>
-      <div class="seat-diagram" id="seat-diagram">
-        <!-- Generado por JS -->
-      </div>
-      <div style="margin-top:10px;font-size:.72rem;color:var(--muted)">
-        Face Mesh detecta hasta <strong style="color:var(--text)">6 rostros</strong> simultaneamente,
-        ordenados por posicion horizontal.
-      </div>
+      <div class="seat-diagram" id="seat-diagram"></div>
     </div>
 
-    <!-- Resumen + boton iniciar -->
-    <div class="card">
-      <div class="section-title">Resumen de la sesion</div>
-      <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px" id="summary-box">
-        <div style="color:var(--muted);font-size:.85rem">Selecciona alumnos para ver el resumen</div>
+    <!-- Summary + Start -->
+    <div class="glass summary-card">
+      <div class="card-header">
+        <div class="card-title">
+          <i data-lucide="zap" style="width:12px;height:12px"></i>
+          Resumen de la Sesión
+        </div>
+      </div>
+      <div class="summary-body" id="summary-box">
+        <div style="color:var(--muted);font-size:.83rem">Selecciona alumnos para ver el resumen</div>
       </div>
       <div id="error-box"></div>
-      <button id="btn-start" class="btn btn-green" onclick="startSession()">
-        <i data-lucide="play" style="width:18px;height:18px"></i>
+      <button id="btn-start" class="btn-start" onclick="startSession()">
+        <i data-lucide="play" style="width:17px;height:17px"></i>
         <span id="btn-text">Iniciar Monitoreo</span>
         <div class="spinner" id="btn-spin"></div>
       </button>
     </div>
 
-    <!-- Sesiones anteriores -->
-    <div class="card">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-        <div class="section-title" style="margin-bottom:0">Sesiones Anteriores</div>
-      </div>
-      <div id="past-sessions" style="display:flex;flex-direction:column;gap:8px;max-height:220px;overflow-y:auto">
-        <div style="color:var(--muted);font-size:.82rem;text-align:center;padding:12px">
-          Cargando...
+    <!-- Past sessions with CRUD -->
+    <div class="glass sessions-card">
+      <div class="card-header">
+        <div class="card-title">
+          <i data-lucide="history" style="width:12px;height:12px"></i>
+          Sesiones Anteriores
         </div>
+        <button onclick="loadPastSessions()" class="btn-sm" style="padding:4px 9px;font-size:.68rem">
+          <i data-lucide="refresh-cw" style="width:11px;height:11px"></i>
+        </button>
+      </div>
+      <div class="sessions-list" id="past-sessions">
+        <div style="color:var(--muted);font-size:.82rem;text-align:center;padding:16px">Cargando...</div>
       </div>
     </div>
 
   </div>
-</main>
+</div>
 
-<!-- Toast de notificaciones -->
+<!-- Toast -->
 <div id="app-toast">
   <span id="toast-icon"></span>
   <span id="toast-msg"></span>
@@ -341,13 +578,16 @@
 <!-- Modal: editar alumno -->
 <div class="modal-backdrop" id="edit-student-modal">
   <div class="modal-box">
-    <div class="modal-title" style="margin-bottom:16px">Editar alumno</div>
-    <div class="modal-field" style="margin-bottom:12px">
+    <div class="modal-icon" style="background:rgba(99,102,241,.12);border:1px solid rgba(99,102,241,.25)">
+      <i data-lucide="pencil" style="width:22px;height:22px;color:var(--accent2)"></i>
+    </div>
+    <div class="modal-title">Editar alumno</div>
+    <div class="modal-field">
       <label>Nombre</label>
       <input type="text" id="edit-student-nombre" placeholder="Juan Pérez"
              onkeydown="if(event.key==='Enter')confirmEditStudent()"/>
     </div>
-    <div class="modal-field" style="margin-bottom:20px">
+    <div class="modal-field">
       <label>Código</label>
       <input type="text" id="edit-student-codigo" placeholder="2021-001"
              onkeydown="if(event.key==='Enter')confirmEditStudent()"/>
@@ -359,12 +599,34 @@
   </div>
 </div>
 
-<!-- Modal: confirmar borrado masivo alumnos -->
+<!-- Modal: editar sesión -->
+<div class="modal-backdrop" id="edit-session-modal">
+  <div class="modal-box">
+    <div class="modal-icon" style="background:rgba(234,179,8,.1);border:1px solid rgba(234,179,8,.28)">
+      <i data-lucide="edit-3" style="width:22px;height:22px;color:var(--yellow)"></i>
+    </div>
+    <div class="modal-title">Editar sesión</div>
+    <div class="modal-field">
+      <label>Título</label>
+      <input type="text" id="edit-session-titulo" placeholder="Título de la sesión"
+             onkeydown="if(event.key==='Enter')confirmEditSession()"/>
+    </div>
+    <div class="modal-field">
+      <label>Materia</label>
+      <input type="text" id="edit-session-materia" placeholder="Ej: Matemáticas"
+             onkeydown="if(event.key==='Enter')confirmEditSession()"/>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-modal-cancel" onclick="closeEditSession()">Cancelar</button>
+      <button class="btn-modal-save" id="btn-confirm-edit-session" onclick="confirmEditSession()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: borrar masivo alumnos -->
 <div class="modal-backdrop" id="del-student-modal">
-  <div class="modal-box" style="text-align:center">
-    <div style="width:48px;height:48px;border-radius:50%;background:rgba(239,68,68,.15);
-                border:1px solid rgba(239,68,68,.3);display:flex;align-items:center;
-                justify-content:center;margin:0 auto 14px">
+  <div class="modal-box">
+    <div class="modal-icon" style="background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.28)">
       <i data-lucide="trash-2" style="width:22px;height:22px;color:var(--red)"></i>
     </div>
     <div class="modal-title" id="del-student-title">¿Eliminar alumnos?</div>
@@ -376,101 +638,93 @@
   </div>
 </div>
 
+<!-- Modal: borrar sesión -->
+<div class="modal-backdrop" id="del-session-modal">
+  <div class="modal-box">
+    <div class="modal-icon" style="background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.28)">
+      <i data-lucide="trash-2" style="width:22px;height:22px;color:var(--red)"></i>
+    </div>
+    <div class="modal-title" id="del-session-title">¿Eliminar sesión?</div>
+    <div class="modal-body-text" id="del-session-body">Se eliminará la sesión y todos sus datos. Esta acción no se puede deshacer.</div>
+    <div class="modal-actions">
+      <button class="btn-modal-cancel" onclick="document.getElementById('del-session-modal').classList.remove('open')">Cancelar</button>
+      <button class="btn-modal-confirm" onclick="confirmDeleteSession()">Sí, eliminar</button>
+    </div>
+  </div>
+</div>
+
 <script>
   lucide.createIcons();
 
-  const token    = sessionStorage.getItem('edu_token');
-  const tutorId  = sessionStorage.getItem('edu_tutor_id');
-  const tutorName= sessionStorage.getItem('edu_tutor');
-
+  const token     = sessionStorage.getItem('edu_token');
+  const tutorId   = sessionStorage.getItem('edu_tutor_id');
+  const tutorName = sessionStorage.getItem('edu_tutor');
   if (!token) { location.href = '/login'; }
   document.getElementById('hdr-tutor').textContent = tutorName || 'Tutor';
+  const headers = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
 
-  const headers  = { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' };
+  let allStudents       = [];
+  let selectedIds       = new Set();
+  let studentManageMode = false;
+  let studentDeleteSel  = new Set();
+  const SEAT_LABELS = ['Izquierda','Centro-Izq','Centro','Centro-Der','Derecha-1','Derecha-2'];
 
-  // Estado local
-  let allStudents         = [];       // todos los alumnos del tutor
-  let selectedIds         = new Set();// ids seleccionados para esta sesion
-  let studentManageMode   = false;
-  let studentDeleteSel    = new Set();
-  const SEAT_LABELS = ['Izquierda', 'Centro-Izq', 'Centro', 'Centro-Der', 'Derecha-1', 'Derecha-2'];
-
-  // ── Cargar alumnos ───────────────────────────────────────────────────────────
+  // ── Alumnos ───────────────────────────────────────────────────────────────────
   async function loadStudents() {
     try {
-      const res  = await fetch('/api/students', { headers });
+      const res   = await fetch('/api/students', { headers });
       allStudents = await res.json();
       renderStudentList();
     } catch { renderStudentList(); }
   }
 
-  const _pencilSvg = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`;
-  const _trashSvg  = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>`;
-  const _checkSvg  = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>`;
+  const _pencilSvg = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`;
+  const _trashSvg  = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>`;
+  const _checkSvg  = `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>`;
 
   function renderStudentList() {
     const el = document.getElementById('student-list');
     if (!allStudents.length) {
-      el.innerHTML = `<div style="color:var(--muted);font-size:.85rem;text-align:center;padding:20px">
-        No hay alumnos registrados.<br>Usá el boton Agregar para crear el primero.
+      el.innerHTML = `<div style="color:var(--muted);font-size:.84rem;text-align:center;padding:24px">
+        No hay alumnos registrados.<br>
+        <span style="color:var(--accent2);cursor:pointer;font-weight:600" onclick="showAddStudent()">Agregar el primero →</span>
       </div>`;
-      updateDiagram(); updateSummary();
-      return;
+      updateDiagram(); updateSummary(); return;
     }
     el.innerHTML = allStudents.map(s => {
       const nombre_safe = s.nombre.replace(/'/g, "\\'");
       const codigo_safe = s.codigo.replace(/'/g, "\\'");
-      const editBtn = `<button class="btn-edit-s" title="Editar"
-                               onclick="event.stopPropagation();openEditStudent(${s.id},'${nombre_safe}','${codigo_safe}')">
-                         ${_pencilSvg}</button>`;
-      const delBtn  = `<button class="btn-red" title="Eliminar"
-                               onclick="event.stopPropagation();deleteStudent(${s.id})">
-                         ${_trashSvg}</button>`;
-
+      const editBtn = `<button class="btn-icon edit" title="Editar" onclick="event.stopPropagation();openEditStudent(${s.id},'${nombre_safe}','${codigo_safe}')">${_pencilSvg}</button>`;
+      const delBtn  = `<button class="btn-icon del"  title="Eliminar" onclick="event.stopPropagation();deleteStudent(${s.id})">${_trashSvg}</button>`;
       if (studentManageMode) {
         const delSel = studentDeleteSel.has(s.id);
-        return `
-        <div class="student-row${delSel ? ' del-selected' : ''}" id="sr-${s.id}" onclick="toggleDeleteSel(${s.id})">
-          <div class="check">${delSel ? _checkSvg : ''}</div>
-          <div>
-            <div style="font-weight:600;font-size:.88rem">${s.nombre}</div>
-            <div style="font-size:.74rem;color:var(--muted)">${s.codigo}</div>
-          </div>
-          <span></span>
-          ${editBtn}
-          ${delBtn}
-        </div>`;
+        return `<div class="student-row${delSel?' del-selected':''}" id="sr-${s.id}" onclick="toggleDeleteSel(${s.id})">
+          <div class="check">${delSel?_checkSvg:''}</div>
+          <div><div class="s-name">${s.nombre}</div><div class="s-code">${s.codigo}</div></div>
+          <span></span>${editBtn}${delBtn}</div>`;
       }
-
       const sel  = selectedIds.has(s.id);
       const slot = [...selectedIds].indexOf(s.id);
-      return `
-      <div class="student-row${sel ? ' selected' : ''}" id="sr-${s.id}" onclick="toggleStudent(${s.id})">
-        <div class="check">${sel ? _checkSvg : ''}</div>
-        <div>
-          <div style="font-weight:600;font-size:.88rem">${s.nombre}</div>
-          <div style="font-size:.74rem;color:var(--muted)">${s.codigo}</div>
-        </div>
-        ${sel ? `<span class="slot-tag">Slot ${slot} · ${SEAT_LABELS[slot]||'Extra'}</span>` : '<span></span>'}
-        ${editBtn}
-        ${delBtn}
-      </div>`;
+      return `<div class="student-row${sel?' selected':''}" id="sr-${s.id}" onclick="toggleStudent(${s.id})">
+        <div class="check">${sel?_checkSvg:''}</div>
+        <div><div class="s-name">${s.nombre}</div><div class="s-code">${s.codigo}</div></div>
+        ${sel?`<span class="slot-tag">Slot ${slot} · ${SEAT_LABELS[slot]||'Extra'}</span>`:'<span></span>'}
+        ${editBtn}${delBtn}</div>`;
     }).join('');
     lucide.createIcons();
-    updateDiagram();
-    updateSummary();
+    updateDiagram(); updateSummary();
   }
 
-  // ── Toast ────────────────────────────────────────────────────────────────────
+  // ── Toast ─────────────────────────────────────────────────────────────────────
   let _toastTimer = null;
   function showToast(msg, type = 'info') {
     const el  = document.getElementById('app-toast');
     const ico = document.getElementById('toast-icon');
     const txt = document.getElementById('toast-msg');
     const colors = { info:'#818cf8', warn:'#eab308', error:'#ef4444', ok:'#22c55e' };
-    ico.innerHTML = type === 'warn'
-      ? `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="${colors[type]}" stroke-width="2" stroke-linecap="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`
-      : `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="${colors[type]||colors.info}" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`;
+    ico.innerHTML = type==='warn'
+      ? `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="${colors[type]}" stroke-width="2" stroke-linecap="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`
+      : `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="${colors[type]||colors.info}" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`;
     txt.textContent = msg;
     el.style.borderColor = colors[type] || colors.info;
     el.classList.add('show');
@@ -479,69 +733,50 @@
   }
 
   function toggleStudent(id) {
-    if (selectedIds.has(id)) {
-      selectedIds.delete(id);
-    } else {
-      if (selectedIds.size >= 6) {
-        showToast('Máximo 6 alumnos por sesión (límite de Face Mesh).', 'warn');
-        return;
-      }
+    if (selectedIds.has(id)) { selectedIds.delete(id); }
+    else {
+      if (selectedIds.size >= 6) { showToast('Máximo 6 alumnos por sesión.','warn'); return; }
       selectedIds.add(id);
     }
     renderStudentList();
   }
 
-  // ── Diagrama de asientos ─────────────────────────────────────────────────────
+  // ── Diagrama ──────────────────────────────────────────────────────────────────
   function updateDiagram() {
     const el  = document.getElementById('seat-diagram');
     const sel = [...selectedIds];
-    el.innerHTML = Array.from({length: 6}, (_, i) => {
+    el.innerHTML = Array.from({length:6},(_,i) => {
       const sid = sel[i];
       const s   = sid ? allStudents.find(a => a.id === sid) : null;
-      return `
-      <div class="seat ${s ? 'occupied' : 'empty'}">
+      return `<div class="seat ${s?'occupied':'empty'}">
         ${s
-          ? `<i data-lucide="user" style="width:16px;height:16px;color:var(--accent2)"></i>
-             <div style="font-weight:600;font-size:.75rem;color:var(--text)">${s.nombre.split(' ')[0]}</div>`
-          : `<i data-lucide="user-x" style="width:16px;height:16px"></i>
-             <div>Libre</div>`
-        }
+          ? `<i data-lucide="user" style="width:15px;height:15px;color:var(--accent2)"></i>
+             <div style="font-weight:700;font-size:.72rem">${s.nombre.split(' ')[0]}</div>`
+          : `<i data-lucide="user-x" style="width:14px;height:14px"></i><div>Libre</div>`}
         <div class="seat-label">Slot ${i} · ${SEAT_LABELS[i]}</div>
       </div>`;
     }).join('');
     lucide.createIcons();
   }
 
-  // ── Resumen ──────────────────────────────────────────────────────────────────
+  // ── Resumen ───────────────────────────────────────────────────────────────────
   function updateSummary() {
     const el  = document.getElementById('summary-box');
     const n   = selectedIds.size;
     const tit = document.getElementById('inp-titulo').value.trim() || '—';
     const mat = document.getElementById('inp-materia').value.trim() || '—';
-
     if (!n) {
-      el.innerHTML = `<div style="color:var(--muted);font-size:.85rem">Selecciona alumnos para ver el resumen</div>`;
+      el.innerHTML = `<div style="color:var(--muted);font-size:.83rem">Selecciona alumnos para ver el resumen</div>`;
       return;
     }
     el.innerHTML = `
-      <div style="display:flex;justify-content:space-between;font-size:.85rem">
-        <span style="color:var(--muted)">Titulo</span>
-        <span style="font-weight:600">${tit}</span>
-      </div>
-      <div style="display:flex;justify-content:space-between;font-size:.85rem">
-        <span style="color:var(--muted)">Materia</span>
-        <span>${mat}</span>
-      </div>
-      <div style="display:flex;justify-content:space-between;font-size:.85rem">
-        <span style="color:var(--muted)">Alumnos</span>
-        <span style="color:var(--green);font-weight:700">${n} / 6</span>
-      </div>
-      <div style="display:flex;justify-content:space-between;font-size:.85rem">
-        <span style="color:var(--muted)">Caras a detectar</span>
-        <span>Face Mesh max_num_faces = ${n}</span>
-      </div>`;
+      <div class="sum-row"><span class="sum-label">Título</span><span class="sum-val">${tit}</span></div>
+      <div class="sum-row"><span class="sum-label">Materia</span><span class="sum-val">${mat}</span></div>
+      <div class="sum-row"><span class="sum-label">Alumnos</span>
+        <span class="sum-val" style="color:var(--green)">${n} / 6</span></div>
+      <div class="sum-row"><span class="sum-label">Face Mesh</span>
+        <span class="sum-val">max_num_faces = ${n}</span></div>`;
   }
-
   ['inp-titulo','inp-materia'].forEach(id =>
     document.getElementById(id).addEventListener('input', updateSummary)
   );
@@ -550,21 +785,18 @@
   function toggleStudentManage() {
     studentManageMode = !studentManageMode;
     studentDeleteSel.clear();
-    const btn    = document.getElementById('btn-manage-students');
-    const bar    = document.getElementById('student-manage-bar');
+    const btn = document.getElementById('btn-manage-students');
+    const bar = document.getElementById('student-manage-bar');
     if (studentManageMode) {
-      btn.style.color        = 'var(--red)';
-      btn.style.borderColor  = 'rgba(239,68,68,.4)';
-      btn.innerHTML = '<i data-lucide="x" style="width:14px;height:14px"></i> Cancelar';
+      btn.style.color = 'var(--red)'; btn.style.borderColor = 'rgba(239,68,68,.35)';
+      btn.innerHTML = '<i data-lucide="x" style="width:12px;height:12px"></i> Cancelar';
       bar.classList.add('visible');
     } else {
-      btn.style.color        = '';
-      btn.style.borderColor  = '';
-      btn.innerHTML = '<i data-lucide="settings-2" style="width:14px;height:14px"></i> Gestionar';
+      btn.style.color = ''; btn.style.borderColor = '';
+      btn.innerHTML = '<i data-lucide="settings-2" style="width:12px;height:12px"></i> Gestionar';
       bar.classList.remove('visible');
     }
-    lucide.createIcons();
-    renderStudentList();
+    lucide.createIcons(); renderStudentList();
   }
 
   function toggleDeleteSel(id) {
@@ -584,9 +816,9 @@
     const ids   = [...studentDeleteSel];
     const names = ids.map(id => (allStudents.find(a => a.id === id) || {}).nombre || ('Alumno #' + id));
     document.getElementById('del-student-title').textContent =
-      ids.length === 1 ? `¿Eliminar a ${names[0]}?` : `¿Eliminar ${ids.length} alumnos?`;
+      ids.length===1 ? `¿Eliminar a ${names[0]}?` : `¿Eliminar ${ids.length} alumnos?`;
     document.getElementById('del-student-body').textContent =
-      (ids.length === 1
+      (ids.length===1
         ? `Se eliminará a "${names[0]}" y todos sus datos de sesiones.`
         : `Se eliminarán ${ids.length} alumnos y todos sus datos de sesiones.`)
       + ' Esta acción no se puede deshacer.';
@@ -596,7 +828,6 @@
 
   // ── Editar alumno ─────────────────────────────────────────────────────────────
   let editingStudentId = null;
-
   function openEditStudent(id, nombre, codigo) {
     editingStudentId = id;
     document.getElementById('edit-student-nombre').value = nombre;
@@ -605,12 +836,10 @@
     lucide.createIcons();
     setTimeout(() => document.getElementById('edit-student-nombre').select(), 80);
   }
-
   function closeEditStudent() {
     document.getElementById('edit-student-modal').classList.remove('open');
     editingStudentId = null;
   }
-
   async function confirmEditStudent() {
     const nombre = document.getElementById('edit-student-nombre').value.trim();
     const codigo = document.getElementById('edit-student-codigo').value.trim().toUpperCase();
@@ -619,172 +848,216 @@
     btn.disabled = true; btn.textContent = 'Guardando...';
     try {
       const res = await fetch(`/api/students/${editingStudentId}`, {
-        method: 'PATCH', headers,
-        body: JSON.stringify({ nombre, codigo }),
+        method:'PATCH', headers, body:JSON.stringify({nombre, codigo}),
       });
-      if (!res.ok) { btn.disabled = false; btn.textContent = 'Guardar'; return; }
-    } catch { btn.disabled = false; btn.textContent = 'Guardar'; return; }
-    btn.disabled = false; btn.textContent = 'Guardar';
-    closeEditStudent();
-    await loadStudents();
+      if (!res.ok) { btn.disabled=false; btn.textContent='Guardar'; return; }
+    } catch { btn.disabled=false; btn.textContent='Guardar'; return; }
+    btn.disabled=false; btn.textContent='Guardar';
+    closeEditStudent(); await loadStudents();
+    showToast('Alumno actualizado','ok');
   }
 
-  // ── Agregar alumno ───────────────────────────────────────────────────────────
+  // ── Agregar alumno ────────────────────────────────────────────────────────────
   function showAddStudent() {
     const f = document.getElementById('add-form');
-    f.style.display = f.style.display === 'none' ? 'block' : 'none';
+    f.classList.toggle('visible');
   }
-
   async function addStudent() {
     const nombre = document.getElementById('new-nombre').value.trim();
     const codigo = document.getElementById('new-codigo').value.trim().toUpperCase();
     const errEl  = document.getElementById('add-error');
-
-    if (!nombre || !codigo) { errEl.textContent = 'Completá nombre y codigo.'; errEl.style.display='block'; return; }
-
+    if (!nombre || !codigo) { errEl.textContent='Completá nombre y código.'; errEl.style.display='block'; return; }
     try {
-      const res  = await fetch('/api/students', {
-        method: 'POST', headers,
-        body: JSON.stringify({ nombre, codigo }),
-      });
+      const res  = await fetch('/api/students', { method:'POST', headers, body:JSON.stringify({nombre,codigo}) });
       const data = await res.json();
-      if (!data.ok) { errEl.textContent = data.error; errEl.style.display='block'; return; }
-      errEl.style.display = 'none';
-      document.getElementById('new-nombre').value = '';
-      document.getElementById('new-codigo').value = '';
-      document.getElementById('add-form').style.display = 'none';
+      if (!data.ok) { errEl.textContent=data.error; errEl.style.display='block'; return; }
+      errEl.style.display='none';
+      document.getElementById('new-nombre').value='';
+      document.getElementById('new-codigo').value='';
+      document.getElementById('add-form').classList.remove('visible');
       await loadStudents();
-    } catch { errEl.textContent = 'Error de conexion.'; errEl.style.display='block'; }
+      showToast('Alumno agregado','ok');
+    } catch { errEl.textContent='Error de conexión.'; errEl.style.display='block'; }
   }
 
   let _pendingDelSingleId = null;
   function deleteStudent(id) {
     const s = allStudents.find(a => a.id === id);
     _pendingDelSingleId = id;
-    document.getElementById('del-student-title').textContent = `¿Eliminar a ${s ? s.nombre : 'este alumno'}?`;
+    document.getElementById('del-student-title').textContent = `¿Eliminar a ${s?s.nombre:'este alumno'}?`;
     document.getElementById('del-student-body').textContent =
       'Se eliminarán todos sus datos de sesiones y telemetría. Esta acción no se puede deshacer.';
-    // Override confirm action to handle single delete
     document.getElementById('del-student-modal').dataset.mode = 'single';
     document.getElementById('del-student-modal').classList.add('open');
     lucide.createIcons();
   }
-
   async function confirmDeleteStudents() {
     const modal = document.getElementById('del-student-modal');
     modal.classList.remove('open');
-    if (modal.dataset.mode === 'single' && _pendingDelSingleId != null) {
-      await fetch(`/api/students/${_pendingDelSingleId}`, { method: 'DELETE', headers });
-      selectedIds.delete(_pendingDelSingleId);
-      _pendingDelSingleId = null;
+    if (modal.dataset.mode==='single' && _pendingDelSingleId!=null) {
+      await fetch(`/api/students/${_pendingDelSingleId}`, { method:'DELETE', headers });
+      selectedIds.delete(_pendingDelSingleId); _pendingDelSingleId=null;
     } else {
       for (const id of [...studentDeleteSel]) {
-        await fetch(`/api/students/${id}`, { method: 'DELETE', headers });
+        await fetch(`/api/students/${id}`, { method:'DELETE', headers });
         selectedIds.delete(id);
       }
-      studentDeleteSel.clear();
-      studentManageMode = false;
-      const btn = document.getElementById('btn-manage-students');
-      const bar = document.getElementById('student-manage-bar');
-      btn.style.color = ''; btn.style.borderColor = '';
-      btn.innerHTML = '<i data-lucide="settings-2" style="width:14px;height:14px"></i> Gestionar';
-      bar.classList.remove('visible');
-      lucide.createIcons();
+      studentDeleteSel.clear(); studentManageMode=false;
+      const btn=document.getElementById('btn-manage-students');
+      const bar=document.getElementById('student-manage-bar');
+      btn.style.color=''; btn.style.borderColor='';
+      btn.innerHTML='<i data-lucide="settings-2" style="width:12px;height:12px"></i> Gestionar';
+      bar.classList.remove('visible'); lucide.createIcons();
     }
-    modal.dataset.mode = '';
+    modal.dataset.mode='';
     await loadStudents();
+    showToast('Alumno(s) eliminado(s)','ok');
   }
 
-  // ── Iniciar sesion ───────────────────────────────────────────────────────────
+  // ── Iniciar sesión ────────────────────────────────────────────────────────────
   async function startSession() {
     const titulo  = document.getElementById('inp-titulo').value.trim();
     const materia = document.getElementById('inp-materia').value.trim();
     const errBox  = document.getElementById('error-box');
-    errBox.style.display = 'none';
-
-    if (!titulo) { showErr('El titulo de la sesion es obligatorio.'); return; }
-    if (!selectedIds.size) { showErr('Debes seleccionar al menos 1 alumno.'); return; }
-
-    const slots = [...selectedIds].map((sid, i) => ({
-      student_id: sid, face_slot: i, seat_label: SEAT_LABELS[i] || `Slot ${i}`,
+    errBox.style.display='none';
+    if (!titulo)           { showErr('El título de la sesión es obligatorio.'); return; }
+    if (!selectedIds.size) { showErr('Debes seleccionar al menos 1 alumno.');  return; }
+    const slots = [...selectedIds].map((sid,i) => ({
+      student_id:sid, face_slot:i, seat_label:SEAT_LABELS[i]||`Slot ${i}`,
     }));
-
-    document.getElementById('btn-start').disabled = true;
-    document.getElementById('btn-spin').style.display = 'block';
-    document.getElementById('btn-text').textContent = 'Iniciando...';
-
+    document.getElementById('btn-start').disabled=true;
+    document.getElementById('btn-spin').style.display='block';
+    document.getElementById('btn-text').textContent='Iniciando...';
     try {
-      const res  = await fetch('/api/sessions', {
-        method: 'POST', headers,
-        body:   JSON.stringify({ titulo, materia, slots }),
-      });
+      const res  = await fetch('/api/sessions', { method:'POST', headers, body:JSON.stringify({titulo,materia,slots}) });
       const data = await res.json();
-      if (!data.ok) { showErr(data.error || 'Error al crear la sesion.'); resetBtn(); return; }
-
-      // Guardar sesion activa en sessionStorage
+      if (!data.ok) { showErr(data.error||'Error al crear la sesión.'); resetBtn(); return; }
       sessionStorage.setItem('edu_session_id', data.session_id);
       sessionStorage.setItem('edu_session_titulo', titulo);
-
-      location.href = '/';
-    } catch { showErr('Error de conexion.'); resetBtn(); }
+      location.href='/';
+    } catch { showErr('Error de conexión.'); resetBtn(); }
   }
-
   function showErr(msg) {
-    const e = document.getElementById('error-box');
-    e.textContent = msg; e.style.display = 'block';
+    const e=document.getElementById('error-box'); e.textContent=msg; e.style.display='block';
   }
   function resetBtn() {
-    document.getElementById('btn-start').disabled = false;
-    document.getElementById('btn-spin').style.display = 'none';
-    document.getElementById('btn-text').textContent = 'Iniciar Monitoreo';
+    document.getElementById('btn-start').disabled=false;
+    document.getElementById('btn-spin').style.display='none';
+    document.getElementById('btn-text').textContent='Iniciar Monitoreo';
   }
 
-  // ── Sesiones pasadas ─────────────────────────────────────────────────────────
+  // ── Sesiones anteriores con CRUD ──────────────────────────────────────────────
   async function loadPastSessions() {
     const el = document.getElementById('past-sessions');
     try {
       const res  = await fetch('/api/sessions', { headers });
       const list = await res.json();
       if (!list.length) {
-        el.innerHTML = '<div style="color:var(--muted);font-size:.82rem;text-align:center;padding:12px">Sin sesiones previas</div>';
+        el.innerHTML = '<div style="color:var(--muted);font-size:.82rem;text-align:center;padding:16px">Sin sesiones previas</div>';
         return;
       }
       el.innerHTML = list.map(s => {
-        const st = s.status === 'activa'
-          ? '<span style="color:var(--green);font-size:.7rem">● Activa</span>'
-          : '<span style="color:var(--muted);font-size:.7rem">Completada</span>';
+        const isActive = s.status === 'activa';
+        const st = isActive
+          ? '<span style="color:var(--green);font-size:.68rem;font-weight:700">● Activa</span>'
+          : '<span style="color:var(--muted2);font-size:.68rem">Completada</span>';
         const date = s.started_at ? s.started_at.slice(0,16).replace('T',' ') : '—';
+        const titulo_safe  = (s.titulo  || '').replace(/'/g,"\\'");
+        const materia_safe = (s.materia || '').replace(/'/g,"\\'");
+        const viewBtn   = `<button class="sact-btn sact-view" onclick="goReport(${s.id})">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          Ver reporte</button>`;
+        const editBtn   = `<button class="sact-btn sact-edit" onclick="editSession(${s.id},'${titulo_safe}','${materia_safe}')">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          Editar</button>`;
+        const delBtn    = `<button class="sact-btn sact-del" onclick="askDeleteSession(${s.id},'${titulo_safe}')">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
+          Eliminar</button>`;
+        const openBtn   = isActive
+          ? `<button class="sact-btn sact-open" onclick="location.href='/'">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
+              Dashboard</button>` : '';
         return `
-        <div class="session-item" onclick="goReport(${s.id})">
-          <div style="display:flex;justify-content:space-between;align-items:center">
-            <div style="font-weight:600;font-size:.85rem">${s.titulo}</div>
+        <div class="session-item${isActive?' active-session':''}">
+          <div class="session-top">
+            <div class="session-title">${s.titulo}</div>
             ${st}
           </div>
-          <div style="font-size:.75rem;color:var(--muted);margin-top:3px">
-            ${date} · ${s.num_alumnos} alumno${s.num_alumnos!==1?'s':''}
-            ${s.materia ? '· '+s.materia : ''}
-          </div>
+          <div class="session-meta">${date} · ${s.num_alumnos} alumno${s.num_alumnos!==1?'s':''}${s.materia?' · '+s.materia:''}</div>
+          <div class="session-actions">${openBtn}${viewBtn}${editBtn}${delBtn}</div>
         </div>`;
       }).join('');
     } catch {
-      el.innerHTML = '<div style="color:var(--muted);font-size:.82rem;padding:12px">Error cargando sesiones</div>';
+      el.innerHTML='<div style="color:var(--muted);font-size:.82rem;padding:12px">Error cargando sesiones</div>';
     }
   }
 
   function goReport(id) {
     sessionStorage.setItem('report_session_id', id);
-    location.href = '/reports';
+    location.href='/reports';
   }
 
+  // ── CRUD de sesiones ──────────────────────────────────────────────────────────
+  let editingSessionId = null;
+  function editSession(id, titulo, materia) {
+    editingSessionId = id;
+    document.getElementById('edit-session-titulo').value  = titulo;
+    document.getElementById('edit-session-materia').value = materia;
+    document.getElementById('edit-session-modal').classList.add('open');
+    lucide.createIcons();
+    setTimeout(() => document.getElementById('edit-session-titulo').select(), 80);
+  }
+  function closeEditSession() {
+    document.getElementById('edit-session-modal').classList.remove('open');
+    editingSessionId = null;
+  }
+  async function confirmEditSession() {
+    const titulo  = document.getElementById('edit-session-titulo').value.trim();
+    const materia = document.getElementById('edit-session-materia').value.trim();
+    if (!titulo) return;
+    const btn = document.getElementById('btn-confirm-edit-session');
+    btn.disabled=true; btn.textContent='Guardando...';
+    try {
+      const res = await fetch(`/api/sessions/${editingSessionId}`, {
+        method:'PATCH', headers, body:JSON.stringify({titulo, materia}),
+      });
+      const data = await res.json();
+      if (!data.ok) { btn.disabled=false; btn.textContent='Guardar'; showToast('Error al guardar','error'); return; }
+    } catch { btn.disabled=false; btn.textContent='Guardar'; return; }
+    btn.disabled=false; btn.textContent='Guardar';
+    closeEditSession(); await loadPastSessions();
+    showToast('Sesión actualizada','ok');
+  }
+
+  let _pendingDelSessionId = null;
+  function askDeleteSession(id, titulo) {
+    _pendingDelSessionId = id;
+    document.getElementById('del-session-title').textContent = `¿Eliminar "${titulo}"?`;
+    document.getElementById('del-session-modal').classList.add('open');
+    lucide.createIcons();
+  }
+  async function confirmDeleteSession() {
+    document.getElementById('del-session-modal').classList.remove('open');
+    if (_pendingDelSessionId == null) return;
+    try {
+      await fetch(`/api/sessions/${_pendingDelSessionId}`, { method:'DELETE', headers });
+      showToast('Sesión eliminada','ok');
+    } catch { showToast('Error al eliminar','error'); }
+    _pendingDelSessionId = null;
+    await loadPastSessions();
+  }
+
+  // ── Logout ────────────────────────────────────────────────────────────────────
   function logout() {
     fetch('/api/auth/logout', { method:'POST', headers });
     sessionStorage.clear();
-    location.href = '/login';
+    location.href='/login';
   }
 
   // ── Init ──────────────────────────────────────────────────────────────────────
   loadStudents();
   loadPastSessions();
+  updateDiagram();
 </script>
 </body>
 </html>

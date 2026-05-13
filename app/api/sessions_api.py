@@ -38,6 +38,11 @@ class SessionBody(BaseModel):
     slots:   List[SlotBody]  # minimo 1 alumno
 
 
+class UpdateSessionBody(BaseModel):
+    titulo:  str
+    materia: str = ""
+
+
 class ReorderBody(BaseModel):
     assignments: List[SlotBody]  # nueva asignacion face_slot ↔ student_id
 
@@ -144,6 +149,34 @@ async def session_slots(session_id: int,
     _tutor_id(authorization)
     from app.storage.repositories.session_repo import get_slots
     return get_slots(session_id)
+
+
+@router.patch("/{session_id}")
+async def update_session(session_id: int,
+                         body: UpdateSessionBody,
+                         authorization: Optional[str] = Header(None)):
+    """Edita título y materia de una sesión."""
+    _tutor_id(authorization)
+    titulo = body.titulo.strip()
+    if not titulo:
+        return JSONResponse({"ok": False, "error": "El titulo es obligatorio"}, status_code=400)
+    from app.storage.repositories.session_repo import update_session as _update
+    _update(session_id, titulo, body.materia.strip())
+    return {"ok": True}
+
+
+@router.delete("/{session_id}")
+async def delete_session_endpoint(session_id: int,
+                                  authorization: Optional[str] = Header(None)):
+    """Elimina una sesión y todos sus slots."""
+    _tutor_id(authorization)
+    from app.storage.repositories.session_repo import get_session, delete_session as _delete
+    from app.core.telemetry_writer import telemetry_writer
+    session = get_session(session_id)
+    if session and session.get("status") == "activa":
+        telemetry_writer.stop_session()
+    _delete(session_id)
+    return {"ok": True}
 
 
 @router.patch("/{session_id}/slots/reorder")

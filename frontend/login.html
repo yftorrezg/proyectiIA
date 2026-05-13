@@ -4,218 +4,383 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
   <title>Edu-Insight — Acceso</title>
-  <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
   <style>
-    :root{--bg:#0f172a;--surface:#1e293b;--surface2:#263348;--border:#334155;
-          --accent:#6366f1;--accent2:#818cf8;--green:#22c55e;--red:#ef4444;
-          --text:#e2e8f0;--muted:#94a3b8;}
-    *{box-sizing:border-box;margin:0;padding:0;}
-    body{background:var(--bg);color:var(--text);font-family:system-ui,sans-serif;
-         min-height:100vh;display:flex;flex-direction:column;align-items:center;
-         justify-content:center;padding:20px;}
+    :root{
+      --bg:#070c18; --glass:rgba(13,21,44,.78); --glass2:rgba(19,30,60,.65);
+      --border:rgba(99,102,241,.14); --border2:rgba(148,163,184,.08);
+      --accent:#6366f1; --accent2:#818cf8; --accent3:#a5b4fc;
+      --purple:#a855f7; --green:#22c55e; --red:#ef4444; --yellow:#eab308;
+      --text:#e2e8f0; --muted:#94a3b8; --muted2:#64748b;
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    html,body{height:100%;overflow:hidden;}
+    body{
+      background:var(--bg);color:var(--text);
+      font-family:system-ui,-apple-system,sans-serif;
+      display:flex;align-items:center;justify-content:center;
+    }
 
-    .bg-grid{position:fixed;inset:0;z-index:0;
-      background-image:linear-gradient(rgba(99,102,241,.04) 1px,transparent 1px),
-                       linear-gradient(90deg,rgba(99,102,241,.04) 1px,transparent 1px);
-      background-size:40px 40px;pointer-events:none;}
+    /* ── Aurora background ── */
+    .aurora{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;}
+    .aurora-blob{position:absolute;border-radius:50%;filter:blur(90px);opacity:.35;}
+    .blob1{width:700px;height:700px;top:-200px;left:-180px;
+           background:radial-gradient(circle,rgba(99,102,241,.6),transparent 65%);
+           animation:ab1 14s ease-in-out infinite;}
+    .blob2{width:600px;height:600px;bottom:-180px;right:-120px;
+           background:radial-gradient(circle,rgba(168,85,247,.5),transparent 65%);
+           animation:ab2 17s ease-in-out infinite;}
+    .blob3{width:500px;height:500px;top:35%;left:48%;
+           background:radial-gradient(circle,rgba(6,182,212,.3),transparent 65%);
+           animation:ab3 11s ease-in-out infinite;}
+    @keyframes ab1{0%,100%{transform:translate(0,0)scale(1)}50%{transform:translate(50px,-35px)scale(1.07)}}
+    @keyframes ab2{0%,100%{transform:translate(0,0)scale(1)}50%{transform:translate(-35px,25px)scale(1.06)}}
+    @keyframes ab3{0%,100%{transform:translate(0,0)scale(1)}50%{transform:translate(-25px,35px)scale(1.08)}}
 
-    .page{position:relative;z-index:1;width:100%;max-width:1050px;
-          display:grid;grid-template-columns:340px 1fr;gap:20px;align-items:start;}
+    /* Grid overlay */
+    .grid-bg{position:fixed;inset:0;z-index:0;pointer-events:none;
+      background-image:linear-gradient(rgba(99,102,241,.03) 1px,transparent 1px),
+                       linear-gradient(90deg,rgba(99,102,241,.03) 1px,transparent 1px);
+      background-size:48px 48px;}
 
-    /* ── Panel izquierdo: lista de tutores ── */
-    .left-panel{display:flex;flex-direction:column;gap:16px;}
+    /* ── Layout ── */
+    .page{
+      position:relative;z-index:1;
+      width:100%;max-width:1060px;
+      height:100vh;
+      display:grid;grid-template-columns:330px 1fr;
+      gap:14px;padding:18px;
+    }
 
-    .logo-box{background:var(--surface);border:1px solid var(--border);
-              border-radius:16px;padding:20px 22px;
-              display:flex;align-items:center;gap:14px;}
-    .logo-ico{width:46px;height:46px;border-radius:13px;flex-shrink:0;
-              background:linear-gradient(135deg,var(--accent),#a855f7);
-              display:flex;align-items:center;justify-content:center;}
+    /* ── Glass card ── */
+    .glass{
+      background:var(--glass);
+      backdrop-filter:blur(22px) saturate(1.4);
+      -webkit-backdrop-filter:blur(22px) saturate(1.4);
+      border:1px solid var(--border);
+      border-radius:20px;
+      box-shadow:0 20px 60px rgba(0,0,0,.5),0 0 0 1px rgba(255,255,255,.03),
+                 inset 0 1px 0 rgba(255,255,255,.05);
+    }
 
-    .tutors-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden;}
-    .tutors-header{padding:14px 18px;border-bottom:1px solid var(--border);
-                   display:flex;align-items:center;justify-content:space-between;}
-    .tutors-list{max-height:340px;overflow-y:auto;padding:10px;}
-    .tutor-item{display:flex;align-items:center;gap:12px;padding:11px 12px;
-                border-radius:10px;cursor:pointer;border:2px solid transparent;
-                transition:all .2s;margin-bottom:6px;}
-    .tutor-item:last-child{margin-bottom:0;}
-    .tutor-item:hover{background:var(--surface2);border-color:var(--border);}
-    .tutor-item.selected{background:rgba(99,102,241,.1);border-color:var(--accent);}
-    .tutor-avatar{width:40px;height:40px;border-radius:50%;flex-shrink:0;
-                  display:flex;align-items:center;justify-content:center;
-                  font-weight:800;font-size:.9rem;color:#fff;}
+    /* ══ LEFT PANEL ══ */
+    .left-panel{display:flex;flex-direction:column;gap:12px;height:100%;overflow:hidden;}
+
+    /* Logo */
+    .logo-box{flex-shrink:0;padding:18px 20px;display:flex;align-items:center;gap:14px;}
+    .logo-ico{
+      width:48px;height:48px;border-radius:14px;flex-shrink:0;
+      background:linear-gradient(135deg,var(--accent),var(--purple));
+      display:flex;align-items:center;justify-content:center;
+      box-shadow:0 0 28px rgba(99,102,241,.45);
+    }
+    .logo-title{
+      font-size:1.15rem;font-weight:900;
+      background:linear-gradient(135deg,#fff 30%,var(--accent3));
+      -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+      background-clip:text;
+    }
+    .logo-sub{font-size:.7rem;color:var(--muted);margin-top:1px;}
+
+    /* Tutors card */
+    .tutors-card{flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden;}
+    .tutors-header{
+      flex-shrink:0;padding:13px 16px;
+      border-bottom:1px solid var(--border2);
+      display:flex;align-items:center;justify-content:space-between;
+    }
+    .tutors-title{display:flex;align-items:center;gap:8px;font-weight:700;font-size:.86rem;}
+    .tutors-list{flex:1;overflow-y:auto;padding:9px;}
+    .tutors-list::-webkit-scrollbar{width:3px;}
+    .tutors-list::-webkit-scrollbar-thumb{background:rgba(99,102,241,.3);border-radius:99px;}
+
+    .tutor-item{
+      display:flex;align-items:center;gap:11px;
+      padding:10px 11px;border-radius:12px;
+      cursor:pointer;border:1.5px solid transparent;
+      transition:all .25s cubic-bezier(.4,0,.2,1);
+      margin-bottom:5px;position:relative;overflow:hidden;
+    }
+    .tutor-item::after{
+      content:'';position:absolute;inset:0;
+      background:linear-gradient(90deg,rgba(99,102,241,.06),transparent);
+      opacity:0;transition:opacity .25s;border-radius:11px;
+    }
+    .tutor-item:hover{
+      background:rgba(99,102,241,.07);border-color:rgba(99,102,241,.22);
+      transform:translateX(4px);
+    }
+    .tutor-item:hover::after{opacity:1;}
+    .tutor-item.selected{
+      background:rgba(99,102,241,.12);border-color:var(--accent);
+      box-shadow:0 0 0 1px rgba(99,102,241,.25),0 4px 18px rgba(99,102,241,.14);
+    }
+    .tutor-avatar{
+      width:38px;height:38px;border-radius:50%;flex-shrink:0;
+      display:flex;align-items:center;justify-content:center;
+      font-weight:800;font-size:.87rem;color:#fff;
+      box-shadow:0 3px 12px rgba(0,0,0,.35);
+    }
     .tutor-info{min-width:0;flex:1;}
-    .tutor-name{font-weight:700;font-size:.9rem;white-space:nowrap;
-                overflow:hidden;text-overflow:ellipsis;}
-    .tutor-user{font-size:.73rem;color:var(--muted);}
-    .tutor-last{font-size:.68rem;color:var(--muted);margin-top:1px;}
-    .tutor-check{width:20px;height:20px;border-radius:50%;border:2px solid var(--border);
-                 flex-shrink:0;display:flex;align-items:center;justify-content:center;
-                 transition:all .2s;}
-    .tutor-item.selected .tutor-check{background:var(--accent);border-color:var(--accent);}
+    .tutor-name{font-weight:700;font-size:.87rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .tutor-user{font-size:.69rem;color:var(--muted);}
+    .tutor-last{font-size:.64rem;color:var(--muted2);margin-top:1px;}
+    .tutor-check{
+      width:20px;height:20px;border-radius:50%;flex-shrink:0;
+      border:2px solid rgba(148,163,184,.25);
+      display:flex;align-items:center;justify-content:center;transition:all .2s;
+    }
+    .tutor-item.selected .tutor-check{
+      background:var(--accent);border-color:var(--accent);
+      box-shadow:0 0 12px rgba(99,102,241,.55);
+    }
 
-    /* Modo gestión */
-    .btn-manage{background:none;border:1px solid var(--border);border-radius:8px;
-                padding:4px 10px;font-size:.72rem;font-weight:600;color:var(--muted);
-                cursor:pointer;display:flex;align-items:center;gap:5px;transition:all .2s;}
+    /* Manage mode */
+    .btn-manage{
+      background:none;border:1px solid rgba(148,163,184,.18);border-radius:8px;
+      padding:4px 10px;font-size:.69rem;font-weight:600;color:var(--muted);
+      cursor:pointer;display:flex;align-items:center;gap:5px;transition:all .2s;
+    }
     .btn-manage:hover{border-color:var(--accent2);color:var(--accent2);}
     .btn-manage.active{border-color:var(--red);color:var(--red);}
-    .btn-delete{width:28px;height:28px;border-radius:8px;border:1px solid rgba(239,68,68,.3);
-                background:rgba(239,68,68,.08);color:var(--red);cursor:pointer;
-                display:flex;align-items:center;justify-content:center;flex-shrink:0;
-                transition:all .2s;}
-    .btn-delete:hover{background:rgba(239,68,68,.2);border-color:var(--red);}
-    .btn-edit-tutor{width:28px;height:28px;border-radius:8px;border:1px solid rgba(99,102,241,.3);
-                background:rgba(99,102,241,.08);color:var(--accent2);cursor:pointer;
-                display:flex;align-items:center;justify-content:center;flex-shrink:0;
-                transition:all .2s;margin-right:4px;}
-    .btn-edit-tutor:hover{background:rgba(99,102,241,.2);border-color:var(--accent);}
-    .tutor-item.manage-select{background:rgba(239,68,68,.07);border-color:rgba(239,68,68,.35);}
-    .manage-footer{padding:10px 14px;border-top:1px solid var(--border);
-                   display:none;gap:8px;align-items:center;}
+    .btn-delete{
+      width:26px;height:26px;border-radius:7px;
+      border:1px solid rgba(239,68,68,.22);background:rgba(239,68,68,.06);
+      color:var(--red);cursor:pointer;
+      display:flex;align-items:center;justify-content:center;flex-shrink:0;
+      transition:all .2s;
+    }
+    .btn-delete:hover{background:rgba(239,68,68,.18);border-color:var(--red);transform:scale(1.1);}
+    .btn-edit-tutor{
+      width:26px;height:26px;border-radius:7px;
+      border:1px solid rgba(99,102,241,.22);background:rgba(99,102,241,.06);
+      color:var(--accent2);cursor:pointer;margin-right:3px;
+      display:flex;align-items:center;justify-content:center;flex-shrink:0;
+      transition:all .2s;
+    }
+    .btn-edit-tutor:hover{background:rgba(99,102,241,.18);border-color:var(--accent);transform:scale(1.1);}
+    .tutor-item.manage-select{background:rgba(239,68,68,.07);border-color:rgba(239,68,68,.28);}
+    .manage-footer{padding:9px 13px;border-top:1px solid var(--border2);display:none;gap:8px;align-items:center;}
     .manage-footer.visible{display:flex;}
-    .btn-del-sel{flex:1;padding:8px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.35);
-                 border-radius:8px;color:var(--red);font-size:.8rem;font-weight:700;
-                 cursor:pointer;transition:all .2s;}
-    .btn-del-sel:hover{background:rgba(239,68,68,.2);}
+    .btn-del-sel{
+      flex:1;padding:7px;background:rgba(239,68,68,.08);
+      border:1px solid rgba(239,68,68,.28);border-radius:8px;
+      color:var(--red);font-size:.77rem;font-weight:700;cursor:pointer;transition:all .2s;
+    }
+    .btn-del-sel:hover{background:rgba(239,68,68,.18);}
     .btn-del-sel:disabled{opacity:.35;cursor:not-allowed;}
+    .empty-tutors{padding:28px 14px;text-align:center;color:var(--muted);font-size:.83rem;}
 
-    /* Modal de confirmación */
-    .modal-backdrop{display:none;position:fixed;inset:0;z-index:100;
-                    background:rgba(0,0,0,.7);backdrop-filter:blur(4px);
-                    align-items:center;justify-content:center;}
-    .modal-backdrop.open{display:flex;}
-    .modal-box{background:var(--surface);border:1px solid var(--border);border-radius:16px;
-               padding:28px 24px;max-width:380px;width:90%;text-align:center;}
-    .modal-icon{width:52px;height:52px;border-radius:50%;background:rgba(239,68,68,.15);
-                border:1px solid rgba(239,68,68,.3);display:flex;align-items:center;
-                justify-content:center;margin:0 auto 14px;}
-    .modal-title{font-weight:800;font-size:1rem;margin-bottom:6px;}
-    .modal-body{font-size:.82rem;color:var(--muted);margin-bottom:20px;line-height:1.5;}
-    .modal-actions{display:flex;gap:10px;}
-    .btn-cancel{flex:1;padding:10px;border:1px solid var(--border);border-radius:10px;
-                background:none;color:var(--text);font-weight:600;cursor:pointer;
-                font-size:.85rem;transition:all .2s;}
-    .btn-cancel:hover{background:var(--surface2);}
-    .btn-confirm-del{flex:1;padding:10px;border:none;border-radius:10px;
-                     background:var(--red);color:#fff;font-weight:700;cursor:pointer;
-                     font-size:.85rem;transition:opacity .2s;}
-    .btn-confirm-del:hover{opacity:.85;}
+    /* Steps info */
+    .steps-card{flex-shrink:0;padding:14px 18px;}
+    .steps-label{
+      font-size:.65rem;font-weight:700;color:var(--muted2);text-transform:uppercase;
+      letter-spacing:.07em;margin-bottom:10px;
+    }
+    .step-row{display:flex;align-items:center;gap:9px;font-size:.77rem;color:var(--muted);padding:3px 0;}
+    .step-num{
+      width:20px;height:20px;border-radius:50%;flex-shrink:0;
+      background:linear-gradient(135deg,var(--accent),var(--purple));
+      color:#fff;font-size:.6rem;font-weight:900;
+      display:flex;align-items:center;justify-content:center;
+    }
+    .add-tutor-link{
+      display:flex;align-items:center;gap:7px;font-size:.77rem;
+      color:var(--accent2);font-weight:600;text-decoration:none;
+      padding:9px 12px;border-radius:10px;
+      border:1px dashed rgba(99,102,241,.25);
+      margin:10px 14px 14px;transition:all .25s;
+    }
+    .add-tutor-link:hover{background:rgba(99,102,241,.08);border-color:rgba(99,102,241,.45);transform:translateY(-1px);}
 
-    /* Sin tutores */
-    .empty-tutors{padding:32px 16px;text-align:center;color:var(--muted);font-size:.85rem;}
+    /* ══ RIGHT PANEL ══ */
+    .right-panel{display:flex;flex-direction:column;gap:12px;height:100%;overflow:hidden;}
 
-    /* ── Panel derecho: cámara + verificación ── */
-    .right-panel{display:flex;flex-direction:column;gap:16px;}
-
-    .cam-card{background:var(--surface);border:1px solid var(--border);
-              border-radius:16px;overflow:hidden;position:relative;}
-    #video-feed{width:100%;display:block;aspect-ratio:4/3;object-fit:cover;}
+    /* Camera */
+    .cam-card{position:relative;overflow:hidden;flex:1;min-height:0;}
+    #video-feed{width:100%;height:100%;object-fit:cover;display:block;}
     #face-svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;}
+    #cam-overlay{
+      position:absolute;bottom:12px;left:50%;transform:translateX(-50%);
+      background:rgba(7,12,24,.88);backdrop-filter:blur(10px);
+      border:1px solid rgba(99,102,241,.2);border-radius:99px;
+      padding:7px 18px;font-size:.79rem;font-weight:600;
+      display:flex;align-items:center;gap:8px;white-space:nowrap;
+      transition:all .3s;
+    }
+    #cam-dot{width:8px;height:8px;border-radius:50%;background:var(--muted);transition:background .3s;}
+    #ear-badge{
+      position:absolute;top:12px;right:12px;
+      background:rgba(7,12,24,.82);backdrop-filter:blur(8px);
+      border:1px solid rgba(99,102,241,.18);border-radius:10px;
+      padding:7px 10px;font-size:.69rem;
+      display:flex;flex-direction:column;gap:4px;
+    }
+    #ear-bar-track{width:68px;height:4px;background:rgba(148,163,184,.12);border-radius:99px;overflow:hidden;}
+    #ear-bar-fill{height:100%;border-radius:99px;background:var(--green);transition:width .15s,background .3s;}
 
-    /* Overlay de estado sobre el video */
-    #cam-overlay{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);
-                 background:rgba(15,23,42,.88);backdrop-filter:blur(8px);
-                 border:1px solid var(--border);border-radius:99px;
-                 padding:7px 18px;font-size:.82rem;font-weight:600;
-                 display:flex;align-items:center;gap:8px;white-space:nowrap;}
-    #cam-dot{width:8px;height:8px;border-radius:50%;background:var(--muted);}
+    /* Success overlay */
+    .success-overlay{
+      display:none;position:absolute;inset:0;z-index:10;
+      background:rgba(7,12,24,.93);backdrop-filter:blur(8px);
+      align-items:center;justify-content:center;flex-direction:column;
+      gap:13px;text-align:center;border-radius:20px;
+    }
+    @keyframes pop{0%{transform:scale(.5);opacity:0}80%{transform:scale(1.1)}100%{transform:scale(1);opacity:1}}
+    .success-check{
+      width:76px;height:76px;border-radius:50%;
+      background:linear-gradient(135deg,var(--green),#16a34a);
+      display:flex;align-items:center;justify-content:center;
+      animation:pop .5s ease-out;
+      box-shadow:0 0 50px rgba(34,197,94,.45);
+    }
 
-    /* EAR badge */
-    #ear-badge{position:absolute;top:10px;right:10px;
-               background:rgba(15,23,42,.8);border:1px solid var(--border);
-               border-radius:8px;padding:6px 10px;font-size:.72rem;
-               display:flex;flex-direction:column;gap:3px;}
-    #ear-bar-track{width:72px;height:5px;background:var(--surface2);border-radius:99px;overflow:hidden;}
-    #ear-bar-fill{height:100%;border-radius:99px;background:var(--green);transition:width .15s;}
+    /* Action card */
+    .action-card{flex-shrink:0;padding:16px 18px;}
+    .instructions-wrap{display:flex;flex-direction:column;gap:8px;margin-bottom:12px;}
+    .instruction{
+      display:flex;align-items:center;gap:11px;
+      padding:10px 13px;border-radius:12px;
+      border:1px solid var(--border2);background:rgba(19,30,60,.45);
+      transition:all .3s cubic-bezier(.4,0,.2,1);
+    }
+    .instruction.active{
+      background:rgba(99,102,241,.08);border-color:rgba(99,102,241,.28);
+      box-shadow:0 0 0 1px rgba(99,102,241,.1),0 4px 18px rgba(99,102,241,.08);
+    }
+    .instruction.done{border-color:rgba(34,197,94,.28);background:rgba(34,197,94,.05);}
+    .instruction.err{border-color:rgba(239,68,68,.28);background:rgba(239,68,68,.05);}
+    .instr-icon{
+      width:30px;height:30px;border-radius:50%;flex-shrink:0;
+      background:rgba(148,163,184,.1);font-size:.74rem;font-weight:800;
+      display:flex;align-items:center;justify-content:center;transition:all .3s;
+    }
+    .instruction.active .instr-icon{background:var(--accent);color:#fff;box-shadow:0 0 16px rgba(99,102,241,.5);}
+    .instruction.done .instr-icon{background:var(--green);color:#fff;box-shadow:0 0 14px rgba(34,197,94,.45);}
+    .instruction.err .instr-icon{background:var(--red);color:#fff;}
+    .instr-text{font-size:.83rem;font-weight:600;}
+    .instr-sub{font-size:.72rem;color:var(--muted);margin-top:1px;}
 
-    /* Panel de acción */
-    .action-card{background:var(--surface);border:1px solid var(--border);
-                 border-radius:16px;padding:20px;}
+    #error-box{
+      display:none;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.22);
+      border-radius:10px;padding:9px 13px;font-size:.79rem;color:#fca5a5;margin-bottom:11px;
+    }
 
-    /* Instrucción activa */
-    .instruction{display:flex;align-items:center;gap:12px;padding:12px 14px;
-                 border-radius:10px;border:1px solid var(--border);
-                 background:var(--surface2);margin-bottom:14px;transition:all .3s;}
-    .instruction.active{background:rgba(99,102,241,.08);border-color:var(--accent);}
-    .instruction.done{border-color:var(--green);}
-    .instruction.err{border-color:var(--red);background:rgba(239,68,68,.06);}
-    .instr-icon{width:32px;height:32px;border-radius:50%;display:flex;
-                align-items:center;justify-content:center;flex-shrink:0;
-                background:var(--surface);font-size:.8rem;font-weight:700;transition:all .3s;}
-    .instruction.active .instr-icon{background:var(--accent);color:#fff;}
-    .instruction.done  .instr-icon{background:var(--green);color:#fff;}
-    .instruction.err   .instr-icon{background:var(--red);color:#fff;}
-
-    /* Botón principal */
-    .btn-main{width:100%;padding:14px;background:linear-gradient(135deg,var(--accent),#7c3aed);
-              color:#fff;font-weight:700;font-size:1rem;border:none;border-radius:12px;
-              cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;
-              transition:opacity .2s,transform .15s,box-shadow .2s;}
-    .btn-main:hover:not(:disabled){opacity:.9;transform:translateY(-2px);
-                                   box-shadow:0 8px 24px rgba(99,102,241,.35);}
-    .btn-main:disabled{opacity:.4;cursor:not-allowed;transform:none;box-shadow:none;}
-
+    /* Main button */
+    .btn-main{
+      width:100%;padding:13px;
+      background:linear-gradient(135deg,var(--accent) 0%,#7c3aed 55%,var(--purple) 100%);
+      color:#fff;font-weight:700;font-size:.93rem;border:none;border-radius:13px;
+      cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;
+      position:relative;overflow:hidden;transition:all .3s cubic-bezier(.4,0,.2,1);
+      box-shadow:0 4px 24px rgba(99,102,241,.32);
+    }
+    .btn-main::before{
+      content:'';position:absolute;top:-50%;left:-80%;
+      width:55%;height:200%;
+      background:rgba(255,255,255,.13);transform:skewX(-18deg);
+      transition:left .55s ease;
+    }
+    .btn-main:hover:not(:disabled)::before{left:130%;}
+    .btn-main:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 8px 32px rgba(99,102,241,.48);}
+    .btn-main:disabled{opacity:.38;cursor:not-allowed;transform:none;box-shadow:none;}
     @keyframes spin{to{transform:rotate(360deg)}}
     .spinner{width:18px;height:18px;border-radius:50%;border:2px solid rgba(255,255,255,.3);
              border-top-color:#fff;animation:spin .7s linear infinite;display:none;}
 
-    @keyframes borderPulse{0%,100%{stroke-opacity:1}50%{stroke-opacity:.3}}
+    /* Scan animation */
+    @keyframes borderPulse{0%,100%{stroke-opacity:1}50%{stroke-opacity:.25}}
     .rect-pulse{animation:borderPulse 1.2s infinite;}
 
-    /* Pantalla de éxito */
-    .success-overlay{display:none;position:absolute;inset:0;z-index:10;
-                     background:rgba(15,23,42,.92);backdrop-filter:blur(4px);
-                     align-items:center;justify-content:center;flex-direction:column;
-                     gap:12px;text-align:center;border-radius:16px;}
-    @keyframes pop{0%{transform:scale(.5);opacity:0}80%{transform:scale(1.1)}100%{transform:scale(1);opacity:1}}
-    .success-check{width:72px;height:72px;border-radius:50%;
-                   background:linear-gradient(135deg,var(--green),#16a34a);
-                   display:flex;align-items:center;justify-content:center;
-                   animation:pop .5s ease-out;}
+    /* ══ MODALS ══ */
+    .modal-backdrop{
+      display:none;position:fixed;inset:0;z-index:200;
+      background:rgba(0,0,0,.78);backdrop-filter:blur(10px);
+      align-items:center;justify-content:center;
+    }
+    .modal-backdrop.open{display:flex;}
+    .modal-box{
+      background:rgba(12,19,40,.96);backdrop-filter:blur(24px);
+      border:1px solid rgba(99,102,241,.18);border-radius:22px;
+      padding:30px 26px;max-width:390px;width:92%;text-align:center;
+      box-shadow:0 28px 80px rgba(0,0,0,.65),0 0 0 1px rgba(255,255,255,.04);
+      animation:modalIn .25s cubic-bezier(.34,1.56,.64,1);
+    }
+    @keyframes modalIn{from{transform:scale(.9);opacity:0}to{transform:scale(1);opacity:1}}
+    .modal-icon{
+      width:54px;height:54px;border-radius:50%;
+      display:flex;align-items:center;justify-content:center;margin:0 auto 16px;
+    }
+    .modal-title{font-weight:800;font-size:1rem;margin-bottom:7px;}
+    .modal-body{font-size:.82rem;color:var(--muted);margin-bottom:22px;line-height:1.55;}
+    .modal-actions{display:flex;gap:10px;}
+    .btn-cancel{
+      flex:1;padding:11px;border:1px solid rgba(148,163,184,.18);
+      border-radius:11px;background:rgba(148,163,184,.06);
+      color:var(--text);font-weight:600;cursor:pointer;font-size:.85rem;transition:all .2s;
+    }
+    .btn-cancel:hover{background:rgba(148,163,184,.13);}
+    .btn-confirm-del{
+      flex:1;padding:11px;border:none;border-radius:11px;
+      background:linear-gradient(135deg,var(--red),#c0392b);color:#fff;
+      font-weight:700;cursor:pointer;font-size:.85rem;
+      transition:all .2s;box-shadow:0 4px 16px rgba(239,68,68,.3);
+    }
+    .btn-confirm-del:hover{opacity:.9;transform:translateY(-1px);}
+    .modal-field{margin-bottom:18px;text-align:left;}
+    .modal-field label{
+      display:block;font-size:.69rem;font-weight:700;color:var(--muted);
+      text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;
+    }
+    .modal-field input{
+      width:100%;background:rgba(19,30,60,.8);border:1px solid rgba(99,102,241,.2);
+      border-radius:10px;color:var(--text);padding:10px 13px;
+      font-size:.9rem;outline:none;transition:all .2s;
+    }
+    .modal-field input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(99,102,241,.16);}
 
-    #error-box{display:none;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);
-               border-radius:10px;padding:10px 14px;font-size:.82rem;color:#fca5a5;margin-bottom:10px;}
-
-    ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:var(--surface)}
-    ::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+    ::-webkit-scrollbar{width:4px;}
+    ::-webkit-scrollbar-track{background:transparent;}
+    ::-webkit-scrollbar-thumb{background:rgba(99,102,241,.25);border-radius:99px;}
   </style>
 </head>
 <body>
-<div class="bg-grid"></div>
+
+<!-- Aurora & grid -->
+<div class="aurora">
+  <div class="aurora-blob blob1"></div>
+  <div class="aurora-blob blob2"></div>
+  <div class="aurora-blob blob3"></div>
+</div>
+<div class="grid-bg"></div>
 
 <div class="page">
 
-  <!-- ══ PANEL IZQUIERDO ══ -->
+  <!-- ══ LEFT PANEL ══ -->
   <div class="left-panel">
 
     <!-- Logo -->
-    <div class="logo-box">
+    <div class="glass logo-box">
       <div class="logo-ico">
         <i data-lucide="graduation-cap" style="width:22px;height:22px;color:#fff"></i>
       </div>
       <div>
-        <div style="font-weight:800;font-size:1.1rem">Edu-Insight</div>
-        <div style="font-size:.73rem;color:var(--muted)">Sistema de Monitoreo Educativo</div>
+        <div class="logo-title">Edu-Insight</div>
+        <div class="logo-sub">Sistema de Monitoreo Educativo</div>
       </div>
     </div>
 
-    <!-- Lista de tutores -->
-    <div class="tutors-card">
+    <!-- Tutors card -->
+    <div class="glass tutors-card">
       <div class="tutors-header">
-        <div style="display:flex;align-items:center;gap:8px">
-          <i data-lucide="users" style="width:15px;height:15px;color:var(--accent2)"></i>
-          <span style="font-weight:700;font-size:.88rem">Tutores registrados</span>
+        <div class="tutors-title">
+          <i data-lucide="users" style="width:14px;height:14px;color:var(--accent2)"></i>
+          Tutores registrados
+          <span id="tutor-count" style="font-size:.7rem;color:var(--muted);font-weight:500">—</span>
         </div>
-        <div style="display:flex;align-items:center;gap:8px;">
-          <span id="tutor-count" style="font-size:.75rem;color:var(--muted)">—</span>
-          <button class="btn-manage" id="btn-manage" onclick="toggleManage()">
-            <i data-lucide="settings-2" style="width:11px;height:11px"></i>
-            Gestionar
-          </button>
-        </div>
+        <button class="btn-manage" id="btn-manage" onclick="toggleManage()">
+          <i data-lucide="settings-2" style="width:11px;height:11px"></i>Gestionar
+        </button>
       </div>
 
       <div class="tutors-list" id="tutors-list">
@@ -225,64 +390,46 @@
         </div>
       </div>
 
-      <!-- Footer modo gestión: eliminar seleccionados -->
       <div class="manage-footer" id="manage-footer">
-        <span id="sel-count" style="font-size:.78rem;color:var(--muted);white-space:nowrap">0 selec.</span>
+        <span id="sel-count" style="font-size:.76rem;color:var(--muted);white-space:nowrap">0 selec.</span>
         <button class="btn-del-sel" id="btn-del-sel" onclick="deleteSelected()" disabled>
-          <i data-lucide="trash-2" style="width:13px;height:13px;display:inline;vertical-align:middle;margin-right:4px"></i>
+          <i data-lucide="trash-2" style="width:12px;height:12px;display:inline;vertical-align:middle;margin-right:4px"></i>
           Eliminar seleccionados
         </button>
-        <button class="btn-cancel" style="flex:none;padding:8px 12px;font-size:.78rem" onclick="toggleManage()">Listo</button>
+        <button class="btn-cancel" style="flex:none;padding:7px 12px;font-size:.76rem" onclick="toggleManage()">Listo</button>
       </div>
 
-      <div style="padding:10px 14px;border-top:1px solid var(--border)">
-        <a href="/register"
-           style="display:flex;align-items:center;gap:7px;font-size:.8rem;
-                  color:var(--accent2);font-weight:600;text-decoration:none;
-                  padding:8px 10px;border-radius:8px;border:1px dashed rgba(99,102,241,.3);
-                  transition:background .2s;"
-           onmouseover="this.style.background='rgba(99,102,241,.08)'"
-           onmouseout="this.style.background='transparent'">
-          <i data-lucide="user-plus" style="width:14px;height:14px"></i>
-          Registrar nuevo tutor
-        </a>
-      </div>
+      <a href="/register" class="add-tutor-link">
+        <i data-lucide="user-plus" style="width:14px;height:14px"></i>
+        Registrar nuevo tutor
+      </a>
     </div>
 
-    <!-- Info del sistema -->
-    <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;">
-      <div style="font-size:.72rem;color:var(--muted);font-weight:700;text-transform:uppercase;
-                  letter-spacing:.06em;margin-bottom:10px">Cómo iniciar sesión</div>
-      <div style="display:flex;flex-direction:column;gap:7px;">
-        <div style="display:flex;align-items:center;gap:8px;font-size:.8rem">
-          <span style="width:18px;height:18px;border-radius:50%;background:var(--accent);
-                       color:#fff;display:flex;align-items:center;justify-content:center;
-                       font-size:.65rem;font-weight:700;flex-shrink:0">1</span>
-          Seleccioná tu nombre de la lista
-        </div>
-        <div style="display:flex;align-items:center;gap:8px;font-size:.8rem">
-          <span style="width:18px;height:18px;border-radius:50%;background:var(--accent);
-                       color:#fff;display:flex;align-items:center;justify-content:center;
-                       font-size:.65rem;font-weight:700;flex-shrink:0">2</span>
-          Mirá a la cámara y parpadeá
-        </div>
-        <div style="display:flex;align-items:center;gap:8px;font-size:.8rem">
-          <span style="width:18px;height:18px;border-radius:50%;background:var(--accent);
-                       color:#fff;display:flex;align-items:center;justify-content:center;
-                       font-size:.65rem;font-weight:700;flex-shrink:0">3</span>
-          El sistema te reconoce automáticamente
-        </div>
+    <!-- How to login -->
+    <div class="glass steps-card">
+      <div class="steps-label">Cómo iniciar sesión</div>
+      <div class="step-row">
+        <div class="step-num">1</div>
+        Seleccioná tu nombre de la lista
+      </div>
+      <div class="step-row">
+        <div class="step-num">2</div>
+        Mirá a la cámara y parpadeá
+      </div>
+      <div class="step-row">
+        <div class="step-num">3</div>
+        El sistema te reconoce automáticamente
       </div>
     </div>
 
   </div>
 
-  <!-- ══ PANEL DERECHO ══ -->
+  <!-- ══ RIGHT PANEL ══ -->
   <div class="right-panel">
 
-    <!-- Cámara con overlay de éxito -->
-    <div class="cam-card" style="position:relative">
-      <img id="video-feed" src="/api/video_feed" alt="Camara">
+    <!-- Camera -->
+    <div class="glass cam-card">
+      <img id="video-feed" src="/api/video_feed" alt="Cámara">
 
       <svg id="face-svg" viewBox="0 0 640 480" preserveAspectRatio="xMidYMid slice">
         <rect id="face-rect" x="190" y="70" width="260" height="320" rx="12"
@@ -291,20 +438,18 @@
         <path d="M410,70  L450,70 L450,110" fill="none" stroke="#6366f1" stroke-width="3" stroke-linecap="round"/>
         <path d="M190,350 L190,390 L230,390" fill="none" stroke="#6366f1" stroke-width="3" stroke-linecap="round"/>
         <path d="M410,390 L450,390 L450,350" fill="none" stroke="#6366f1" stroke-width="3" stroke-linecap="round"/>
-        <!-- Línea de scan -->
-        <rect id="scan-line" x="190" y="70" width="260" height="3" rx="1"
-              fill="url(#sg)" opacity="0"/>
+        <rect id="scan-line" x="190" y="70" width="260" height="3" rx="1" fill="url(#sg)" opacity="0"/>
         <defs>
           <linearGradient id="sg" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0%"  stop-color="#6366f1" stop-opacity="0"/>
-            <stop offset="50%" stop-color="#818cf8" stop-opacity="1"/>
+            <stop offset="0%"   stop-color="#6366f1" stop-opacity="0"/>
+            <stop offset="50%"  stop-color="#818cf8" stop-opacity="1"/>
             <stop offset="100%" stop-color="#6366f1" stop-opacity="0"/>
           </linearGradient>
         </defs>
       </svg>
 
       <div id="ear-badge">
-        <span style="font-size:.68rem;color:var(--muted);font-weight:600">EAR</span>
+        <span style="font-size:.67rem;color:var(--muted);font-weight:600">EAR</span>
         <div id="ear-bar-track"><div id="ear-bar-fill" style="width:60%"></div></div>
       </div>
 
@@ -313,46 +458,46 @@
         <span id="cam-text">Iniciando cámara...</span>
       </div>
 
-      <!-- Overlay de éxito -->
+      <!-- Success overlay -->
       <div class="success-overlay" id="success-overlay">
         <div class="success-check">
           <i data-lucide="check" style="width:36px;height:36px;color:#fff"></i>
         </div>
-        <div style="font-size:1.4rem;font-weight:800;color:#fff" id="suc-name">Bienvenido</div>
-        <div style="font-size:.85rem;color:#94a3b8">Identidad verificada</div>
-        <div style="margin-top:4px;display:flex;align-items:center;gap:6px;
-                    background:rgba(34,197,94,.15);border:1px solid rgba(34,197,94,.3);
-                    border-radius:99px;padding:5px 14px;">
-          <i data-lucide="fingerprint" style="width:14px;height:14px;color:#22c55e"></i>
-          <span id="suc-sim" style="font-size:.8rem;color:#22c55e;font-weight:700">—</span>
+        <div style="font-size:1.45rem;font-weight:800;color:#fff" id="suc-name">Bienvenido</div>
+        <div style="font-size:.84rem;color:var(--muted)">Identidad verificada</div>
+        <div style="margin-top:2px;display:flex;align-items:center;gap:7px;
+                    background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.28);
+                    border-radius:99px;padding:6px 16px;">
+          <i data-lucide="fingerprint" style="width:14px;height:14px;color:var(--green)"></i>
+          <span id="suc-sim" style="font-size:.8rem;color:var(--green);font-weight:700">—</span>
         </div>
-        <div style="font-size:.78rem;color:#64748b;margin-top:4px">Redirigiendo...</div>
+        <div style="font-size:.76rem;color:var(--muted2);margin-top:2px">Redirigiendo...</div>
       </div>
     </div>
 
-    <!-- Acción -->
-    <div class="action-card">
-
-      <!-- Instrucciones de estado -->
-      <div id="instr-1" class="instruction active">
-        <div class="instr-icon">1</div>
-        <div>
-          <div style="font-size:.85rem;font-weight:600">Seleccioná tu nombre</div>
-          <div style="font-size:.75rem;color:var(--muted)" id="instr-1-sub">Elegí quién sos en la lista de la izquierda</div>
+    <!-- Action card -->
+    <div class="glass action-card">
+      <div class="instructions-wrap">
+        <div id="instr-1" class="instruction active">
+          <div class="instr-icon">1</div>
+          <div>
+            <div class="instr-text">Seleccioná tu nombre</div>
+            <div class="instr-sub" id="instr-1-sub">Elegí quién sos en la lista de la izquierda</div>
+          </div>
         </div>
-      </div>
-      <div id="instr-2" class="instruction">
-        <div class="instr-icon">2</div>
-        <div>
-          <div style="font-size:.85rem;font-weight:600">Parpadeá para confirmar</div>
-          <div style="font-size:.75rem;color:var(--muted)">Prueba de vida — una foto no puede engañar al sistema</div>
+        <div id="instr-2" class="instruction">
+          <div class="instr-icon">2</div>
+          <div>
+            <div class="instr-text">Parpadeá para confirmar</div>
+            <div class="instr-sub">Prueba de vida — una foto no puede engañar al sistema</div>
+          </div>
         </div>
-      </div>
-      <div id="instr-3" class="instruction">
-        <div class="instr-icon">3</div>
-        <div>
-          <div style="font-size:.85rem;font-weight:600">Verificando identidad</div>
-          <div style="font-size:.75rem;color:var(--muted)">Comparando con Facenet512</div>
+        <div id="instr-3" class="instruction">
+          <div class="instr-icon">3</div>
+          <div>
+            <div class="instr-text">Verificando identidad</div>
+            <div class="instr-sub">Comparando con Facenet512</div>
+          </div>
         </div>
       </div>
 
@@ -371,58 +516,53 @@
 <!-- Modal edición de tutor -->
 <div class="modal-backdrop" id="edit-tutor-modal">
   <div class="modal-box">
-    <div class="modal-icon" style="background:rgba(99,102,241,.15);border-color:rgba(99,102,241,.3)">
+    <div class="modal-icon" style="background:rgba(99,102,241,.14);border:1px solid rgba(99,102,241,.28)">
       <i data-lucide="pencil" style="width:22px;height:22px;color:var(--accent2)"></i>
     </div>
     <div class="modal-title">Editar tutor</div>
-    <div style="margin-bottom:18px;text-align:left">
-      <label style="font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;
-                    letter-spacing:.05em;display:block;margin-bottom:6px">Nombre</label>
+    <div class="modal-field">
+      <label>Nombre</label>
       <input type="text" id="edit-tutor-nombre"
-             style="width:100%;background:var(--surface2);border:1px solid var(--border);
-                    border-radius:8px;color:var(--text);padding:10px 12px;font-size:.9rem;
-                    outline:none;transition:border-color .2s"
              onfocus="this.style.borderColor='var(--accent)'"
-             onblur="this.style.borderColor='var(--border)'"
+             onblur="this.style.borderColor='rgba(99,102,241,.2)'"
              onkeydown="if(event.key==='Enter')confirmEditTutor()"
              placeholder="Nombre completo"/>
     </div>
     <div class="modal-actions">
       <button class="btn-cancel" onclick="closeEditTutor()">Cancelar</button>
       <button class="btn-confirm-del" id="btn-confirm-edit-tutor"
-              style="background:var(--accent)" onclick="confirmEditTutor()">Guardar</button>
+              style="background:linear-gradient(135deg,var(--accent),#7c3aed)" onclick="confirmEditTutor()">Guardar</button>
     </div>
   </div>
 </div>
 
-<!-- Modal: tutor incorrecto detectado -->
+<!-- Modal: tutor incorrecto -->
 <div class="modal-backdrop" id="mismatch-modal">
-  <div class="modal-box" style="max-width:400px;text-align:center">
-    <div class="modal-icon" style="background:rgba(234,179,8,.12);border-color:rgba(234,179,8,.35)">
-      <i data-lucide="user-x" style="width:24px;height:24px;color:#eab308"></i>
+  <div class="modal-box" style="max-width:400px">
+    <div class="modal-icon" style="background:rgba(234,179,8,.1);border:1px solid rgba(234,179,8,.3)">
+      <i data-lucide="user-x" style="width:24px;height:24px;color:var(--yellow)"></i>
     </div>
-    <div class="modal-title" style="font-size:1.05rem;margin-bottom:10px">Tutor incorrecto</div>
+    <div class="modal-title">Tutor incorrecto</div>
     <div style="font-size:.82rem;color:var(--muted);margin-bottom:14px;line-height:1.6" id="mismatch-body"></div>
-    <!-- Tarjeta del tutor reconocido -->
-    <div id="mismatch-card" style="display:flex;align-items:center;gap:12px;padding:12px 14px;
-         background:rgba(99,102,241,.08);border:1px solid rgba(99,102,241,.3);
-         border-radius:12px;margin-bottom:20px;text-align:left">
+    <div id="mismatch-card" style="display:flex;align-items:center;gap:12px;padding:13px 15px;
+         background:rgba(99,102,241,.08);border:1px solid rgba(99,102,241,.25);
+         border-radius:13px;margin-bottom:20px;text-align:left">
       <div id="mismatch-avatar" style="width:42px;height:42px;border-radius:50%;flex-shrink:0;
-           display:flex;align-items:center;justify-content:center;font-weight:800;
-           font-size:.95rem;color:#fff"></div>
+           display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.93rem;color:#fff"></div>
       <div>
-        <div id="mismatch-nombre" style="font-weight:700;font-size:.95rem"></div>
-        <div id="mismatch-username" style="font-size:.75rem;color:var(--muted)"></div>
+        <div id="mismatch-nombre" style="font-weight:700;font-size:.93rem"></div>
+        <div id="mismatch-username" style="font-size:.74rem;color:var(--muted)"></div>
       </div>
     </div>
     <button id="btn-mismatch-select" class="btn-main" style="margin-bottom:10px" onclick="mismatchSelectCorrect()">
       <i data-lucide="check-circle" style="width:18px;height:18px"></i>
       <span id="btn-mismatch-text">Seleccionar tutor correcto</span>
     </button>
-    <button onclick="closeMismatch()" style="width:100%;padding:10px;background:none;
-            border:1px solid var(--border);border-radius:10px;color:var(--muted);
-            font-size:.83rem;cursor:pointer;font-weight:600;transition:background .2s"
-            onmouseover="this.style.background='var(--surface2)'"
+    <button onclick="closeMismatch()"
+            style="width:100%;padding:10px;background:none;border:1px solid rgba(148,163,184,.18);
+                   border-radius:11px;color:var(--muted);font-size:.82rem;cursor:pointer;
+                   font-weight:600;transition:background .2s"
+            onmouseover="this.style.background='rgba(148,163,184,.08)'"
             onmouseout="this.style.background='none'">Cancelar</button>
   </div>
 </div>
@@ -430,11 +570,11 @@
 <!-- Modal confirmación borrado -->
 <div class="modal-backdrop" id="confirm-modal">
   <div class="modal-box">
-    <div class="modal-icon">
+    <div class="modal-icon" style="background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.28)">
       <i data-lucide="trash-2" style="width:24px;height:24px;color:var(--red)"></i>
     </div>
     <div class="modal-title" id="modal-title">¿Eliminar tutor?</div>
-    <div class="modal-body" id="modal-body">Esta acción eliminará al tutor y todos sus alumnos, sesiones y datos asociados. No se puede deshacer.</div>
+    <div class="modal-body" id="modal-body">Esta acción eliminará al tutor y todos sus datos. No se puede deshacer.</div>
     <div class="modal-actions">
       <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
       <button class="btn-confirm-del" id="btn-confirm-del" onclick="confirmDelete()">Sí, eliminar</button>
@@ -450,16 +590,15 @@ let selectedTutor    = null;
 let verifying        = false;
 let ws               = null;
 let manageMode       = false;
-let manageSelected   = new Set();   // IDs seleccionados para borrar
-let pendingDeleteIds = [];          // IDs a confirmar en el modal
-let pendingDeleteNames = [];        // Nombres para el modal
+let manageSelected   = new Set();
+let pendingDeleteIds = [];
+let pendingDeleteNames = [];
 
 const faceRect = document.getElementById('face-rect');
 const corners  = document.querySelectorAll('#face-svg path');
 const scanLine = document.getElementById('scan-line');
 let scanAnim   = null;
 
-// Colores de avatar por inicial
 const AV_COLORS = ['#6366f1','#22c55e','#f97316','#ec4899','#06b6d4','#8b5cf6','#eab308'];
 function avatarColor(name) {
   const code = (name || 'A').charCodeAt(0);
@@ -509,21 +648,16 @@ async function loadTutors() {
             <div class="tutor-user">@${t.username}</div>
             <div class="tutor-last">${last}</div>
           </div>
-          <button class="btn-edit-tutor" onclick="event.stopPropagation();openEditTutor(${t.id},'${nombre_safe}')"
-                  title="Editar nombre">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
-                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <button class="btn-edit-tutor" onclick="event.stopPropagation();openEditTutor(${t.id},'${nombre_safe}')" title="Editar nombre">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
               <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
             </svg>
           </button>
-          <button class="btn-delete" onclick="event.stopPropagation();askDelete([${t.id}],['${nombre_safe}'])"
-                  title="Eliminar tutor">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
-                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <button class="btn-delete" onclick="event.stopPropagation();askDelete([${t.id}],['${nombre_safe}'])" title="Eliminar">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/>
-              <path d="M10 11v6"/><path d="M14 11v6"/>
-              <path d="M9 6V4h6v2"/>
+              <path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/>
             </svg>
           </button>
         </div>`;
@@ -537,8 +671,7 @@ async function loadTutors() {
           <div class="tutor-last">${last}</div>
         </div>
         <div class="tutor-check" id="tc-${t.id}">
-          <svg width="10" height="10" viewBox="0 0 24 24" fill="none"
-               stroke="white" stroke-width="3" style="display:none">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" style="display:none">
             <polyline points="20 6 9 17 4 12"/>
           </svg>
         </div>
@@ -570,25 +703,16 @@ async function confirmEditTutor() {
   const nombre = document.getElementById('edit-tutor-nombre').value.trim();
   if (!nombre) return;
   const btn = document.getElementById('btn-confirm-edit-tutor');
-  btn.disabled = true;
-  btn.textContent = 'Guardando...';
+  btn.disabled = true; btn.textContent = 'Guardando...';
   try {
     const res = await fetch(`/api/auth/tutors/${editingTutorId}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ nombre }),
     });
-    if (!res.ok) {
-      btn.disabled = false; btn.textContent = 'Guardar';
-      alert('Error al guardar el nombre.');
-      return;
-    }
-  } catch {
-    btn.disabled = false; btn.textContent = 'Guardar';
-    return;
-  }
-  btn.disabled = false;
-  btn.textContent = 'Guardar';
+    if (!res.ok) { btn.disabled = false; btn.textContent = 'Guardar'; alert('Error al guardar.'); return; }
+  } catch { btn.disabled = false; btn.textContent = 'Guardar'; return; }
+  btn.disabled = false; btn.textContent = 'Guardar';
   closeEditTutor();
   await loadTutors();
 }
@@ -620,14 +744,12 @@ function toggleManageSelect(id) {
   const count = manageSelected.size;
   document.getElementById('sel-count').textContent = count + ' selec.';
   document.getElementById('btn-del-sel').disabled = count === 0;
-  // Actualizar visual del item
   const item = document.getElementById('ti-' + id);
   if (item) item.classList.toggle('manage-select', manageSelected.has(id));
 }
 
 function deleteSelected() {
   if (!manageSelected.size) return;
-  // Recopilar nombres de los seleccionados desde el DOM
   const ids   = [...manageSelected];
   const names = ids.map(id => {
     const el = document.getElementById('ti-' + id);
@@ -660,9 +782,7 @@ function closeModal() {
 
 async function confirmDelete() {
   const btn = document.getElementById('btn-confirm-del');
-  btn.disabled = true;
-  btn.textContent = 'Eliminando...';
-
+  btn.disabled = true; btn.textContent = 'Eliminando...';
   let errors = 0;
   for (const id of pendingDeleteIds) {
     try {
@@ -670,17 +790,12 @@ async function confirmDelete() {
       if (!res.ok) errors++;
     } catch { errors++; }
   }
-
-  btn.disabled = false;
-  btn.textContent = 'Sí, eliminar';
+  btn.disabled = false; btn.textContent = 'Sí, eliminar';
   closeModal();
   manageSelected.clear();
   document.getElementById('sel-count').textContent = '0 selec.';
   document.getElementById('btn-del-sel').disabled = true;
-
-  if (errors > 0) {
-    alert(`${errors} tutor(es) no pudieron ser eliminados.`);
-  }
+  if (errors > 0) alert(`${errors} tutor(es) no pudieron ser eliminados.`);
   await loadTutors();
 }
 
@@ -688,18 +803,12 @@ async function confirmDelete() {
 function selectTutor(id, nombre, username) {
   if (verifying) return;
   selectedTutor = { id, nombre, username };
-
-  // Deseleccionar todos
   document.querySelectorAll('.tutor-item').forEach(el => el.classList.remove('selected'));
   document.querySelectorAll('[id^="tc-"]').forEach(el => {
-    el.style.borderColor = 'var(--border)';
+    el.style.borderColor = 'rgba(148,163,184,.25)';
     el.querySelector('svg').style.display = 'none';
   });
-  document.querySelectorAll('.tutor-check').forEach(el =>
-    el.style.background = 'transparent'
-  );
-
-  // Seleccionar este
+  document.querySelectorAll('.tutor-check').forEach(el => el.style.background = 'transparent');
   const item = document.getElementById('ti-' + id);
   const check = document.getElementById('tc-' + id);
   if (item) item.classList.add('selected');
@@ -708,17 +817,11 @@ function selectTutor(id, nombre, username) {
     check.style.borderColor = 'var(--accent)';
     check.querySelector('svg').style.display = 'block';
   }
-
-  // Actualizar instrucciones
   setStep(2);
-
-  // Activar botón
   const btn = document.getElementById('btn-verify');
   btn.disabled = false;
   document.getElementById('btn-text').textContent = `Verificar como ${nombre.split(' ')[0]}`;
   document.getElementById('instr-1-sub').textContent = `✓ ${nombre} seleccionado`;
-
-  // Color del marco de cámara
   const col = avatarColor(nombre);
   faceRect.style.stroke = col;
   corners.forEach(c => c.style.stroke = col);
@@ -737,54 +840,44 @@ function setStep(n, isDone = [], isError = []) {
   });
 }
 
-// ── Mismatch de tutor ──────────────────────────────────────────────────────────
+// ── Mismatch ──────────────────────────────────────────────────────────────────
 let _mismatchData = null;
 
 function showMismatch(data) {
   _mismatchData = data;
-  const selectedNombre = selectedTutor.nombre;
-  const reconocidoNombre = data.nombre;
-
   document.getElementById('mismatch-body').textContent =
-    `Seleccionaste a "${selectedNombre}", pero tu rostro corresponde a otro tutor registrado.`;
-
-  const col = avatarColor(reconocidoNombre);
-  const ini = initials(reconocidoNombre);
+    `Seleccionaste a "${selectedTutor.nombre}", pero tu rostro corresponde a otro tutor registrado.`;
+  const col = avatarColor(data.nombre);
+  const ini = initials(data.nombre);
   document.getElementById('mismatch-avatar').style.background = col;
   document.getElementById('mismatch-avatar').textContent = ini;
-  document.getElementById('mismatch-nombre').textContent = reconocidoNombre;
-  document.getElementById('mismatch-username').textContent = `@${data.username || reconocidoNombre.toLowerCase()}`;
-  document.getElementById('btn-mismatch-text').textContent = `Continuar como ${reconocidoNombre.split(' ')[0]}`;
-
+  document.getElementById('mismatch-nombre').textContent = data.nombre;
+  document.getElementById('mismatch-username').textContent = `@${data.username || data.nombre.toLowerCase()}`;
+  document.getElementById('btn-mismatch-text').textContent = `Continuar como ${data.nombre.split(' ')[0]}`;
   document.getElementById('mismatch-modal').classList.add('open');
   lucide.createIcons();
-
-  // TTS
   if (window.speechSynthesis) {
-    const msg = `No eres ${selectedNombre}. Eres ${reconocidoNombre}. Selecciona ${reconocidoNombre.split(' ')[0]} para continuar.`;
+    const msg = `No eres ${selectedTutor.nombre}. Eres ${data.nombre}. Selecciona ${data.nombre.split(' ')[0]} para continuar.`;
     const u = new SpeechSynthesisUtterance(msg);
     u.lang = 'es-ES'; u.rate = 0.92;
-    speechSynthesis.cancel();
-    speechSynthesis.speak(u);
+    speechSynthesis.cancel(); speechSynthesis.speak(u);
   }
 }
 
 function closeMismatch() {
   document.getElementById('mismatch-modal').classList.remove('open');
-  _mismatchData = null;
-  speechSynthesis.cancel();
+  _mismatchData = null; speechSynthesis.cancel();
 }
 
 function mismatchSelectCorrect() {
   if (!_mismatchData) return;
   document.getElementById('mismatch-modal').classList.remove('open');
   speechSynthesis.cancel();
-  // Seleccionar automáticamente al tutor reconocido en la lista
   selectTutor(_mismatchData.tutor_id, _mismatchData.nombre, _mismatchData.username || '');
   _mismatchData = null;
 }
 
-// ── WebSocket para EAR en tiempo real ─────────────────────────────────────────
+// ── WebSocket ─────────────────────────────────────────────────────────────────
 function connectWS() {
   ws = new WebSocket(`ws://${location.host}/ws`);
   ws.onmessage = (evt) => {
@@ -793,7 +886,6 @@ function connectWS() {
     const pct = Math.min(100, (ear / 0.35) * 100);
     document.getElementById('ear-bar-fill').style.width      = pct + '%';
     document.getElementById('ear-bar-fill').style.background = ear < 0.22 ? '#eab308' : '#22c55e';
-
     if (!verifying) {
       const faceOk = ear > 0.01;
       document.getElementById('cam-dot').style.background =
@@ -819,10 +911,9 @@ function stopScan() {
   scanLine.style.opacity = '0';
 }
 
-// ── Verificar ──────────────────────────────────────────────────────────────────
+// ── Verificar ─────────────────────────────────────────────────────────────────
 async function startVerify() {
   if (verifying || !selectedTutor) return;
-
   verifying = true;
   const btn = document.getElementById('btn-verify');
   btn.disabled = true;
@@ -831,55 +922,40 @@ async function startVerify() {
   document.getElementById('error-box').style.display = 'none';
   faceRect.classList.add('rect-pulse');
   setStep(2, [1]);
-
   try {
     const res  = await fetch('/api/auth/verify', { method: 'POST' });
     const data = await res.json();
     faceRect.classList.remove('rect-pulse');
-
     if (data.ok) {
       setStep(3, [1,2]);
       startScan();
       document.getElementById('cam-dot').style.background = 'var(--accent)';
       document.getElementById('cam-text').textContent     = 'Procesando...';
-
       await sleep(1000);
       stopScan();
-
-      // ── Detectar mismatch: reconoció a otro tutor ───────────────────────────
       if (data.tutor_id !== selectedTutor.id) {
         verifying = false;
         setStep(1);
         faceRect.classList.remove('rect-pulse');
-        const btn = document.getElementById('btn-verify');
         btn.disabled = false;
         document.getElementById('btn-spin').style.display = 'none';
         document.getElementById('btn-text').textContent = 'Verificar';
         showMismatch(data);
         return;
       }
-
-      // Éxito
       setStep(3, [1,2,3]);
       sessionStorage.setItem('edu_token',    data.token);
       sessionStorage.setItem('edu_tutor',    data.nombre);
       sessionStorage.setItem('edu_tutor_id', data.tutor_id);
-
-      // Mostrar overlay de éxito
       const ov = document.getElementById('success-overlay');
       ov.style.display = 'flex';
       document.getElementById('suc-name').textContent = `¡Bienvenido, ${data.nombre}!`;
-      document.getElementById('suc-sim').textContent =
-        `Similitud: ${Math.round(data.similarity * 100)}%`;
+      document.getElementById('suc-sim').textContent  = `Similitud: ${Math.round(data.similarity * 100)}%`;
       lucide.createIcons();
-
-      // Voz
       if (window.speechSynthesis) {
         const u = new SpeechSynthesisUtterance(`Bienvenido ${data.nombre}`);
-        u.lang = 'es-ES'; u.rate = .95;
-        speechSynthesis.speak(u);
+        u.lang = 'es-ES'; u.rate = .95; speechSynthesis.speak(u);
       }
-
       setTimeout(() => { location.href = '/'; }, 2800);
     } else {
       handleError(data);
@@ -891,9 +967,7 @@ async function startVerify() {
 
 function handleError(data) {
   faceRect.classList.remove('rect-pulse');
-  stopScan();
-  verifying = false;
-
+  stopScan(); verifying = false;
   const MSGS = {
     liveness_failed: 'No se detectó parpadeo. Mirá a la cámara y parpadeá naturalmente.',
     no_face:         'No se detectó tu rostro. Mejorá la iluminación.',
@@ -901,16 +975,13 @@ function handleError(data) {
     no_tutors:       'No hay tutores registrados. Hacé clic en "Registrar nuevo tutor".',
   };
   const msg = MSGS[data.error] ?? data.message ?? 'Error desconocido.';
-
   const errBox = document.getElementById('error-box');
   errBox.style.display = 'block';
-  errBox.innerHTML     = `<div style="display:flex;align-items:center;gap:8px">
+  errBox.innerHTML = `<div style="display:flex;align-items:center;gap:8px">
     <i data-lucide="alert-circle" style="width:15px;height:15px;color:var(--red);flex-shrink:0"></i>
     <span>${msg}</span></div>`;
   lucide.createIcons();
-
   setStep(selectedTutor ? 2 : 1, [], [2]);
-
   const btn = document.getElementById('btn-verify');
   btn.disabled = !selectedTutor;
   document.getElementById('btn-spin').style.display = 'none';
@@ -923,7 +994,6 @@ function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 connectWS();
 loadTutors();
 
-// Si ya hay token válido → saltar login
 const existingToken = sessionStorage.getItem('edu_token');
 if (existingToken) {
   fetch('/api/auth/me', { headers: { Authorization: `Bearer ${existingToken}` }})
