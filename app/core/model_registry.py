@@ -363,7 +363,7 @@ class ModelRegistry:
         # Config activa por categoría (por defecto: primer modelo del catálogo)
         self.active_configs: Dict[ModelCategory, ModelConfig] = {
             ModelCategory.ATENCION:  MODEL_CATALOG[ModelCategory.ATENCION][0],   # XGBoost
-            ModelCategory.AUDIO:     MODEL_CATALOG[ModelCategory.AUDIO][1],      # Whisper base
+            ModelCategory.AUDIO:     MODEL_CATALOG[ModelCategory.AUDIO][2],      # Whisper small
             ModelCategory.EMOCION:   MODEL_CATALOG[ModelCategory.EMOCION][0],    # VGG-Face
             ModelCategory.SEMANTICA: MODEL_CATALOG[ModelCategory.SEMANTICA][0],  # RoBERTuito
         }

@@ -359,7 +359,7 @@ print(f"  Feat.Imp. → {RUTA_FI}")
 # RESUMEN FINAL
 # ──────────────────────────────────────────────────────────────────────────────
 separador()
-print(f"\n  RESUMEN EJECUTIVO PARA TU INGENIERO")
+print(f"\n  RESUMEN")
 separador()
 print(f"  Modelo      : XGBoost (n_est={best_params['n_estimators']}, "
       f"depth={best_params['max_depth']}, lr={best_params['learning_rate']})")

@@ -880,7 +880,7 @@ async function startVerify() {
         speechSynthesis.speak(u);
       }
 
-      setTimeout(() => { location.href = '/session-setup'; }, 2800);
+      setTimeout(() => { location.href = '/'; }, 2800);
     } else {
       handleError(data);
     }
@@ -928,7 +928,7 @@ const existingToken = sessionStorage.getItem('edu_token');
 if (existingToken) {
   fetch('/api/auth/me', { headers: { Authorization: `Bearer ${existingToken}` }})
     .then(r => r.ok ? r.json() : null)
-    .then(d => { if (d) location.href = '/session-setup'; })
+    .then(d => { if (d) location.href = '/'; })
     .catch(() => {});
 }
 </script>

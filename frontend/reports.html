@@ -425,7 +425,7 @@ const sessionId = sessionStorage.getItem('report_session_id')
                || new URLSearchParams(location.search).get('id');
 
 if (!token)     { location.href = '/login';        }
-if (!sessionId) { location.href = '/session-setup';}
+if (!sessionId) { location.href = '/'; }
 
 const HEADERS = { Authorization: `Bearer ${token}` };
 

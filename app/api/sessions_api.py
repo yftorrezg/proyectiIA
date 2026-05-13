@@ -38,6 +38,10 @@ class SessionBody(BaseModel):
     slots:   List[SlotBody]  # minimo 1 alumno
 
 
+class ReorderBody(BaseModel):
+    assignments: List[SlotBody]  # nueva asignacion face_slot ↔ student_id
+
+
 @router.get("")
 async def list_sessions(authorization: Optional[str] = Header(None)):
     tutor_id = _tutor_id(authorization)
@@ -140,3 +144,26 @@ async def session_slots(session_id: int,
     _tutor_id(authorization)
     from app.storage.repositories.session_repo import get_slots
     return get_slots(session_id)
+
+
+@router.patch("/{session_id}/slots/reorder")
+async def reorder_session_slots(session_id: int,
+                                body: ReorderBody,
+                                authorization: Optional[str] = Header(None)):
+    """
+    Reasigna en caliente que alumno corresponde a cada posicion de camara (face_slot).
+    Actualiza la DB y el overlay de video de forma inmediata.
+    """
+    _tutor_id(authorization)
+    from app.storage.repositories.session_repo  import reorder_slots, get_slots
+    from app.storage.repositories.student_repo  import get_student_by_id
+    from app.core.telemetry_writer               import telemetry_writer
+
+    assignments = [{"face_slot": s.face_slot, "student_id": s.student_id} for s in body.assignments]
+    updated_slots = reorder_slots(session_id, assignments)
+
+    # Actualizar TelemetryWriter + slot_map del inference engine
+    if telemetry_writer.active and telemetry_writer.session_id == session_id:
+        telemetry_writer.update_slots(updated_slots)
+
+    return {"ok": True, "slots": updated_slots}

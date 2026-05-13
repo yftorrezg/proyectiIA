@@ -223,7 +223,7 @@ class TrainingManager:
         self._emit(job, "progress")
 
         df = pd.read_csv(DATASET_ATENCION)
-        feature_cols = ["ear", "pitch", "yaw", "ratio_h"]
+        feature_cols = ["ear", "pitch", "yaw", "ratio_h", "ratio_v"]
         label_col    = "label"
 
         df = df.dropna(subset=feature_cols + [label_col])
@@ -334,6 +334,8 @@ class TrainingManager:
     def _build_sklearn_model(self, model_id: str, hp: Dict) -> Any:
         if model_id == "xgboost":
             from xgboost import XGBClassifier
+            import torch as _torch
+            xgb_device = "cuda" if _torch.cuda.is_available() else "cpu"
             return XGBClassifier(
                 n_estimators  = int(hp.get("n_estimators", 100)),
                 max_depth     = int(hp.get("max_depth", 5)),
@@ -342,6 +344,7 @@ class TrainingManager:
                 eval_metric   = "mlogloss",
                 verbosity     = 0,
                 random_state  = 42,
+                device        = xgb_device,
             )
         if model_id == "random_forest":
             from sklearn.ensemble import RandomForestClassifier

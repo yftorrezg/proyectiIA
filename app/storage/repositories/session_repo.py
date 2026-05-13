@@ -97,3 +97,40 @@ def get_slots(session_id: int) -> list:
     ).fetchall()
     conn.close()
     return [dict(r) for r in rows]
+
+
+def reorder_slots(session_id: int, new_assignments: list) -> list:
+    """
+    Reasigna los slots de cara en la sesion activa.
+    new_assignments: [{face_slot: int, student_id: int}, ...]
+    Usa DELETE + INSERT para evitar conflictos de PRIMARY KEY (session_id, face_slot).
+    Devuelve la lista actualizada de slots.
+    """
+    SEAT_LABELS = ["Izquierda", "Centro-Izq", "Centro", "Centro-Der", "Derecha-1", "Derecha-2"]
+
+    with _lock:
+        conn = get_connection()
+        with conn:
+            # Obtener student_ids validos de esta sesion
+            existing_ids = {row[0] for row in conn.execute(
+                "SELECT student_id FROM session_slots WHERE session_id = ?",
+                (session_id,),
+            ).fetchall()}
+
+            # Eliminar todos los slots actuales
+            conn.execute("DELETE FROM session_slots WHERE session_id = ?", (session_id,))
+
+            # Re-insertar con nueva asignacion de face_slot
+            for asgn in new_assignments:
+                sid   = asgn["student_id"]
+                fslot = asgn["face_slot"]
+                if sid not in existing_ids:
+                    continue
+                label = SEAT_LABELS[fslot] if fslot < len(SEAT_LABELS) else f"Slot {fslot}"
+                conn.execute(
+                    "INSERT INTO session_slots (session_id, student_id, face_slot, seat_label) VALUES (?,?,?,?)",
+                    (session_id, sid, fslot, label),
+                )
+        conn.close()
+
+    return get_slots(session_id)

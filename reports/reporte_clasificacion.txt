@@ -1,7 +1,7 @@
 EDU-INSIGHT — Reporte de Clasificación
-Fecha: 2026-04-15T12:09:18
-Accuracy : 0.9804
-Macro F1 : 0.9807
+Fecha: 2026-05-12T23:22:47
+Accuracy : 0.9795
+Macro F1 : 0.9798
 
               precision    recall  f1-score   support
 

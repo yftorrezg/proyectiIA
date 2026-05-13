@@ -21,7 +21,6 @@ def create_student(nombre: str, codigo: str, tutor_id: int) -> int:
     logger.info(f"Alumno creado: '{nombre}' codigo={codigo} (id={sid})")
     return sid
 
-
 def get_students_by_tutor(tutor_id: int) -> list:
     conn = get_connection()
     rows = conn.execute(
@@ -30,7 +29,6 @@ def get_students_by_tutor(tutor_id: int) -> list:
     ).fetchall()
     conn.close()
     return [dict(r) for r in rows]
-
 
 def get_student_by_id(student_id: int) -> Optional[dict]:
     conn = get_connection()
@@ -41,13 +39,11 @@ def get_student_by_id(student_id: int) -> Optional[dict]:
     conn.close()
     return dict(row) if row else None
 
-
 def codigo_exists(codigo: str) -> bool:
     conn = get_connection()
     row  = conn.execute("SELECT id FROM students WHERE codigo = ?", (codigo,)).fetchone()
     conn.close()
     return row is not None
-
 
 def update_student(student_id: int, nombre: str, codigo: str) -> bool:
     """Actualiza nombre y código de un alumno. Devuelve True si existía."""
@@ -60,7 +56,6 @@ def update_student(student_id: int, nombre: str, codigo: str) -> bool:
             )
         conn.close()
     return cur.rowcount > 0
-
 
 def delete_student(student_id: int) -> None:
     with _lock:

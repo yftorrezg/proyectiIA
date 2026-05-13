@@ -21,6 +21,7 @@ import time
 import queue
 import threading
 import logging
+from collections import deque, Counter
 from pathlib import Path
 from typing import Optional
 
@@ -41,7 +42,7 @@ CONFIG = {
     "transcripcion_activa":    True,
     "emocion_activa":          True,
     "whisper_compute":         "float16",
-    "forzar_gpu_whisper":      True,
+    "forzar_gpu_whisper":      False,
 }
 
 # ─────────────────────────────────────────────
@@ -61,13 +62,15 @@ estado_api_global = {
     "ml_disponible":    False,
     "modelo_activo":    "xgboost",      # id del modelo de atención activo
     # ── Modelos activos por categoría ──────────────────────────
-    "audio_model":      "whisper_base",
+    "audio_model":      "whisper_small",
     "emocion_model":    "deepface_vggface",
     "semantica_model":  "robertuito",
     "max_num_faces":    1,
     # ── Estado individual por cara (multi-alumno) ───────────────
     # face_idx → {ear, atencion, mirada, emocion, sentimiento, indice_comprension}
     "alumnos":          {},
+    # ── Mapa face_slot → nombre alumno (actualizado por TelemetryWriter) ───
+    "slot_map":         {},   # {0: "Juan Pérez", 1: "María García", ...}
 }
 
 frame_global_bytes: Optional[bytes] = None   # bytes MJPEG del frame actual
@@ -141,10 +144,22 @@ class InferenceEngine:
         self._ml_cache_key  = None   # (model_id, trained_path) — evita recargas innecesarias
         self._ml_lock       = threading.Lock()
 
-        # Modelo de emoción CNN entrenado (PyTorch) — None = usar DeepFace
+        # Modelo de emoción CNN entrenado (PyTorch) — None = usar ONNX/DeepFace
         self._emocion_cnn      = None
         self._emocion_classes  = None
         self._emocion_img_size = 224   # se actualiza al cargar el checkpoint
+
+        # Modelo de emoción ONNX GPU (DeepFace convertido, inferencia en CUDA)
+        self._onnx_emotion_session  = None
+        self._onnx_emotion_inp_name = None
+        self._onnx_emotion_labels   = ["angry","disgust","fear","happy","sad","surprise","neutral"]
+
+        # Emoción suavizada: voto mayoritario sobre últimos 7 frames por cara
+        self._emocion_deque: deque = deque(maxlen=7)      # cara 0 / global
+        self._emocion_per_face: dict = {}                  # face_idx → deque(maxlen=7)
+
+        # NLP: ventana deslizante — últimos 5 segmentos para contexto de sentimiento
+        self._texto_buffer: deque = deque(maxlen=5)
 
     # ── Inicialización ────────────────────────────────────────────────────────
 
@@ -154,6 +169,7 @@ class InferenceEngine:
         self.running = True
 
         self._init_mediapipe()
+        self._init_onnx_emotion()
         self._init_whisper_nlp()
         self._load_attention_model_from_registry()
 
@@ -194,6 +210,51 @@ class InferenceEngine:
         except Exception as exc:
             logger.warning(f"MediaPipe no disponible: {exc}")
             self.face_mesh = None
+
+    # ── Emoción ONNX GPU ──────────────────────────────────────────────────────
+
+    def _init_onnx_emotion(self) -> None:
+        """
+        Carga el modelo de emoción en ONNX Runtime con CUDAExecutionProvider.
+        Si el archivo ONNX no existe lo genera convirtiendo el Keras de DeepFace.
+        Si CUDA no está disponible, cae a CPUExecutionProvider.
+        """
+        onnx_path = Path("models/emotion_model.onnx")
+        try:
+            # Añadir DLLs CUDA de PyTorch al path de búsqueda AQUÍ (después de MediaPipe)
+            _torch_lib = Path(torch.__file__).parent / "lib"
+            if _torch_lib.exists():
+                try:
+                    os.add_dll_directory(str(_torch_lib))
+                except Exception:
+                    pass
+                os.environ["PATH"] = str(_torch_lib) + os.pathsep + os.environ.get("PATH", "")
+
+            import onnxruntime as ort
+
+            # Generar ONNX si no existe
+            if not onnx_path.exists():
+                logger.info("Convirtiendo modelo de emoción DeepFace → ONNX...")
+                import tf2onnx
+                from deepface.models.demography.Emotion import EmotionClient
+                ec = EmotionClient()
+                tf2onnx.convert.from_keras(ec.model, output_path=str(onnx_path), opset=13)
+                logger.info(f"Modelo ONNX generado: {onnx_path}")
+
+            providers = (
+                [("CUDAExecutionProvider", {"device_id": 0}), "CPUExecutionProvider"]
+                if self.device == "cuda"
+                else ["CPUExecutionProvider"]
+            )
+            sess = ort.InferenceSession(str(onnx_path), providers=providers)
+            used = sess.get_providers()
+            self._onnx_emotion_session  = sess
+            self._onnx_emotion_inp_name = sess.get_inputs()[0].name
+            provider_label = "GPU" if "CUDAExecutionProvider" in used else "CPU"
+            logger.info(f"Modelo de emoción ONNX cargado ({provider_label}).")
+        except Exception as exc:
+            logger.warning(f"ONNX emotion no disponible: {exc}")
+            self._onnx_emotion_session = None
 
     # ── Whisper + RoBERTa ─────────────────────────────────────────────────────
 
@@ -380,11 +441,11 @@ class InferenceEngine:
     def _productor_audio(self) -> None:
         import speech_recognition as sr
         recognizer = sr.Recognizer()
-        recognizer.energy_threshold        = 300
-        recognizer.dynamic_energy_threshold = True
-        recognizer.pause_threshold         = 0.8
+        recognizer.energy_threshold         = 300
+        recognizer.dynamic_energy_threshold  = True
+        recognizer.pause_threshold          = 1.5   # esperar más antes de cortar → frases completas
         try:
-            mic = sr.Microphone()
+            mic = sr.Microphone(sample_rate=16000)  # forzar 16kHz nativamente
             with mic as src:
                 logger.info("Calibrando ruido ambiental...")
                 recognizer.adjust_for_ambient_noise(src, duration=2)
@@ -392,7 +453,7 @@ class InferenceEngine:
             while self.running:
                 try:
                     with mic as src:
-                        audio = recognizer.listen(src, timeout=3, phrase_time_limit=5)
+                        audio = recognizer.listen(src, timeout=3, phrase_time_limit=15)
                         if not self.audio_queue.full():
                             self.audio_queue.put(audio)
                 except sr.WaitTimeoutError:
@@ -401,6 +462,7 @@ class InferenceEngine:
             logger.error(f"Error de micrófono: {exc}")
 
     def _consumidor_audio(self) -> None:
+        import numpy as _np
         while self.running:
             try:
                 audio = self.audio_queue.get(timeout=1)
@@ -409,21 +471,28 @@ class InferenceEngine:
             if not self.whisper:
                 continue
             try:
-                with open("temp_audio.wav", "wb") as f:
-                    f.write(audio.get_wav_data())
+                # Convertir AudioData → numpy float32 en memoria (sin escribir disco)
+                raw   = audio.get_raw_data(convert_rate=16000, convert_width=2)
+                samples = _np.frombuffer(raw, dtype=_np.int16).astype(_np.float32) / 32768.0
+
                 segments, _ = self.whisper.transcribe(
-                    "temp_audio.wav", language="es", beam_size=5,
-                    vad_filter=True,
-                    vad_parameters=dict(min_silence_duration_ms=500),
-                    condition_on_previous_text=False,
+                    samples,
+                    language                 = "es",
+                    beam_size                = 3,       # GPU → velocidad sin perder calidad
+                    vad_filter               = True,
+                    vad_parameters           = dict(min_silence_duration_ms=300),
+                    condition_on_previous_text = True,  # contexto entre frases → mejor coherencia
                 )
                 texto = " ".join(seg.text for seg in segments).strip()
                 if texto:
+                    self._texto_buffer.append(texto)
                     estado_api_global["texto"] = texto
                     logger.debug(f"Whisper: {texto!r}")
                     if self.analizador_nlp:
                         try:
-                            res = self.analizador_nlp(texto[:512])
+                            # Ventana deslizante: últimos N segmentos como contexto
+                            texto_ctx = " ".join(self._texto_buffer)[:512]
+                            res = self.analizador_nlp(texto_ctx)
                             lbl = res[0]["label"] if isinstance(res, list) else res["label"]
                             estado_api_global["sentimiento"] = lbl
                         except Exception:
@@ -466,20 +535,46 @@ class InferenceEngine:
         else:
             self._analizar_con_deepface(crop)
 
+    def _infer_onnx_emotion_raw(self, crop: np.ndarray) -> Optional[str]:
+        """Inferencia ONNX de emoción; devuelve etiqueta inglesa cruda o None."""
+        if self._onnx_emotion_session is None:
+            return None
+        try:
+            gray = cv2.cvtColor(crop, cv2.COLOR_BGR2GRAY)
+            gray = cv2.resize(gray, (48, 48)).astype(np.float32) / 255.0
+            inp  = gray[np.newaxis, ..., np.newaxis]
+            out  = self._onnx_emotion_session.run(
+                None, {self._onnx_emotion_inp_name: inp}
+            )[0][0]
+            return self._onnx_emotion_labels[int(out.argmax())]
+        except Exception as exc:
+            logger.debug(f"ONNX emotion raw: {exc}")
+            return None
+
     def _analizar_con_deepface(self, crop: np.ndarray) -> None:
+        # ── Ruta 1: ONNX Runtime (GPU) con suavizado ──────────────────────────
+        raw = self._infer_onnx_emotion_raw(crop)
+        if raw is not None:
+            self._emocion_deque.append(raw)
+            smoothed = Counter(self._emocion_deque).most_common(1)[0][0]
+            estado_api_global["emocion"] = TRADUCCION_EMOCION.get(smoothed, smoothed)
+            return
+
+        # ── Ruta 2: DeepFace TF (fallback CPU) ────────────────────────────────
         try:
             from deepface import DeepFace
-            cv2.imwrite("temp_rostro.jpg", crop)
             resultado = DeepFace.analyze(
-                img_path="temp_rostro.jpg",
+                img_path=crop,
                 actions=["emotion"],
                 enforce_detection=False,
                 detector_backend="skip",
                 silent=True,
             )
             res = resultado[0] if isinstance(resultado, list) else resultado
-            emocion = res.get("dominant_emotion", "neutral")
-            estado_api_global["emocion"] = TRADUCCION_EMOCION.get(emocion, emocion)
+            raw = res.get("dominant_emotion", "neutral")
+            self._emocion_deque.append(raw)
+            smoothed = Counter(self._emocion_deque).most_common(1)[0][0]
+            estado_api_global["emocion"] = TRADUCCION_EMOCION.get(smoothed, smoothed)
         except Exception as exc:
             logger.debug(f"DeepFace error: {exc}")
 
@@ -577,13 +672,35 @@ class InferenceEngine:
                         x_min, x_max = min(xs), max(xs)
                         y_min, y_max = min(ys), max(ys)
 
-                        # Crop para DeepFace / CNN (solo cara 0 alimenta el worker de emocion)
+                        # Crop para emoción (todos los rostros)
                         mg  = int((x_max - x_min) * 0.25)
                         cx1 = max(0, x_min - mg);  cx2 = min(w, x_max + mg)
                         cy1 = max(0, y_min - mg);  cy2 = min(h, y_max + mg)
                         crop = frame_limpio[cy1:cy2, cx1:cx2]
                         if crop.size > 0 and face_idx == 0:
                             self._mediapipe_crop = crop.copy()
+
+                        # Emoción por cara: ONNX inline GPU (~1ms por cara)
+                        face_emocion = estado_api_global["emocion"]   # default global
+                        if (CONFIG["emocion_activa"]
+                                and frame_counter % CONFIG["analisis_emocion_cada"] == 0
+                                and crop.size > 0):
+                            raw_emo = self._infer_onnx_emotion_raw(crop)
+                            if raw_emo is not None:
+                                if face_idx not in self._emocion_per_face:
+                                    self._emocion_per_face[face_idx] = deque(maxlen=7)
+                                self._emocion_per_face[face_idx].append(raw_emo)
+                                smoothed_raw = Counter(self._emocion_per_face[face_idx]).most_common(1)[0][0]
+                                face_emocion = TRADUCCION_EMOCION.get(smoothed_raw, smoothed_raw)
+                                if face_idx == 0:
+                                    estado_api_global["emocion"] = face_emocion
+                        else:
+                            d = self._emocion_per_face.get(face_idx)
+                            if d:
+                                last_raw = Counter(d).most_common(1)[0][0]
+                                face_emocion = TRADUCCION_EMOCION.get(last_raw, last_raw)
+                                if face_idx == 0:
+                                    estado_api_global["emocion"] = face_emocion
 
                         # EAR (por cara)
                         ear_izq = _calcular_ear(lm, OJO_IZQ_EAR, w, h)
@@ -643,12 +760,14 @@ class InferenceEngine:
                             # ── Atención (por cara) ──────────────────────────────────
                             if (estado_api_global["modo_atencion"] == "ml"
                                     and estado_api_global["ml_disponible"]):
-                                # Solo recarga si el registry cambió (cache_key mismatch)
-                                self._load_attention_model_from_registry()
+                                # Leer modelo ya cargado — recarga se dispara desde reload_attention_model()
                                 with self._ml_lock:
                                     pkg = self._ml_package
                                 if pkg:
-                                    feats = np.array([[ear, pitch, yaw, ratio_h]])
+                                    n_feats = len(pkg.get("features", ["ear","pitch","yaw","ratio_h"]))
+                                    feats = (np.array([[ear, pitch, yaw, ratio_h, ratio_v]])
+                                             if n_feats >= 5
+                                             else np.array([[ear, pitch, yaw, ratio_h]]))
                                     pred_enc  = pkg["model"].predict(feats)[0]
                                     pred_prob = pkg["model"].predict_proba(feats)[0]
                                     pred_lbl  = pkg["label_encoder"].inverse_transform([pred_enc])[0]
@@ -678,7 +797,20 @@ class InferenceEngine:
 
                             # Overlay
                             cv2.rectangle(frame, (x_min,y_min),(x_max,y_max), color_ejes, 2)
-                            emo_vis = estado_api_global["emocion"].upper()
+
+                            # Nombre del alumno a la derecha del recuadro
+                            _slot_nombre = estado_api_global["slot_map"].get(face_idx, "")
+                            if _slot_nombre:
+                                _nombre_vis = _slot_nombre.split()[0]  # solo primer nombre
+                                (_tw, _th), _ = cv2.getTextSize(_nombre_vis, cv2.FONT_HERSHEY_SIMPLEX, 0.58, 2)
+                                _ny = (y_min + y_max) // 2
+                                _nx = x_max + 8
+                                cv2.rectangle(frame, (_nx-4, _ny-_th-6), (_nx+_tw+10, _ny+6), (15,23,42), -1)
+                                cv2.rectangle(frame, (_nx-4, _ny-_th-6), (_nx+_tw+10, _ny+6), color_ejes, 1)
+                                cv2.putText(frame, _nombre_vis, (_nx+2, _ny),
+                                    cv2.FONT_HERSHEY_SIMPLEX, 0.58, (255,255,255), 2)
+
+                            emo_vis = face_emocion.upper()
                             if emo_vis == "FELICIDAD": emo_vis = "FELIZ"
                             by = max(0, y_min - 65)
                             cv2.rectangle(frame,(x_min,by),(x_max+80,y_min),(15,23,42),-1)
@@ -709,7 +841,7 @@ class InferenceEngine:
                             "ear":                round(ear, 3),
                             "atencion":           face_atencion,
                             "mirada":             face_mirada,
-                            "emocion":            estado_api_global["emocion"],
+                            "emocion":            face_emocion,
                             "sentimiento":        estado_api_global["sentimiento"],
                             "indice_comprension": face_indice,
                         }
@@ -722,15 +854,17 @@ class InferenceEngine:
                         if old_idx not in detected:
                             del self._somnolencia_counters[old_idx]
                             self._prev_indice_per_face.pop(old_idx, None)
+                            self._emocion_per_face.pop(old_idx, None)
                 else:
                     self._somnolencia_counters = {}
                     estado_api_global["alumnos"] = {}
 
-            # Enviar crop a DeepFace/CNN
+            # Enviar crop a DeepFace/CNN solo si ONNX no está disponible (fallback CPU)
             if (CONFIG["emocion_activa"]
                     and frame_counter % CONFIG["analisis_emocion_cada"] == 0
                     and self._mediapipe_crop is not None
-                    and not self.frame_queue.full()):
+                    and not self.frame_queue.full()
+                    and self._onnx_emotion_session is None):
                 self.frame_queue.put(self._mediapipe_crop.copy())
 
             # MJPEG encode

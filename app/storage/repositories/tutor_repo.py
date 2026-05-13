@@ -8,7 +8,7 @@ Almacenamiento:
 
 Verificación:
   - Similitud coseno entre el embedding capturado y los almacenados.
-  - Umbral: 0.68  (Facenet512: arriba = misma persona, abajo = diferente)
+  - Umbral: 0.58  (Facenet512: arriba = misma persona, abajo = diferente)
 """
 
 import pickle
@@ -30,10 +30,7 @@ logger = logging.getLogger(__name__)
 # Mismo-persona-overlays/angulo: 0.60-0.80
 # Personas-distintas: tipicamente < 0.50
 SIMILARITY_THRESHOLD = 0.58
-
-
 # ── Escritura ────────────────────────────────────────────────────────────────
-
 def create_tutor(nombre: str, username: str, embedding: np.ndarray) -> int:
     """Guarda un tutor nuevo. Devuelve su ID."""
     blob = pickle.dumps(embedding.astype(np.float32))
@@ -48,8 +45,6 @@ def create_tutor(nombre: str, username: str, embedding: np.ndarray) -> int:
         conn.close()
     logger.info(f"Tutor registrado: '{nombre}' (id={tutor_id})")
     return tutor_id
-
-
 def update_tutor_nombre(tutor_id: int, nombre: str) -> bool:
     """Actualiza el nombre de un tutor. Devuelve True si existía."""
     with _lock:
@@ -60,8 +55,6 @@ def update_tutor_nombre(tutor_id: int, nombre: str) -> bool:
             )
         conn.close()
     return cur.rowcount > 0
-
-
 def delete_tutor(tutor_id: int) -> bool:
     """Elimina un tutor y en cascada sus alumnos, sesiones y tokens. Devuelve True si existía."""
     with _lock:
@@ -73,8 +66,6 @@ def delete_tutor(tutor_id: int) -> bool:
     if deleted:
         logger.info(f"Tutor eliminado: id={tutor_id}")
     return deleted
-
-
 def username_exists(username: str) -> bool:
     """Verifica si el username ya está registrado."""
     conn = get_connection()
@@ -83,18 +74,13 @@ def username_exists(username: str) -> bool:
     ).fetchone()
     conn.close()
     return row is not None
-
-
 def get_tutor_count() -> int:
     """Devuelve cuántos tutores hay registrados."""
     conn = get_connection()
     count = conn.execute("SELECT COUNT(*) FROM tutors").fetchone()[0]
     conn.close()
     return count
-
-
 # ── Verificación biométrica ──────────────────────────────────────────────────
-
 def find_matching_tutor(query_embedding: np.ndarray) -> Optional[dict]:
     """
     Compara el embedding con todos los tutores registrados.
@@ -127,10 +113,7 @@ def find_matching_tutor(query_embedding: np.ndarray) -> Optional[dict]:
         return best_match
 
     return None
-
-
 # ── Tokens de sesión ─────────────────────────────────────────────────────────
-
 def create_session_token(tutor_id: int, hours: int = 8) -> str:
     """Genera un UUID token, lo guarda en DB y actualiza last_login."""
     token   = str(uuid.uuid4())
@@ -148,8 +131,6 @@ def create_session_token(tutor_id: int, hours: int = 8) -> str:
             )
         conn.close()
     return token
-
-
 def verify_token(token: str) -> Optional[dict]:
     """
     Verifica que el token exista y no haya expirado.
@@ -168,8 +149,6 @@ def verify_token(token: str) -> Optional[dict]:
     ).fetchone()
     conn.close()
     return dict(row) if row else None
-
-
 def delete_token(token: str) -> None:
     """Elimina el token (logout)."""
     with _lock:
@@ -179,10 +158,7 @@ def delete_token(token: str) -> None:
                 "DELETE FROM auth_sessions WHERE token = ?", (token,)
             )
         conn.close()
-
-
 # ── Matemática ───────────────────────────────────────────────────────────────
-
 def _cosine_similarity(a: np.ndarray, b: np.ndarray) -> float:
     """Similitud coseno entre dos vectores. Rango: -1 a 1."""
     na = np.linalg.norm(a)

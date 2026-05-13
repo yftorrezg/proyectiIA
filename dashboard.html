@@ -216,6 +216,118 @@
         }
         .student-card.distraido { animation: alertPulse 2s ease-in-out infinite; }
         .student-card.distraido:hover { animation: none; }
+
+        /* ── Enhanced Chart Cards ─────────────────────────────────────────── */
+        .chart-card-enhanced {
+            background: linear-gradient(135deg, rgba(15,23,42,0.97) 0%, rgba(20,32,52,0.95) 100%);
+            border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 14px;
+            padding: 10px 12px 8px;
+            flex: 1;
+            min-height: 0;
+            position: relative;
+            overflow: hidden;
+            transition: box-shadow 0.35s ease, border-color 0.35s ease;
+            display: flex;
+            flex-direction: column;
+        }
+        .chart-card-enhanced:hover {
+            border-color: rgba(255,255,255,0.13);
+        }
+        .chart-glow-orb {
+            position: absolute;
+            top: -30px; right: -30px;
+            width: 100px; height: 100px;
+            border-radius: 50%;
+            opacity: 0.07;
+            filter: blur(28px);
+            pointer-events: none;
+            transition: opacity 0.4s;
+        }
+        .chart-card-enhanced:hover .chart-glow-orb { opacity: 0.12; }
+
+        .chart-header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 4px;
+            flex-shrink: 0;
+        }
+        .chart-name-label {
+            font-size: 9px; font-weight: 800;
+            text-transform: uppercase; letter-spacing: .1em;
+            opacity: 0.95;
+        }
+        .chart-trend-label {
+            font-size: 9px; color: #475569; font-weight: 600;
+            margin-top: 2px;
+            display: flex; align-items: center; gap: 3px;
+        }
+        .chart-val-display {
+            text-align: right;
+            line-height: 1;
+        }
+        .chart-val-num {
+            font-size: 1.55rem; font-weight: 900;
+            line-height: 1;
+            font-variant-numeric: tabular-nums;
+            transition: color 0.4s ease;
+            display: block;
+        }
+        .chart-val-unit {
+            font-size: 9px; color: #64748b; font-weight: 700;
+        }
+        .chart-svg-wrap {
+            flex: 1;
+            min-height: 50px;
+            position: relative;
+            margin: 2px -2px 0;
+        }
+
+        /* ── Layout Toggle ─────────────────────────────────────────────────── */
+        .chart-layout-toggle {
+            display: flex;
+            gap: 2px;
+            background: rgba(15,23,42,0.8);
+            border: 1px solid #334155;
+            border-radius: 99px;
+            padding: 2px;
+        }
+        .chart-layout-btn {
+            padding: 3px 9px;
+            border-radius: 99px;
+            border: none;
+            cursor: pointer;
+            font-size: 9px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: .05em;
+            color: #64748b;
+            background: transparent;
+            transition: all 0.22s;
+            display: flex;
+            align-items: center;
+            gap: 3px;
+        }
+        .chart-layout-btn.active {
+            background: #6366f1;
+            color: #fff;
+            box-shadow: 0 0 10px rgba(99,102,241,.4);
+        }
+
+        /* ── Chart live dot pulse ──────────────────────────────────────────── */
+        @keyframes chartDotPulse {
+            0%, 100% { r: 3.5; opacity: 1; }
+            50%       { r: 5;   opacity: 0.7; }
+        }
+        .chart-live-dot { animation: chartDotPulse 2s ease-in-out infinite; }
+
+        /* ── Chart entry animation ─────────────────────────────────────────── */
+        @keyframes chartFadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        .chart-card-enhanced { animation: chartFadeIn 0.35s ease-out; }
     </style>
 </head>
 <body class="min-h-screen bg-slate-50 font-sans text-slate-800 selection:bg-indigo-200">
@@ -382,13 +494,13 @@
         </div>
     </div>
 
-    <main class="max-w-[1600px] mx-auto p-4 md:p-6 mt-4">
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+    <main class="max-w-[1600px] mx-auto px-4 md:px-5 pt-3 pb-2" style="height:calc(100vh - 68px);overflow:hidden">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 h-full">
 
             <!-- ══════════════════════════════════════════
                  COLUMNA IZQUIERDA — Tutor · Sesión · Alumnos
                  ══════════════════════════════════════════ -->
-            <div class="lg:col-span-2 flex flex-col gap-4">
+            <div class="lg:col-span-2 flex flex-col gap-3 h-full overflow-y-auto pb-1" style="scrollbar-width:thin">
 
                 <!-- ── Tutor card ──────────────────────── -->
                 <div class="bg-slate-900 border border-slate-700 rounded-2xl p-4">
@@ -479,6 +591,23 @@
 
                 <!-- ── Paneles de alumnos en vivo ──────── -->
                 <div id="sidebar-student-panels" style="display:none">
+                    <!-- Botón reasignar posiciones (encima del monitoreo) -->
+                    <button onclick="openReorderModal()"
+                            style="width:100%;margin-bottom:10px;padding:9px;
+                                   background:rgba(99,102,241,.12);border:1px solid rgba(99,102,241,.35);
+                                   border-radius:10px;color:#818cf8;font-size:.75rem;font-weight:700;
+                                   cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;
+                                   transition:all .2s"
+                            onmouseover="this.style.background='rgba(99,102,241,.22)'"
+                            onmouseout="this.style.background='rgba(99,102,241,.12)'">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                             stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3"/>
+                            <path d="M3 16v3a2 2 0 0 0 2 2h3m8 0h3a2 2 0 0 0 2-2v-3"/>
+                            <path d="m7 16 4-4-4-4"/><path d="m17 8-4 4 4 4"/>
+                        </svg>
+                        Corregir Posiciones
+                    </button>
                     <div class="flex items-center gap-2 mb-2 px-1">
                         <i data-lucide="activity" class="w-3.5 h-3.5 text-indigo-400 flex-shrink-0"></i>
                         <span class="text-slate-300 text-[11px] font-bold uppercase tracking-wider">Monitoreo</span>
@@ -493,11 +622,11 @@
             <!-- ==========================================
                  COLUMNA CENTRAL — Auditoría Visual + Audio
                  ========================================== -->
-            <div class="lg:col-span-7 flex flex-col gap-6">
-                
+            <div class="lg:col-span-7 flex flex-col gap-3 h-full overflow-hidden">
+
                 <!-- Monitor de Video (OpenCV + 3D Axes de MediaPipe) -->
-                <div class="glass-panel rounded-2xl shadow-sm overflow-hidden flex flex-col">
-                    <div class="bg-white/50 border-b border-slate-100 p-3.5 flex justify-between items-center gap-3">
+                <div class="glass-panel rounded-2xl shadow-sm overflow-hidden flex flex-col flex-1" style="min-height:0">
+                    <div class="bg-white/50 border-b border-slate-100 p-2.5 flex justify-between items-center gap-3">
                         <h2 class="font-bold flex items-center gap-2 text-slate-700 text-sm uppercase tracking-wider shrink-0">
                             <i data-lucide="video" class="w-4 h-4 text-indigo-500"></i>
                             Auditoría Visual
@@ -522,7 +651,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="bg-slate-900 relative aspect-video flex items-center justify-center border-b-4 border-indigo-500">
+                    <div class="bg-slate-900 relative flex items-center justify-center border-b-4 border-indigo-500 flex-1" style="min-height:0">
                         <!-- Streaming MJPEG directo desde FastAPI -->
                         <img id="video-stream" src="http://localhost:8080/api/video_feed" alt="Transmisión IA" class="w-full h-full object-cover" />
                         
@@ -536,20 +665,16 @@
                 </div>
 
                 <!-- Consola de Transcripción (Modelo Faster-Whisper) -->
-                <div class="bg-slate-900 rounded-2xl shadow-xl border border-slate-800 p-6 relative overflow-hidden group">
-                    <!-- Brillo de fondo estético -->
-                    <div class="absolute top-0 right-0 w-64 h-64 bg-indigo-500 rounded-full mix-blend-screen filter blur-[80px] opacity-20 group-hover:opacity-30 transition-smooth"></div>
-                    
-                    <div class="flex justify-between items-start mb-4 relative z-10">
-                        <h3 class="text-indigo-400 text-xs font-bold tracking-widest uppercase flex items-center gap-2">
-                            <i data-lucide="mic" class="w-4 h-4"></i> Transcripción Cognitiva
+                <div class="bg-slate-900 rounded-2xl shadow-xl border border-slate-800 p-3 relative overflow-hidden group flex-shrink-0">
+                    <div class="flex justify-between items-center mb-1.5 relative z-10">
+                        <h3 class="text-indigo-400 text-[10px] font-bold tracking-widest uppercase flex items-center gap-2">
+                            <i data-lucide="mic" class="w-3.5 h-3.5"></i> Transcripción Cognitiva
                         </h3>
-                        <span class="flex items-center gap-1.5 text-[10px] uppercase tracking-wider font-bold bg-indigo-500/20 text-indigo-300 px-2 py-1 rounded">
+                        <span class="flex items-center gap-1.5 text-[9px] uppercase tracking-wider font-bold bg-indigo-500/20 text-indigo-300 px-2 py-0.5 rounded">
                             <div class="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse"></div> Faster-Whisper
                         </span>
                     </div>
-                    
-                    <div id="texto-val" class="text-white text-2xl font-light leading-relaxed relative z-10 min-h-[80px] flex items-center">
+                    <div id="texto-val" class="text-white text-base font-light leading-snug relative z-10 min-h-[36px] flex items-center">
                         "Esperando datos del modelo acústico..."
                     </div>
                 </div>
@@ -558,130 +683,90 @@
             <!-- ==========================================
                  COLUMNA DERECHA — Métricas y Gráficas de IA
                  ========================================== -->
-            <div class="lg:col-span-3 flex flex-col gap-4">
-                
+            <div class="lg:col-span-3 flex flex-col gap-2 h-full overflow-hidden">
+
                 <!-- 1. Radar de Atención (Geometría Epipolar de MediaPipe) -->
-                <div id="panel-atencion" class="glass-panel rounded-2xl p-5 transition-smooth border-l-4 border-l-emerald-500">
+                <div id="panel-atencion" class="glass-panel rounded-2xl p-3 transition-smooth border-l-4 border-l-emerald-500 flex-shrink-0">
                     <div class="flex justify-between items-center">
                         <div class="flex-1">
-                            <p id="label-modo-atencion" class="text-slate-400 text-[10px] font-bold tracking-widest uppercase mb-1">Geometría Espacial 3D</p>
-                            <h3 id="texto-atencion" class="text-emerald-600 font-extrabold text-xl tracking-tight">ALUMNO ENFOCADO</h3>
+                            <p id="label-modo-atencion" class="text-slate-400 text-[10px] font-bold tracking-widest uppercase mb-0.5">Geometría Espacial 3D</p>
+                            <h3 id="texto-atencion" class="text-emerald-600 font-extrabold text-base tracking-tight">ALUMNO ENFOCADO</h3>
                             <!-- Badge de confianza ML (solo visible en modo ML) -->
-                            <div id="conf-badge" class="hidden mt-2 flex items-center gap-2">
-                                <div class="bg-indigo-500/10 border border-indigo-500/30 rounded-full px-2 py-0.5 flex items-center gap-1.5">
-                                    <i data-lucide="sparkles" class="w-3 h-3 text-indigo-400"></i>
-                                    <span id="conf-badge-model-name" class="text-indigo-300 text-[10px] font-bold tracking-wider">ML</span>
+                            <div id="conf-badge" class="hidden mt-1 flex items-center gap-1.5">
+                                <div class="bg-indigo-500/10 border border-indigo-500/30 rounded-full px-1.5 py-0.5 flex items-center gap-1">
+                                    <i data-lucide="sparkles" class="w-2.5 h-2.5 text-indigo-400"></i>
+                                    <span id="conf-badge-model-name" class="text-indigo-300 text-[9px] font-bold tracking-wider">ML</span>
                                 </div>
-                                <div class="flex items-center gap-1.5">
-                                    <div class="h-1.5 w-20 bg-slate-200 rounded-full overflow-hidden">
+                                <div class="flex items-center gap-1">
+                                    <div class="h-1.5 w-16 bg-slate-200 rounded-full overflow-hidden">
                                         <div id="conf-bar" class="h-full bg-indigo-500 rounded-full transition-all duration-500" style="width:0%"></div>
                                     </div>
-                                    <span id="conf-pct" class="text-indigo-400 text-[10px] font-mono font-bold">0%</span>
+                                    <span id="conf-pct" class="text-indigo-400 text-[9px] font-mono font-bold">0%</span>
                                 </div>
                             </div>
                         </div>
-                        <div id="icon-atencion-bg" class="p-3 rounded-xl bg-emerald-50 text-emerald-600 transition-smooth">
-                            <i id="icon-atencion" data-lucide="focus" class="w-7 h-7"></i>
+                        <div id="icon-atencion-bg" class="p-2 rounded-xl bg-emerald-50 text-emerald-600 transition-smooth">
+                            <i id="icon-atencion" data-lucide="focus" class="w-5 h-5"></i>
                         </div>
                     </div>
                 </div>
 
                 <!-- 2. Clasificación de Microexpresiones (DeepFace CNN) -->
-                <div class="glass-panel rounded-2xl p-5 relative overflow-hidden">
-                    <div id="emocion-glow" class="absolute -right-6 -top-6 w-24 h-24 rounded-full blur-2xl opacity-20 transition-smooth bg-slate-400"></div>
-                    
-                    <p class="text-slate-400 text-[10px] font-bold tracking-widest uppercase mb-3">Red Neuronal Convolucional (CNN)</p>
-                    <div class="flex items-center gap-4">
-                        <div id="emocion-icon-wrapper" class="p-3.5 rounded-2xl bg-slate-100 text-slate-500 border border-slate-200 transition-smooth shadow-sm">
-                            <i id="emocion-icon" data-lucide="meh" class="w-6 h-6"></i>
+                <div class="glass-panel rounded-2xl p-3 relative overflow-hidden flex-shrink-0">
+                    <p class="text-slate-400 text-[10px] font-bold tracking-widest uppercase mb-1.5">Red Neuronal Convolucional (CNN)</p>
+                    <div class="flex items-center gap-3">
+                        <div id="emocion-icon-wrapper" class="p-2.5 rounded-xl bg-slate-100 text-slate-500 border border-slate-200 transition-smooth shadow-sm flex-shrink-0">
+                            <i id="emocion-icon" data-lucide="meh" class="w-5 h-5"></i>
                         </div>
                         <div>
-                            <p class="text-sm font-semibold text-slate-500">Emoción Dominante</p>
-                            <p id="emocion-val" class="text-2xl font-bold text-slate-800 tracking-tight transition-smooth">Analizando...</p>
+                            <p class="text-[10px] font-semibold text-slate-500">Emoción Dominante</p>
+                            <p id="emocion-val" class="text-lg font-bold text-slate-800 tracking-tight transition-smooth">Analizando...</p>
                         </div>
                     </div>
                 </div>
 
-                <!-- 3. Gráfica de Seguimiento (Fusión Multimodal) -->
-                <div class="glass-panel rounded-2xl p-4 flex-1 flex flex-col shadow-sm">
-                    <div class="flex justify-between items-start mb-3">
-                        <div>
-                            <h3 class="text-slate-800 font-bold text-sm flex items-center gap-1.5">
-                                <i data-lucide="activity" class="w-4 h-4 text-indigo-500"></i> Comprensión
-                            </h3>
-                            <p class="text-slate-400 text-[10px] mt-0.5">Visión + NLP</p>
-                        </div>
-                        <div class="text-right">
-                            <span id="indice-val" class="text-4xl font-black tracking-tighter text-indigo-600 transition-smooth">0</span>
-                            <span class="text-base font-bold text-slate-400">%</span>
-                        </div>
+                <!-- 3. Gráficas de Comprensión por alumno (dinámico) -->
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:0 2px;flex-shrink:0;margin-bottom:2px">
+                    <span style="font-size:9px;font-weight:800;color:#475569;text-transform:uppercase;letter-spacing:.1em;display:flex;align-items:center;gap:4px">
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2.5" stroke-linecap="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                        Comprensión
+                    </span>
+                    <div class="chart-layout-toggle">
+                        <button class="chart-layout-btn active" id="btn-layout-rows" onclick="setChartLayout('rows')" title="Vista en filas">
+                            <svg width="9" height="9" viewBox="0 0 12 12" fill="currentColor"><rect x="0" y="0" width="12" height="3.5" rx="1"/><rect x="0" y="4.5" width="12" height="3.5" rx="1"/><rect x="0" y="9" width="12" height="3" rx="1"/></svg>
+                            Filas
+                        </button>
+                        <button class="chart-layout-btn" id="btn-layout-grid" onclick="setChartLayout('grid')" title="Vista en cuadrícula">
+                            <svg width="9" height="9" viewBox="0 0 12 12" fill="currentColor"><rect x="0" y="0" width="5.5" height="5.5" rx="1"/><rect x="6.5" y="0" width="5.5" height="5.5" rx="1"/><rect x="0" y="6.5" width="5.5" height="5.5" rx="1"/><rect x="6.5" y="6.5" width="5.5" height="5.5" rx="1"/></svg>
+                            Grid
+                        </button>
                     </div>
-
-                    <!-- Motor SVG Avanzado (Calculado por JavaScript sin librerías externas) -->
-                    <div class="flex-1 w-full min-h-[140px] relative mt-2">
-                        <svg viewBox="0 0 400 120" class="w-full h-full overflow-visible" preserveAspectRatio="none">
-                            <!-- Cuadrícula de fondo -->
-                            <line x1="0" y1="0" x2="400" y2="0" stroke="#f1f5f9" stroke-width="1" />
-                            <line x1="0" y1="60" x2="400" y2="60" stroke="#f1f5f9" stroke-width="1" stroke-dasharray="4" />
-                            <line x1="0" y1="120" x2="400" y2="120" stroke="#f1f5f9" stroke-width="1" />
-                            
-                            <!-- Ejes Numéricos -->
-                            <text x="-25" y="5" font-size="10" fill="#94a3b8" font-weight="600">100</text>
-                            <text x="-20" y="64" font-size="10" fill="#94a3b8" font-weight="600">50</text>
-                            <text x="-15" y="124" font-size="10" fill="#94a3b8" font-weight="600">0</text>
-
-                            <!-- Degradado estético para el área bajo la curva -->
-                            <defs>
-                                <linearGradient id="gradient-area" x1="0%" y1="0%" x2="0%" y2="100%">
-                                    <stop offset="0%" stop-color="#6366f1" stop-opacity="0.3" />
-                                    <stop offset="100%" stop-color="#6366f1" stop-opacity="0.0" />
-                                </linearGradient>
-                            </defs>
-
-                            <!-- Área y Línea dinámica manipuladas por JavaScript -->
-                            <path id="chart-area" fill="url(#gradient-area)" d="" />
-                            <path id="chart-line" fill="none" stroke="#6366f1" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" d="" class="transition-smooth" />
-                            
-                            <!-- Punto indicador de valor actual -->
-                            <circle id="chart-dot" cx="0" cy="0" r="5" fill="#ffffff" stroke="#6366f1" stroke-width="2" class="hidden transition-smooth shadow-lg" />
-                        </svg>
-                    </div>
+                </div>
+                <div class="flex-1 min-h-0" id="comprension-charts-wrap">
+                    <!-- Generado dinámicamente por JS según alumnos de la sesión -->
                 </div>
 
                 <!-- 4. Análisis Semántico (RoBERTa NLP) -->
-                <div class="glass-panel rounded-2xl p-4 flex items-center justify-between">
-                    <div class="flex items-center gap-3">
-                        <div class="p-2 bg-slate-100 rounded-lg text-slate-500">
-                            <i data-lucide="message-square-quote" class="w-5 h-5"></i>
+                <div class="glass-panel rounded-2xl p-2.5 flex items-center justify-between flex-shrink-0">
+                    <div class="flex items-center gap-2">
+                        <div class="p-1.5 bg-slate-100 rounded-lg text-slate-500 flex-shrink-0">
+                            <i data-lucide="message-square-quote" class="w-4 h-4"></i>
                         </div>
                         <div>
-                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Semántica (RoBERTa NLP)</p>
-                            <p id="nlp-val" class="font-semibold text-slate-700">Esperando texto...</p>
+                            <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Semántica (RoBERTa NLP)</p>
+                            <p id="nlp-val" class="font-semibold text-slate-700 text-sm">Esperando texto...</p>
                         </div>
                     </div>
-                    <div id="nlp-badge" class="w-3 h-3 rounded-full bg-slate-300"></div>
+                    <div id="nlp-badge" class="w-2.5 h-2.5 rounded-full bg-slate-300 flex-shrink-0"></div>
                 </div>
 
             </div>
         </div>
 
-        <!-- ══════════════════════════════════════════════════════════════════
-             SECCIÓN ML — MÉTRICAS DEL MODELO (carga al abrir el dashboard)
-             ══════════════════════════════════════════════════════════════════ -->
-        <div class="mt-6" id="seccion-ml">
-            <!-- Header de sección -->
-            <div class="flex items-center gap-3 mb-4">
-                <div class="bg-indigo-500/10 border border-indigo-500/20 p-2 rounded-lg">
-                    <i data-lucide="sparkles" class="w-4 h-4 text-indigo-400"></i>
-                </div>
-                <div>
-                    <h2 class="text-slate-700 font-extrabold text-sm uppercase tracking-widest">Métricas del Modelo ML</h2>
-                    <p id="ml-header-subtitle" class="text-slate-400 text-[10px] font-semibold tracking-wider">Modelo de Atención · Clasificador Personalizado</p>
-                </div>
-                <div id="ml-fecha-badge" class="ml-auto bg-slate-100 text-slate-500 text-[10px] font-semibold px-3 py-1 rounded-full border border-slate-200">
-                    Cargando...
-                </div>
-            </div>
+    </main>
+
+    <!-- SECCIÓN ML oculta (eliminada del dashboard principal) -->
+    <div style="display:none" id="seccion-ml">
 
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
 
@@ -780,8 +865,7 @@
                 </div>
             </div>
         </div>
-
-    </main>
+    </div><!-- /seccion-ml wrapper -->
 
     <!-- LOGICA FRONTEND Y WEBSOCKETS -->
     <script>
@@ -810,61 +894,290 @@
         };
 
         // ==============================================================================
-        // MOTOR SVG: GRÁFICA DE SEGUIMIENTO TEMPORAL DE COMPRENSIÓN
+        // MOTOR SVG: GRÁFICAS DE COMPRENSIÓN POR ALUMNO — Enhanced v2
         // ==============================================================================
-        const MAX_PUNTOS = 30; // Define cuántos segundos de historial visual guardaremos
-        let historialComprehension = Array(MAX_PUNTOS).fill(50); // Inicia en un 50% plano
-        
-        const chartLine = document.getElementById('chart-line');
-        const chartArea = document.getElementById('chart-area');
-        const chartDot = document.getElementById('chart-dot');
+        const MAX_PUNTOS  = 40;   // más puntos = curva más continua
+        const SVG_W = 400, SVG_H = 110;
+        const COLORES_HEX = ['#6366f1','#22c55e','#f97316','#ec4899','#06b6d4','#eab308'];
 
-        function actualizarGraficaSVG(nuevoValor) {
-            // Lógica de "ventana deslizante": agregamos el nuevo valor al final y borramos el primero
-            historialComprehension.push(nuevoValor);
-            historialComprehension.shift();
+        // ── EMA (Suavizado Exponencial) ────────────────────────────────────────
+        // α = 0.12 → muy suave; sube/baja lentamente, sin saltos bruscos
+        const EMA_ALPHA   = 0.12;
+        let _emaValues    = {};
+        let _prevEmaValues = {};  // para calcular tendencia
 
-            const width = 400;
-            const height = 120;
-            const stepX = width / (MAX_PUNTOS - 1);
-            
-            let dLine = "";
-            let ultimoX = 0;
-            let ultimoY = 0;
+        // Historial por face_slot (valores ya suavizados)
+        let _chartHistories = { 0: Array(MAX_PUNTOS).fill(50) };
 
-            // Mapeo matemático: Convertir los valores de 0-100 a coordenadas (X, Y) del SVG
-            historialComprehension.forEach((val, index) => {
-                const x = index * stepX;
-                // Se invierte Y porque en la web el punto Y=0 está en la parte superior de la pantalla
-                const y = height - ((val / 100) * height);
-                
-                if (index === 0) dLine += `M ${x},${y} `;
-                else dLine += `L ${x},${y} `;
-                
-                ultimoX = x;
-                ultimoY = y;
-            });
+        // Layout: 'rows' | 'grid'
+        let _chartLayout = 'rows';
 
-            // Aplicar rutas (paths) calculadas a los elementos del DOM
-            chartLine.setAttribute('d', dLine);
-            
-            // Ruta del área (cierra el polígono hacia abajo para crear el sombreado)
-            const dArea = dLine + ` L ${ultimoX},${height} L 0,${height} Z`;
-            chartArea.setAttribute('d', dArea);
-
-            // Posicionar el círculo indicador final
-            chartDot.classList.remove('hidden');
-            chartDot.setAttribute('cx', ultimoX);
-            chartDot.setAttribute('cy', ultimoY);
-            
-            // Semiótica de colores de la línea según el nivel cognitivo actual
-            let colorLinea = '#6366f1'; // Indigo (Normal)
-            if(nuevoValor >= 70) colorLinea = '#10b981'; // Verde (Óptimo)
-            else if(nuevoValor <= 30) colorLinea = '#ef4444'; // Rojo (Frustración)
-            
-            chartLine.setAttribute('stroke', colorLinea);
-            chartDot.setAttribute('stroke', colorLinea);
+        // ── Toggle de layout ───────────────────────────────────────────────────
+        function setChartLayout(mode) {
+            _chartLayout = mode;
+            document.getElementById('btn-layout-rows').classList.toggle('active', mode === 'rows');
+            document.getElementById('btn-layout-grid').classList.toggle('active', mode === 'grid');
+            _applyChartLayout();
         }
+
+        function _applyChartLayout() {
+            const wrap = document.getElementById('comprension-charts-wrap');
+            if (!wrap) return;
+            const slots = window._slots || [];
+            const n = slots.length || 1;
+
+            if (_chartLayout === 'grid' && n >= 2) {
+                wrap.style.cssText = 'flex:1;display:grid;gap:7px;min-height:0;grid-template-columns:1fr 1fr;align-content:start';
+            } else {
+                wrap.style.cssText = 'flex:1;display:flex;flex-direction:column;gap:7px;min-height:0';
+            }
+        }
+
+        // ── Constructor del HTML de una gráfica ───────────────────────────────
+        function _miniChartHTML(slotId, nombre, color) {
+            const pad = 4;
+            return `
+            <div class="chart-card-enhanced" id="chartcard-${slotId}"
+                 style="border-top:2.5px solid ${color};
+                        box-shadow:0 2px 18px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.05);">
+
+                <!-- Glow ambiental del color del alumno -->
+                <div class="chart-glow-orb" style="background:${color}"></div>
+
+                <!-- Cabecera: nombre + valor -->
+                <div class="chart-header-row">
+                    <div>
+                        <span class="chart-name-label" style="color:${color}">${nombre.split(' ')[0]}</span>
+                        <div class="chart-trend-label" id="ctrend-${slotId}">
+                            <svg width="8" height="8" viewBox="0 0 10 10" fill="${color}" opacity="0.7">
+                                <polygon points="5,1 9,9 1,9"/>
+                            </svg>
+                            <span id="ctrendtxt-${slotId}">—</span>
+                        </div>
+                    </div>
+                    <div class="chart-val-display">
+                        <span class="chart-val-num" id="cval-${slotId}" style="color:${color}">—</span>
+                        <span class="chart-val-unit">%</span>
+                    </div>
+                </div>
+
+                <!-- SVG Chart -->
+                <div class="chart-svg-wrap">
+                    <svg id="csvg-${slotId}"
+                         viewBox="0 0 ${SVG_W} ${SVG_H}"
+                         style="width:100%;height:100%;min-height:55px;display:block;overflow:visible"
+                         preserveAspectRatio="none">
+                        <defs>
+                            <linearGradient id="cgrad-${slotId}" x1="0%" y1="0%" x2="0%" y2="100%">
+                                <stop offset="0%"   stop-color="${color}" stop-opacity="0.40"/>
+                                <stop offset="55%"  stop-color="${color}" stop-opacity="0.10"/>
+                                <stop offset="100%" stop-color="${color}" stop-opacity="0.01"/>
+                            </linearGradient>
+                            <filter id="cglow-${slotId}" x="-10%" y="-60%" width="120%" height="220%">
+                                <feGaussianBlur in="SourceGraphic" stdDeviation="2.5" result="blur"/>
+                                <feMerge>
+                                    <feMergeNode in="blur"/>
+                                    <feMergeNode in="SourceGraphic"/>
+                                </feMerge>
+                            </filter>
+                            <clipPath id="cclip-${slotId}">
+                                <rect x="0" y="0" width="${SVG_W}" height="${SVG_H}"/>
+                            </clipPath>
+                        </defs>
+
+                        <!-- Líneas de cuadrícula horizontales -->
+                        <line x1="0" y1="${SVG_H*0.25}" x2="${SVG_W}" y2="${SVG_H*0.25}"
+                              stroke="rgba(148,163,184,0.07)" stroke-width="1"/>
+                        <line x1="0" y1="${SVG_H*0.5}"  x2="${SVG_W}" y2="${SVG_H*0.5}"
+                              stroke="rgba(148,163,184,0.12)" stroke-width="1" stroke-dasharray="5,5"/>
+                        <line x1="0" y1="${SVG_H*0.75}" x2="${SVG_W}" y2="${SVG_H*0.75}"
+                              stroke="rgba(148,163,184,0.07)" stroke-width="1"/>
+
+                        <!-- Área bajo la curva -->
+                        <path id="carea-${slotId}"
+                              fill="url(#cgrad-${slotId})"
+                              clip-path="url(#cclip-${slotId})"
+                              d=""/>
+
+                        <!-- Línea principal con glow -->
+                        <path id="cline-${slotId}"
+                              fill="none" stroke="${color}" stroke-width="2.2"
+                              stroke-linecap="round" stroke-linejoin="round"
+                              filter="url(#cglow-${slotId})"
+                              clip-path="url(#cclip-${slotId})"
+                              d=""/>
+
+                        <!-- Punto vivo animado en el extremo derecho -->
+                        <circle id="cdot-${slotId}"
+                                class="chart-live-dot"
+                                r="3.5" fill="${color}"
+                                stroke="rgba(15,23,42,0.85)" stroke-width="2"
+                                cx="${SVG_W}" cy="${SVG_H/2}"
+                                opacity="0"/>
+                        <!-- Halo exterior del punto -->
+                        <circle id="cdothalo-${slotId}"
+                                r="7" fill="${color}" opacity="0"
+                                cx="${SVG_W}" cy="${SVG_H/2}"
+                                style="transition:opacity .3s"/>
+                    </svg>
+                </div>
+            </div>`;
+        }
+
+        // ── Catmull-Rom → Bézier cúbico (curvas verdaderamente fluidas) ────────
+        // Mucho más suave que el midpoint-X anterior: pasa por TODOS los puntos
+        function _buildSmoothPath(pts) {
+            if (pts.length < 2) return '';
+            const tension = 0.35;
+            let d = `M${pts[0].x.toFixed(2)},${pts[0].y.toFixed(2)}`;
+            for (let i = 0; i < pts.length - 1; i++) {
+                const p0 = pts[Math.max(0, i - 1)];
+                const p1 = pts[i];
+                const p2 = pts[i + 1];
+                const p3 = pts[Math.min(pts.length - 1, i + 2)];
+                const cp1x = p1.x + (p2.x - p0.x) * tension;
+                const cp1y = p1.y + (p2.y - p0.y) * tension;
+                const cp2x = p2.x - (p3.x - p1.x) * tension;
+                const cp2y = p2.y - (p3.y - p1.y) * tension;
+                d += ` C${cp1x.toFixed(2)},${cp1y.toFixed(2)} ${cp2x.toFixed(2)},${cp2y.toFixed(2)} ${p2.x.toFixed(2)},${p2.y.toFixed(2)}`;
+            }
+            return d;
+        }
+
+        // ── Actualizar una gráfica individual ─────────────────────────────────
+        function _updateChart(slotId, rawValue) {
+            // 1. EMA doble — aplica dos pasadas para máximo suavizado
+            if (_emaValues[slotId] === undefined) { _emaValues[slotId] = rawValue; _prevEmaValues[slotId] = rawValue; }
+            _prevEmaValues[slotId] = _emaValues[slotId];
+            _emaValues[slotId] = _emaValues[slotId] * (1 - EMA_ALPHA) + rawValue * EMA_ALPHA;
+            // segunda pasada (EMA de EMA) — opcional, produce curvas casi cinematográficas
+            _emaValues[slotId] = _emaValues[slotId] * (1 - EMA_ALPHA * 0.5) + rawValue * (EMA_ALPHA * 0.5);
+            const smoothed = _emaValues[slotId];
+
+            // 2. Ventana deslizante
+            if (!_chartHistories[slotId]) _chartHistories[slotId] = Array(MAX_PUNTOS).fill(smoothed);
+            _chartHistories[slotId].push(smoothed);
+            _chartHistories[slotId].shift();
+
+            // 3. Coordenadas SVG con margen vertical (5px arriba y abajo para que el punto no se corte)
+            const margin = 6;
+            const hist   = _chartHistories[slotId];
+            const step   = SVG_W / (MAX_PUNTOS - 1);
+            const pts    = hist.map((v, i) => ({
+                x: i * step,
+                y: margin + (SVG_H - margin * 2) * (1 - v / 100)
+            }));
+            const last = pts[pts.length - 1];
+
+            // 4. Paths Catmull-Rom → Bézier
+            const dLine = _buildSmoothPath(pts);
+            const dArea = dLine + ` L${last.x.toFixed(2)},${SVG_H} L0,${SVG_H} Z`;
+
+            // 5. Color semántico dinámico
+            const baseColor = COLORES_HEX[slotId % COLORES_HEX.length];
+            const color = smoothed >= 70 ? '#10b981' : smoothed <= 30 ? '#ef4444' : baseColor;
+
+            // 6. Tendencia (delta vs frame anterior)
+            const delta = smoothed - _prevEmaValues[slotId];
+            const trendEl = document.getElementById(`ctrendtxt-${slotId}`);
+            const trendIcon = document.getElementById(`ctrend-${slotId}`)?.querySelector('svg');
+            if (trendEl) {
+                if (delta > 0.3)       { trendEl.textContent = 'Mejorando'; trendEl.style.color = '#10b981'; }
+                else if (delta < -0.3) { trendEl.textContent = 'Bajando';   trendEl.style.color = '#f87171'; }
+                else                   { trendEl.textContent = 'Estable';   trendEl.style.color = '#64748b'; }
+            }
+            if (trendIcon) {
+                if (delta > 0.3)       { trendIcon.style.transform='rotate(0deg)';   trendIcon.setAttribute('fill','#10b981'); }
+                else if (delta < -0.3) { trendIcon.style.transform='rotate(180deg)'; trendIcon.setAttribute('fill','#f87171'); }
+                else                   { trendIcon.style.transform='rotate(90deg)';  trendIcon.setAttribute('fill','#64748b'); }
+            }
+
+            // 7. Actualizar DOM
+            const lineEl  = document.getElementById(`cline-${slotId}`);
+            const areaEl  = document.getElementById(`carea-${slotId}`);
+            const dotEl   = document.getElementById(`cdot-${slotId}`);
+            const haloEl  = document.getElementById(`cdothalo-${slotId}`);
+            const valEl   = document.getElementById(`cval-${slotId}`);
+
+            if (lineEl) { lineEl.setAttribute('d', dLine); lineEl.setAttribute('stroke', color); }
+            if (areaEl) { areaEl.setAttribute('d', dArea); }
+            if (dotEl)  {
+                dotEl.setAttribute('cx', last.x.toFixed(2));
+                dotEl.setAttribute('cy', last.y.toFixed(2));
+                dotEl.setAttribute('fill', color);
+                dotEl.setAttribute('opacity', '1');
+            }
+            if (haloEl) {
+                haloEl.setAttribute('cx', last.x.toFixed(2));
+                haloEl.setAttribute('cy', last.y.toFixed(2));
+                haloEl.setAttribute('fill', color);
+                haloEl.setAttribute('opacity', '0.12');
+            }
+            if (valEl) {
+                valEl.textContent = Math.round(smoothed);
+                valEl.style.color = color;
+            }
+
+            // Actualizar gradiente de área al color semántico
+            const gradEl = document.getElementById(`cgrad-${slotId}`);
+            if (gradEl) {
+                gradEl.querySelectorAll('stop')[0].setAttribute('stop-color', color);
+                gradEl.querySelectorAll('stop')[1].setAttribute('stop-color', color);
+                gradEl.querySelectorAll('stop')[2].setAttribute('stop-color', color);
+            }
+        }
+
+        // ── Construye/reconstruye las gráficas según los slots ─────────────────
+        function buildComprensionCharts() {
+            const wrap = document.getElementById('comprension-charts-wrap');
+            if (!wrap) return;
+            const slots = window._slots || [];
+
+            if (!slots.length) {
+                _chartHistories  = { 0: Array(MAX_PUNTOS).fill(50) };
+                _emaValues       = { 0: 50 };
+                _prevEmaValues   = { 0: 50 };
+                _applyChartLayout();
+                wrap.innerHTML = _miniChartHTML(0, 'Comprensión', '#6366f1');
+                return;
+            }
+
+            // Preservar historiales existentes, inicializar nuevos
+            const nuevo = {}, nuevoEma = {}, nuevoPrev = {};
+            slots.forEach(s => {
+                nuevo[s.face_slot]    = _chartHistories[s.face_slot]  || Array(MAX_PUNTOS).fill(50);
+                nuevoEma[s.face_slot] = _emaValues[s.face_slot]       ?? 50;
+                nuevoPrev[s.face_slot]= _prevEmaValues[s.face_slot]   ?? 50;
+            });
+            _chartHistories  = nuevo;
+            _emaValues       = nuevoEma;
+            _prevEmaValues   = nuevoPrev;
+
+            _applyChartLayout();
+            wrap.innerHTML = slots.map(s =>
+                _miniChartHTML(s.face_slot, s.nombre, COLORES_HEX[s.face_slot % COLORES_HEX.length])
+            ).join('');
+        }
+
+        // ── Actualizar todas las gráficas con datos del WS ─────────────────────
+        window._updateAllCharts = function(wsData) {
+            const slots = window._slots || [];
+            if (!slots.length) {
+                _updateChart(0, wsData.indice_comprension ?? 50);
+                return;
+            }
+            slots.forEach(s => {
+                const state = (wsData.alumnos && wsData.alumnos[s.face_slot])
+                    ? wsData.alumnos[s.face_slot] : wsData;
+                _updateChart(s.face_slot, state.indice_comprension ?? 50);
+            });
+        };
+
+        // Compatibilidad con código legacy
+        function actualizarGraficaSVG(val) { _updateChart(0, val); }
+
+        // Inicializar
+        buildComprensionCharts();
 
         // ==============================================================================
         // INGENIERÍA DE RED: CONEXIÓN WEBSOCKET FULL-DUPLEX
@@ -892,77 +1205,54 @@
                 // 2. ACTUALIZACIÓN DE EMOCIONES (Vía DeepFace)
                 const emocion = data.emocion;
                 const emoConfig = emotionMap[emocion] || emotionMap["Neutral"];
-                
+
                 const emoWrapper = document.getElementById('emocion-icon-wrapper');
-                const emoVal = document.getElementById('emocion-val');
-                const emoGlow = document.getElementById('emocion-glow');
+                const emoVal    = document.getElementById('emocion-val');
                 const emoIconEl = document.getElementById('emocion-icon');
-                
-                emoVal.innerText = emocion;
-                emoVal.className = `text-2xl font-bold tracking-tight transition-smooth ${emoConfig.colorText}`;
-                emoWrapper.className = `p-3.5 rounded-2xl border transition-smooth shadow-sm ${emoConfig.colorBg} ${emoConfig.colorText} ${emoConfig.colorBorder}`;
-                emoGlow.style.backgroundColor = emoConfig.colorHex;
-                
-                // Actualizar el icono inyectando el nuevo data-atributo y pidiendo a Lucide que re-dibuje
-                emoIconEl.setAttribute('data-lucide', emoConfig.icon);
-                lucide.createIcons({ nameAttr: 'data-lucide', attrs: { class: 'w-6 h-6' } });
+
+                if (emoVal)    { emoVal.innerText = emocion; emoVal.className = `text-lg font-bold tracking-tight transition-smooth ${emoConfig.colorText}`; }
+                if (emoWrapper) emoWrapper.className = `p-2.5 rounded-xl border transition-smooth shadow-sm flex-shrink-0 ${emoConfig.colorBg} ${emoConfig.colorText} ${emoConfig.colorBorder}`;
+                if (emoIconEl) { emoIconEl.setAttribute('data-lucide', emoConfig.icon); lucide.createIcons({ nameAttr: 'data-lucide', attrs: { class: 'w-5 h-5' } }); }
 
                 // 3. ACTUALIZACIÓN DEL RADAR DE ATENCIÓN 3D (Vía MediaPipe Epipolar)
-                const panelAtencion = document.getElementById('panel-atencion');
-                const textAtencion = document.getElementById('texto-atencion');
+                const panelAtencion  = document.getElementById('panel-atencion');
+                const textAtencion   = document.getElementById('texto-atencion');
                 const iconAtencionBg = document.getElementById('icon-atencion-bg');
-                const iconAtencion = document.getElementById('icon-atencion');
-                
-                // Dispara alertas visuales según el estado de atención
-                if(data.atencion === 'Distraído') {
-                    panelAtencion.className = 'glass-panel rounded-2xl p-5 transition-smooth border-l-4 alert-distracted';
-                    textAtencion.innerText = '⚠️ PÉRDIDA DE CONTACTO VISUAL';
-                    textAtencion.className = 'text-red-600 font-extrabold text-xl tracking-tight';
-                    iconAtencionBg.className = 'p-3 rounded-xl bg-red-100 text-red-600 transition-smooth';
-                    iconAtencion.setAttribute('data-lucide', 'eye-off');
-                } else if(data.atencion === 'Somnoliento') {
-                    panelAtencion.className = 'glass-panel rounded-2xl p-5 transition-smooth border-l-4 border-l-orange-500';
-                    textAtencion.innerText = '😴 OJOS CERRADOS / SOMNOLIENTO';
-                    textAtencion.className = 'text-orange-600 font-extrabold text-xl tracking-tight';
-                    iconAtencionBg.className = 'p-3 rounded-xl bg-orange-100 text-orange-600 transition-smooth';
-                    iconAtencion.setAttribute('data-lucide', 'moon');
+                const iconAtencion   = document.getElementById('icon-atencion');
+
+                if (data.atencion === 'Distraído') {
+                    if (panelAtencion) panelAtencion.className = 'glass-panel rounded-2xl p-3 transition-smooth border-l-4 alert-distracted';
+                    if (textAtencion)  { textAtencion.innerText = '⚠️ PÉRDIDA VISUAL'; textAtencion.className = 'text-red-600 font-extrabold text-base tracking-tight'; }
+                    if (iconAtencionBg) iconAtencionBg.className = 'p-2 rounded-xl bg-red-100 text-red-600 transition-smooth';
+                    if (iconAtencion) iconAtencion.setAttribute('data-lucide', 'eye-off');
+                } else if (data.atencion === 'Somnoliento') {
+                    if (panelAtencion) panelAtencion.className = 'glass-panel rounded-2xl p-3 transition-smooth border-l-4 border-l-orange-500';
+                    if (textAtencion)  { textAtencion.innerText = '😴 SOMNOLIENTO'; textAtencion.className = 'text-orange-600 font-extrabold text-base tracking-tight'; }
+                    if (iconAtencionBg) iconAtencionBg.className = 'p-2 rounded-xl bg-orange-100 text-orange-600 transition-smooth';
+                    if (iconAtencion) iconAtencion.setAttribute('data-lucide', 'moon');
                 } else {
-                    panelAtencion.className = 'glass-panel rounded-2xl p-5 transition-smooth border-l-4 border-l-emerald-500';
-                    textAtencion.innerText = 'ALUMNO ENFOCADO';
-                    textAtencion.className = 'text-emerald-600 font-extrabold text-xl tracking-tight';
-                    iconAtencionBg.className = 'p-3 rounded-xl bg-emerald-50 text-emerald-600 transition-smooth';
-                    iconAtencion.setAttribute('data-lucide', 'focus');
+                    if (panelAtencion) panelAtencion.className = 'glass-panel rounded-2xl p-3 transition-smooth border-l-4 border-l-emerald-500';
+                    if (textAtencion)  { textAtencion.innerText = 'ALUMNO ENFOCADO'; textAtencion.className = 'text-emerald-600 font-extrabold text-base tracking-tight'; }
+                    if (iconAtencionBg) iconAtencionBg.className = 'p-2 rounded-xl bg-emerald-50 text-emerald-600 transition-smooth';
+                    if (iconAtencion) iconAtencion.setAttribute('data-lucide', 'focus');
                 }
 
-                // 4. ACTUALIZACIÓN DEL ÍNDICE DE COMPRENSIÓN (La Fusión Multimodal Final)
-                const indice = data.indice_comprension;
-                const indiceEl = document.getElementById('indice-val');
-                indiceEl.innerText = indice;
-                
-                // Cambiar color numérico según umbrales de aprendizaje
-                if(indice >= 70) indiceEl.className = 'text-5xl font-black tracking-tighter transition-smooth text-emerald-500';
-                else if(indice >= 40) indiceEl.className = 'text-5xl font-black tracking-tighter transition-smooth text-amber-500';
-                else indiceEl.className = 'text-5xl font-black tracking-tighter transition-smooth text-red-500';
-
-                // Llamar al motor de renderizado SVG para redibujar la gráfica con el nuevo punto
-                actualizarGraficaSVG(indice);
+                // 4. ACTUALIZACIÓN DE LAS GRÁFICAS DE COMPRENSIÓN (por alumno)
+                if (typeof window._updateAllCharts === 'function') window._updateAllCharts(data);
 
                 // 5. ACTUALIZACIÓN DE SEMÁNTICA NLP (Vía RoBERTa HuggingFace)
-                const nlpVal = document.getElementById('nlp-val');
+                const nlpVal   = document.getElementById('nlp-val');
                 const nlpBadge = document.getElementById('nlp-badge');
-                
-                if(data.sentimiento === 'POS') { 
-                    nlpVal.innerText = 'Polaridad Positiva'; 
-                    nlpVal.className = 'font-semibold text-emerald-600';
-                    nlpBadge.className = 'w-3 h-3 rounded-full bg-emerald-500 shadow-[0_0_5px_#10b981]';
-                } else if(data.sentimiento === 'NEG') { 
-                    nlpVal.innerText = 'Frustración / Negativa'; 
-                    nlpVal.className = 'font-semibold text-red-600'; 
-                    nlpBadge.className = 'w-3 h-3 rounded-full bg-red-500 shadow-[0_0_5px_#ef4444]';
-                } else { 
-                    nlpVal.innerText = 'Discurso Neutral'; 
-                    nlpVal.className = 'font-semibold text-slate-600'; 
-                    nlpBadge.className = 'w-3 h-3 rounded-full bg-slate-400';
+
+                if (data.sentimiento === 'POS') {
+                    if (nlpVal)   { nlpVal.innerText = 'Polaridad Positiva'; nlpVal.className = 'font-semibold text-emerald-600 text-sm'; }
+                    if (nlpBadge) nlpBadge.className = 'w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_5px_#10b981] flex-shrink-0';
+                } else if (data.sentimiento === 'NEG') {
+                    if (nlpVal)   { nlpVal.innerText = 'Frustración / Negativa'; nlpVal.className = 'font-semibold text-red-600 text-sm'; }
+                    if (nlpBadge) nlpBadge.className = 'w-2.5 h-2.5 rounded-full bg-red-500 shadow-[0_0_5px_#ef4444] flex-shrink-0';
+                } else {
+                    if (nlpVal)   { nlpVal.innerText = 'Discurso Neutral'; nlpVal.className = 'font-semibold text-slate-600 text-sm'; }
+                    if (nlpBadge) nlpBadge.className = 'w-2.5 h-2.5 rounded-full bg-slate-400 flex-shrink-0';
                 }
                 
                 // 6. CONFIANZA ML (solo activo en modo ML)
@@ -1380,6 +1670,11 @@
                     _sessionStart = new Date(data.session.started_at.replace(' ','T'));
                     _slots        = data.slots || [];
 
+                    // Exponer al scope global para modales externos
+                    window._sessionId = _sessionId;
+                    window._token     = _token;
+                    window._slots     = _slots;
+
                     // Guardar en sessionStorage para reportes
                     sessionStorage.setItem('edu_session_id', _sessionId);
                     sessionStorage.setItem('edu_session_titulo', data.session.titulo);
@@ -1397,10 +1692,11 @@
                     _timerInterval = setInterval(updateTimer, 1000);
                     updateTimer();
 
-                    // Paneles de alumnos en sidebar
+                    // Paneles de alumnos en sidebar + gráficas por alumno
                     if (_slots.length > 0) {
                         document.getElementById('sidebar-student-panels').style.display = 'block';
                         buildStudentPanels();
+                        buildComprensionCharts();
                     }
                 } else {
                     document.getElementById('sidebar-session-active').style.display = 'none';
@@ -1453,6 +1749,13 @@
         }
 
         // ══ PANELES DE ALUMNOS ════════════════════════════════════════════════
+
+        // Puente global para reconstruir paneles desde scripts externos
+        window._rebuildPanels = function(newSlots) {
+            if (newSlots) { _slots = newSlots; window._slots = newSlots; }
+            buildStudentPanels();
+            buildComprensionCharts();
+        };
 
         // Construye los paneles compactos en el sidebar
         function buildStudentPanels() {
@@ -1671,6 +1974,84 @@
     location.href = '/login';
   }
 
+  // ── Modal Reasignación de Posiciones ─────────────────────────────────────
+  function openReorderModal() {
+    if (!window._sessionId || !window._slots || !window._slots.length) return;
+    const body = document.getElementById('reorder-modal-body');
+    const SEAT_LABELS = ['Izquierda','Centro-Izq','Centro','Centro-Der','Derecha-1','Derecha-2'];
+    // Construir filas: una por cada slot, con dropdown de todos los alumnos
+    body.innerHTML = window._slots.map(slot => {
+      const options = window._slots.map(s =>
+        `<option value="${s.student_id}" ${s.student_id === slot.student_id ? 'selected' : ''}>
+           ${s.nombre}
+         </option>`
+      ).join('');
+      return `
+      <div style="display:grid;grid-template-columns:1fr 1fr;align-items:center;gap:10px;
+                  padding:10px 12px;border-radius:10px;background:#1e293b;border:1px solid #334155">
+        <div>
+          <div style="font-size:.72rem;font-weight:700;color:#6366f1;text-transform:uppercase;
+                      letter-spacing:.05em">Posición ${slot.face_slot}</div>
+          <div style="font-size:.78rem;font-weight:600;color:#94a3b8;margin-top:2px">
+            ${SEAT_LABELS[slot.face_slot] || 'Slot '+slot.face_slot}
+          </div>
+        </div>
+        <select data-slot="${slot.face_slot}"
+                style="background:#263348;border:1px solid #334155;border-radius:8px;
+                       color:#e2e8f0;padding:8px 10px;font-size:.82rem;outline:none;width:100%;
+                       transition:border-color .2s"
+                onfocus="this.style.borderColor='#6366f1'"
+                onblur="this.style.borderColor='#334155'">
+          ${options}
+        </select>
+      </div>`;
+    }).join('');
+    document.getElementById('dlg-reorder').classList.add('open');
+  }
+
+  async function confirmReorder() {
+    const selects = document.querySelectorAll('#reorder-modal-body select[data-slot]');
+    const assignments = [...selects].map(sel => ({
+      face_slot:  parseInt(sel.dataset.slot),
+      student_id: parseInt(sel.value),
+    }));
+    // Validar que no haya duplicados
+    const ids = assignments.map(a => a.student_id);
+    if (new Set(ids).size !== ids.length) {
+      _showDashToast('Cada alumno solo puede ocupar una posición a la vez.', 'warn');
+      return;
+    }
+    const btn = document.getElementById('btn-confirm-reorder');
+    btn.disabled = true; btn.textContent = 'Guardando...';
+    try {
+      const res = await fetch(`/api/sessions/${window._sessionId}/slots/reorder`, {
+        method: 'PATCH',
+        headers: { Authorization: 'Bearer ' + window._token, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ assignments }),
+      });
+      let data;
+      try { data = await res.json(); } catch { data = {}; }
+      if (!res.ok) {
+        const detail = data.detail || `HTTP ${res.status}`;
+        _showDashToast(`Error del servidor: ${detail}`, 'error');
+        btn.disabled = false; btn.textContent = 'Guardar';
+        return;
+      }
+      if (data.ok) {
+        document.getElementById('dlg-reorder').classList.remove('open');
+        if (typeof window._rebuildPanels === 'function') window._rebuildPanels(data.slots);
+        else window._slots = data.slots;
+        _showDashToast('Posiciones actualizadas correctamente.', 'ok');
+      } else {
+        _showDashToast('Error al guardar la asignación.', 'error');
+      }
+    } catch (e) {
+      _showDashToast('Sin conexión con el servidor (¿reiniciaste el servidor?)', 'error');
+      console.error('reorder error:', e);
+    }
+    btn.disabled = false; btn.textContent = 'Guardar';
+  }
+
   // Reemplaza cerrarSesion para usar modal
   function cerrarSesion() {
     if (!window._sessionId) return;
@@ -1698,6 +2079,38 @@
     } catch { _showDashToast('Error al cerrar la sesión.', 'error'); }
   }
 </script>
+
+<!-- Modal: Reasignar Posiciones de Cámara -->
+<div class="dlg-backdrop" id="dlg-reorder">
+  <div class="dlg-box" style="max-width:440px">
+    <div class="dlg-icon" style="background:rgba(99,102,241,.15);border:1px solid rgba(99,102,241,.35)">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#818cf8" stroke-width="2"
+           stroke-linecap="round" stroke-linejoin="round">
+        <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3"/>
+        <path d="M3 16v3a2 2 0 0 0 2 2h3m8 0h3a2 2 0 0 0 2-2v-3"/>
+        <path d="m7 16 4-4-4-4"/><path d="m17 8-4 4 4 4"/>
+      </svg>
+    </div>
+    <div class="dlg-title">Corregir Posiciones de Cámara</div>
+    <div class="dlg-body" style="margin-bottom:14px">
+      Seleccioná qué alumno ocupa cada posición detectada por la cámara
+      (de izquierda a derecha). El video se actualiza al instante.
+    </div>
+    <div id="reorder-modal-body" style="display:flex;flex-direction:column;gap:8px;margin-bottom:20px;text-align:left">
+      <!-- Generado por JS -->
+    </div>
+    <div class="dlg-actions">
+      <button class="dlg-btn dlg-btn-cancel"
+              onclick="document.getElementById('dlg-reorder').classList.remove('open')">
+        Cancelar
+      </button>
+      <button class="dlg-btn" id="btn-confirm-reorder" onclick="confirmReorder()"
+              style="background:#6366f1;color:#fff">
+        Guardar
+      </button>
+    </div>
+  </div>
+</div>
 
 </body>
 </html>

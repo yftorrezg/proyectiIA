@@ -47,6 +47,8 @@ class TelemetryWriter:
             self._slots      = slots
             self._running    = True
 
+        self._sync_slot_map(slots)
+
         if self._thread is None or not self._thread.is_alive():
             self._thread = threading.Thread(
                 target  = self._loop,
@@ -63,7 +65,26 @@ class TelemetryWriter:
             self._running    = False
             self._session_id = None
             self._slots      = []
+        self._sync_slot_map([])
         logger.info("TelemetryWriter detenido.")
+
+    def update_slots(self, new_slots: list) -> None:
+        """
+        Reasigna los slots en caliente (sin reiniciar la sesion).
+        new_slots: lista de dicts con {face_slot, student_id, nombre}.
+        """
+        with self._lock:
+            self._slots = new_slots
+        self._sync_slot_map(new_slots)
+        logger.info(f"Slots reasignados: {[(s['face_slot'], s['nombre']) for s in new_slots]}")
+
+    @staticmethod
+    def _sync_slot_map(slots: list) -> None:
+        """Actualiza estado_api_global['slot_map'] con face_slot → nombre."""
+        from app.core.inference_engine import estado_api_global
+        estado_api_global["slot_map"] = {
+            s["face_slot"]: s["nombre"] for s in slots
+        }
 
     @property
     def active(self) -> bool:
